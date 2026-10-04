@@ -5870,6 +5870,32 @@ function proposerFin(lid) {
 ACTIONS.sessions = function (el) {
   afficherSessions(el.dataset.lecture);
 };
+// une session garde son heure de début, son heure de fin et son temps de lecture (pauses déduites)
+function heureLisible(ts) {
+  return heureVersChamp(ts).replace(':', ' h ');
+}
+function dureeLecture(sec) {
+  var m = Math.round(sec / 60);
+  if (m < 60) {
+    return Math.max(1, m) + ' min';
+  }
+  return Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0');
+}
+// « 18 h 00 → 19 h 00 · 45 min de lecture » ; un simple relevé de page : « à 15 h 33 »
+function texteSession(s) {
+  var parts = [];
+  if (s.fin && s.fin - s.debut >= 60000) {
+    parts.push(heureLisible(s.debut) + ' → ' + heureLisible(s.fin));
+  } else if (s.dureeSec) {
+    parts.push('dès ' + heureLisible(s.debut));
+  } else {
+    parts.push('à ' + heureLisible(s.debut));
+  }
+  if (s.dureeSec) {
+    parts.push('<b>' + dureeLecture(s.dureeSec) + '</b> de lecture');
+  }
+  return parts.join(' · ');
+}
 function afficherSessions(lid) {
   var x = D.lectures[lid];
   var l = D.livres[x.livreId];
@@ -5880,14 +5906,11 @@ function afficherSessions(lid) {
   }
   h += ss.map(function (s) {
     var d = new Date(s.debut);
-    var parts = [JOURS[(d.getDay() + 6) % 7] + ' ' + fdate(s.debut), heureVersChamp(s.debut).replace(':', ' h ')];
-    if (s.dureeSec) {
-      parts.push(Math.round(s.dureeSec / 60) + ' min');
-    }
+    var page = '';
     if (s.position !== null && s.position !== undefined) {
-      parts.push(texteLongueur(x.unite, s.position));
+      page = ' · ' + texteLongueur(x.unite, s.position);
     }
-    return '<div class="ligne-ed"><div class="small">' + parts.join(' · ') + '</div><div class="boutons"><button class="mini-btn" data-act="formSession" data-id="' + s.id + '">✏️</button></div></div>';
+    return '<div class="ligne-ed"><div class="small"><div>' + JOURS[(d.getDay() + 6) % 7] + ' ' + fdate(s.debut) + page + '</div><div class="muted">' + texteSession(s) + '</div></div><div class="boutons"><button class="mini-btn" data-act="formSession" data-id="' + s.id + '">✏️</button></div></div>';
   }).join('');
   h += '<div class="row" style="margin-top:12px"><button class="act doux" data-act="formSession" data-lecture="' + lid + '">＋ Ajouter une session</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">↩️ Retour</button></div>';
   ouvrirFeuille(h);
@@ -5898,10 +5921,17 @@ ACTIONS.formSession = function (el) {
   siIndependant(function () {
     var s = (sid && D.sessions[sid]) || null;
     var x = D.lectures[(s && s.lectureId) || lid];
-    var v = s || {debut: Date.now(), dureeSec: null, position: null};
+    var maintenant = Date.now();
+    var v = s || {debut: maintenant - 30 * 60000, fin: maintenant, dureeSec: 30 * 60, position: null};
+    var fin = '';
+    if (v.fin && v.fin - v.debut >= 60000) {
+      fin = heureVersChamp(v.fin);
+    }
     var h = '<h3>' + (s ? 'Modifier la session' : 'Ajouter une session') + '</h3><div class="form">' +
-      '<div class="deux"><div><label>Date</label>' + champ('seDate', dateVersChamp(v.debut), 'type="date"') + '</div><div><label>Heure</label>' + champ('seHeure', heureVersChamp(v.debut), 'type="time"') + '</div></div>' +
-      '<div class="deux"><div><label>Durée (minutes)</label>' + champ('seMinutes', v.dureeSec ? Math.round(v.dureeSec / 60) : '', 'type="number" min="0" inputmode="numeric"') + '</div><div><label>Arrivée à</label>' + champLongueur('sePosition', x.unite, v.position) + '</div></div>' +
+      '<label>Date</label>' + champ('seDate', dateVersChamp(v.debut), 'type="date"') +
+      '<div class="deux"><div><label>Début</label>' + champ('seHeure', heureVersChamp(v.debut), 'type="time"') + '</div><div><label>Fin</label>' + champ('seFin', fin, 'type="time"') + '</div></div>' +
+      '<div class="deux"><div><label>Temps de lecture (min)</label>' + champ('seMinutes', v.dureeSec ? Math.round(v.dureeSec / 60) : '', 'type="number" min="0" inputmode="numeric"') + '</div><div><label>Arrivée à</label>' + champLongueur('sePosition', x.unite, v.position) + '</div></div>' +
+      '<p class="small muted" style="margin:6px 0 0">Le temps de lecture compte sans les pauses : par ex. de 18 h à 19 h avec 15 min de pause, 45 min. Laisse-le vide pour compter tout le temps entre le début et la fin.</p>' +
       '<div class="row" style="margin-top:16px"><button class="act" data-act="seEnregistrer">💾 Enregistrer</button><button class="act doux" data-act="seRetour">Annuler</button></div>';
     if (s) {
       h += '<button class="lien danger" data-act="seSupprimer" style="margin-top:14px">🗑️ Supprimer cette session</button>';
@@ -5918,10 +5948,27 @@ ACTIONS.formSession = function (el) {
       }
       var debut = new Date(jour + 'T' + (val('seHeure') || '12:00') + ':00').getTime();
       var mn = valNombre('seMinutes');
+      var finSession = null;
+      if (val('seFin')) {
+        finSession = new Date(jour + 'T' + val('seFin') + ':00').getTime();
+        // fin avant le début : la lecture a passé minuit
+        if (finSession < debut) {
+          finSession += DAY;
+        }
+        if (mn === null && finSession > debut) {
+          mn = Math.round((finSession - debut) / 60000);
+        }
+      } else {
+        finSession = debut + (mn || 0) * 60000;
+      }
+      if (mn && finSession > debut && mn * 60000 > finSession - debut + 59000) {
+        alert('Le temps de lecture (' + mn + ' min) dépasse le temps entre le début et la fin (' + Math.round((finSession - debut) / 60000) + ' min).');
+        return;
+      }
       var pos = lireLongueur('sePosition', x.unite);
       var ses = Object.assign({}, s || {id: nouvelId(), lectureId: x.id, livreId: x.livreId, origine: 'manuel'}, {
         debut: debut,
-        fin: debut + (mn || 0) * 60000,
+        fin: finSession,
         dureeSec: mn ? Math.round(mn * 60) : null,
         position: pos
       });
@@ -6559,8 +6606,14 @@ ACTIONS.arreterMinuteur = function () {
   }
   vibrer(120);
   var sec = ecoule(s);
+  var finArret = Date.now();
   var x = D.lectures[s.lectureId];
   var mn = Math.max(1, Math.round(sec / 60));
+  var pauseSec = Math.max(0, (finArret - s.debut) / 1000 - sec);
+  var plage = '🕰️ ' + heureLisible(s.debut) + ' → ' + heureLisible(finArret);
+  if (pauseSec >= 60) {
+    plage += ' · ⏸ ' + dureeLecture(pauseSec) + ' de pause';
+  }
   var depart = x.position || 0;
   var propose = depart;
   var pas = '';
@@ -6589,11 +6642,11 @@ ACTIONS.arreterMinuteur = function () {
     question = 'Tu en es à combien de % ?';
   }
   ouvrirFeuille('<h3>Session terminée ✨</h3><p class="small muted" style="margin:0">' + esc(titreCourt(D.livres[s.livreId])) + '</p>' +
-    '<div class="grand-chrono">' + mn + ' min</div>' + oubli +
+    '<div class="grand-chrono">' + dureeLecture(sec) + '</div><p class="small muted" style="text-align:center;margin:0">de lecture · ' + plage + '</p>' + oubli +
     '<p class="small" style="margin:6px 0 0;text-align:center">' + question + '</p>' +
     '<div class="champ-page"><button class="rond-m" data-act="pasPage" data-n="-1">−</button>' + (x.unite === 'secondes' ? champ('arPosition', texteDuree(propose), 'inputmode="numeric"') : champ('arPosition', propose || '', 'inputmode="decimal"')) + '<button class="rond-m" data-act="pasPage" data-n="1">+</button></div>' +
     pas + '<p class="small muted" style="text-align:center;margin:8px 0 0" id="arResume"></p>' +
-    '<div class="form" style="margin-top:6px"><label>Durée (minutes)</label>' + champ('arMinutes', mn, 'type="number" min="1" inputmode="numeric"') + '</div>' +
+    '<div class="form" style="margin-top:6px"><label>Temps de lecture (min, pauses déduites)</label>' + champ('arMinutes', mn, 'type="number" min="1" inputmode="numeric"') + '</div>' +
     '<div class="row" style="margin-top:14px"><button class="act" data-act="validerArret">💾 Enregistrer</button><button class="act doux" data-act="reprendreApresArret">↩️ Reprendre</button></div>');
   function resume() {
     var pos = lireLongueur('arPosition', x.unite);
@@ -6639,7 +6692,7 @@ ACTIONS.arreterMinuteur = function () {
     }
     var minutes = valNombre('arMinutes') || mn;
     var pos = lireLongueur('arPosition', x.unite);
-    var session = Object.assign({}, s2, {enCours: false, fin: Date.now(), dureeSec: Math.round(minutes * 60), position: pos});
+    var session = Object.assign({}, s2, {enCours: false, fin: finArret, dureeSec: Math.round(minutes * 60), position: pos});
     delete session.accumule;
     delete session.repriseA;
     delete session.pauseA;
