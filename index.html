@@ -54,6 +54,23 @@
   --shadow:0 8px 24px rgba(160,80,40,.14);--spark:rgba(192,87,58,.35);--cover-shadow:0 4px 10px rgba(110,50,20,.25);
   --shelf:#a8714a;--voile:rgba(60,30,10,.45);
 }
+:root[data-theme="fete"]{
+  --accent-soft:color-mix(in srgb,var(--accent) 16%,var(--card));
+  --lav-soft:color-mix(in srgb,var(--lav) 16%,var(--card));
+  --gold-soft:color-mix(in srgb,var(--gold) 20%,var(--card));
+  --mint-soft:color-mix(in srgb,var(--ebook) 15%,var(--card));
+  --paper:var(--accent);--audio:var(--lav);
+  --heat0:color-mix(in srgb,var(--accent) 10%,var(--card));
+  --heat1:color-mix(in srgb,var(--accent) 38%,var(--card));
+  --heat2:color-mix(in srgb,var(--accent) 68%,var(--card));
+  --heat3:var(--accent);
+  --frame:linear-gradient(135deg,color-mix(in srgb,var(--accent) 50%,var(--card)),color-mix(in srgb,var(--lav) 50%,var(--card)) 55%,color-mix(in srgb,var(--gold) 55%,var(--card)));
+  --spark:color-mix(in srgb,var(--gold) 55%,transparent);
+  --shadow:0 8px 24px color-mix(in srgb,var(--accent) 16%,transparent);
+  --cover-shadow:0 4px 10px rgba(0,0,0,.25);
+  --shelf:color-mix(in srgb,var(--gold) 55%,var(--ink));
+  --voile:rgba(10,5,20,.5);
+}
 *{box-sizing:border-box}
 html{background:var(--bg)}
 body{margin:0;color:var(--ink);font:15px/1.5 Nunito,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;
@@ -100,8 +117,18 @@ nav button.on::after{content:"✦";position:absolute;bottom:0;left:50%;transform
 .bar .trk{background:var(--heat0);border-radius:8px;height:12px;overflow:hidden}
 .bar .fil{background:linear-gradient(90deg,var(--lav),var(--accent));height:100%;border-radius:0 6px 6px 0}
 .bar .val{color:var(--muted);font-variant-numeric:tabular-nums;min-width:28px;text-align:right}
-.cols{display:flex;align-items:flex-end;gap:2px;height:110px;border-bottom:1px solid var(--line)}
-.cols div{flex:1;background:linear-gradient(180deg,var(--accent),var(--lav));border-radius:4px 4px 0 0;min-height:1px}
+.bar[data-tip]{cursor:pointer;border-radius:8px}
+.bar.actif .fil{background:var(--gold) !important;box-shadow:0 0 8px var(--gold)}
+.bar.axe-x{margin-top:2px}
+.graduations{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);border-top:1px solid var(--line);padding-top:2px}
+.graph{display:grid;grid-template-columns:auto 1fr;gap:6px}
+.axe-y{position:relative;width:28px;height:110px;font-size:10px;color:var(--muted);line-height:1}
+.axe-y span{position:absolute;right:0;transform:translateY(-50%)}
+.axe-y span:nth-child(1){top:0}.axe-y span:nth-child(2){top:50%}.axe-y span:nth-child(3){top:100%}
+.cols{display:flex;align-items:flex-end;gap:2px;height:110px;border-bottom:1px solid var(--line);background:linear-gradient(var(--line),var(--line)) 0 0/100% 1px no-repeat,linear-gradient(var(--line),var(--line)) 0 50%/100% 1px no-repeat}
+.cols .col{flex:1;height:100%;display:flex;align-items:flex-end;cursor:pointer;border-radius:4px 4px 0 0}
+.cols .col i{display:block;width:100%;background:linear-gradient(180deg,var(--accent),var(--lav));border-radius:4px 4px 0 0;min-height:1px}
+.cols .col.actif i{background:var(--gold);box-shadow:0 0 8px var(--gold)}
 .colslab{display:flex;gap:2px;font-size:10px;color:var(--muted);margin-top:3px}
 .colslab span{flex:1;text-align:center}
 table{width:100%;border-collapse:collapse;font-size:13px}
@@ -113,6 +140,20 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .heat i{width:11px;height:11px;border-radius:4px;background:var(--heat0)}
 .heat i.l1{background:var(--heat1)}.heat i.l2{background:var(--heat2)}.heat i.l3{background:var(--heat3);box-shadow:0 0 6px var(--heat2)}
 .heat i.out{background:transparent}
+.heat i[data-tip]{cursor:pointer}
+.heat i.actif{outline:2px solid var(--gold);outline-offset:1px}
+.heat-mois{position:relative;height:14px;font-size:10px;color:var(--muted)}
+.heat-mois span{position:absolute;top:0}
+.heat-legende{display:flex;align-items:center;gap:3px;justify-content:flex-end;font-size:10px;color:var(--muted);margin-top:6px}
+.heat-legende i{width:11px;height:11px;border-radius:4px;background:var(--heat0)}
+.heat-legende i.l1{background:var(--heat1)}.heat-legende i.l2{background:var(--heat2)}.heat-legende i.l3{background:var(--heat3)}
+.heat-legende span{margin:0 3px}
+/* bulle de valeur */
+.bulle{position:fixed;z-index:60;transform:translate(-50%,-100%);background:var(--ink);color:var(--card);font:700 12px/1.3 Nunito,sans-serif;padding:7px 11px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.25);pointer-events:none;opacity:0;transition:opacity .15s;max-width:240px;text-align:center}
+.bulle.vis{opacity:1}
+.bulle.dessous{transform:translate(-50%,0)}
+.exclus-note{margin:8px 4px 0}
+.exclus-note a{color:var(--accent)}
 .book{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line)}
 .book:last-child{border-bottom:0}
 .book img,.book .ph{width:44px;height:66px;object-fit:cover;border-radius:6px;background:var(--heat0);flex:none;box-shadow:var(--cover-shadow);transform:rotate(-2deg)}
@@ -237,6 +278,41 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .etoiles i{position:absolute;font-style:normal;color:var(--gold);animation:scintille 3.2s ease-in-out infinite}
 header,main{position:relative;z-index:1}
 header .moon{display:inline-block;animation:flotte 4s ease-in-out infinite;text-shadow:0 0 14px var(--gold-soft)}
+.fete-banniere{display:flex;flex-direction:column;align-items:center;gap:2px;margin:14px 0 0;padding:10px 14px;border-radius:18px;background:linear-gradient(135deg,var(--accent-soft),var(--lav-soft));text-align:center;font-size:13px;color:var(--muted)}
+.fete-banniere b{font:700 19px "Cormorant Garamond",Georgia,serif;color:var(--ink)}
+.themes select{font:600 12px Nunito,sans-serif;padding:5px 10px;margin-top:4px}
+
+/* téléphones étroits (Flip 7 ouvert, ~410 px de large) */
+header{padding-top:calc(22px + env(safe-area-inset-top))}
+.theme-btn{top:calc(16px + env(safe-area-inset-top))}
+@media (max-width:440px){
+  header h1{font-size:27px}
+  header h1 span{font-size:23px}
+  main{padding:0 12px 100px}
+  .card{padding:14px 13px;border-radius:20px}
+  .card h2{font-size:20px}
+  .kpis{gap:6px}
+  .kpi{padding:9px 10px}
+  .kpi b{font-size:25px}
+  .bar{grid-template-columns:minmax(64px,34%) 1fr auto;gap:6px}
+  .badges{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}
+  .seg button{font-size:12px;padding:8px 2px}
+  .crit{grid-template-columns:104px 1fr}
+  .pips button{font-size:20px}
+  nav button{font-size:10.5px}
+}
+/* petit écran presque carré (écran externe du Flip, paysage) */
+@media (max-height:620px){
+  header{padding-top:calc(10px + env(safe-area-inset-top));padding-bottom:0}
+  header .moon,header .orn{display:none}
+  header h1{font-size:22px}
+  header h1 span{display:inline;font-size:20px}
+  .theme-btn{width:34px;height:34px;font-size:15px;top:calc(8px + env(safe-area-inset-top))}
+  main{padding-bottom:78px}
+  nav button{padding:6px 2px 7px;font-size:9.5px}
+  nav button span{font-size:18px}
+  .card{margin:10px 0}
+}
 @media (prefers-reduced-motion:reduce){.etoiles i,header .moon,#load::before,.story .paillettes i{animation:none}.roue{transition-duration:.01s}}
 </style>
 
@@ -266,6 +342,11 @@ var ENLIGNE = typeof google !== 'undefined' && google.script && google.script.ru
 var M = null;
 var NOTES = {};
 var ACTIONS = {};
+// livres exclus de certaines stats : {idLivre: {stats: 1, bilan: 1, quetes: 1, reco: 1}}
+var EXCLUS = {};
+// catégorie de stats en cours de calcul (null = tous les livres)
+var CAT = null;
+var JOURS_LONGS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 var onglet = 'accueil';
 var sous = {stats: 'rythme', etagere: 'etagere'};
 
@@ -363,26 +444,91 @@ function kpis(list) {
     return '<div class="kpi"><b>' + k[0] + '</b><i>' + k[1] + '</i></div>';
   }).join('') + '</div>';
 }
-function bars(items) {
-  var max = Math.max.apply(null, items.map(function (i) { return i.v; }).concat([1]));
-  return items.map(function (i) {
+// arrondit un maximum à une graduation lisible (1, 2, 5, 10, 20…)
+function echelle(m) {
+  if (m <= 0) {
+    return 1;
+  }
+  var p = Math.pow(10, Math.floor(Math.log10(m)));
+  var f = m / p;
+  var pas = [1, 2, 5, 10];
+  if (m >= 10) {
+    pas = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+  }
+  var n = pas.find(function (x) { return f <= x; });
+  return n * p;
+}
+function nombre(v) {
+  return String(round(v, 1)).replace('.', ',');
+}
+function sansBalises(t) {
+  return String(t).replace(/<[^>]+>/g, '');
+}
+// barres horizontales, avec graduation en dessous ; opts : {unite, max}
+function bars(items, opts) {
+  opts = opts || {};
+  var unite = opts.unite || '';
+  var max = opts.max || echelle(Math.max.apply(null, items.map(function (i) { return i.v; }).concat([0])));
+  var lignes = items.map(function (i) {
     var txt = i.txt;
     if (txt === undefined) {
-      txt = i.v;
+      txt = nombre(i.v) + unite;
     }
     var col = '';
     if (i.c) {
       col = ';background:' + i.c;
     }
-    return '<div class="bar"><span class="lab" title="' + esc(i.l) + '">' + esc(i.l) + '</span><div class="trk"><div class="fil" style="width:' + (100 * i.v / max) + '%' + col + '"></div></div><span class="val">' + txt + '</span></div>';
+    return '<div class="bar" data-tip="' + esc(i.l + ' : ' + sansBalises(txt)) + '"><span class="lab">' + esc(i.l) + '</span><div class="trk"><div class="fil" style="width:' + (100 * i.v / max) + '%' + col + '"></div></div><span class="val">' + txt + '</span></div>';
   }).join('');
+  return lignes + '<div class="bar axe-x"><span></span><div class="graduations"><span>0</span><span>' + nombre(max / 2) + '</span><span>' + nombre(max) + unite + '</span></div><span></span></div>';
 }
-function colonnes(vals, labels) {
-  var max = Math.max.apply(null, vals.concat([1]));
-  return '<div class="cols">' + vals.map(function (v, i) {
-    return '<div title="' + esc(labels[i]) + ' : ' + v + '" style="height:' + (100 * v / max) + '%"></div>';
-  }).join('') + '</div><div class="colslab">' + labels.map(function (l) { return '<span>' + l + '</span>'; }).join('') + '</div>';
+// colonnes verticales avec axe gradué ; opts : {unite, noms (libellés complets pour la bulle)}
+function colonnes(vals, labels, opts) {
+  opts = opts || {};
+  var unite = opts.unite || '';
+  var noms = opts.noms || labels;
+  var max = echelle(Math.max.apply(null, vals.concat([0])));
+  var cols = vals.map(function (v, i) {
+    return '<div class="col" data-tip="' + esc(noms[i] + ' : ' + nombre(v) + unite) + '"><i style="height:' + (100 * v / max) + '%"></i></div>';
+  }).join('');
+  return '<div class="graph"><div class="axe-y"><span>' + nombre(max) + '</span><span>' + nombre(max / 2) + '</span><span>0</span></div><div><div class="cols">' + cols + '</div><div class="colslab">' + labels.map(function (l) { return '<span>' + l + '</span>'; }).join('') + '</div></div></div>';
 }
+
+// bulle qui affiche la valeur de l'élément touché (barre, colonne, case du calendrier)
+var bulleMinuteur = null;
+function montrerBulle(el) {
+  var b = document.getElementById('bulle');
+  if (!b) {
+    b = document.createElement('div');
+    b.id = 'bulle';
+    b.className = 'bulle';
+    document.body.appendChild(b);
+  }
+  document.querySelectorAll('.actif').forEach(function (x) { x.classList.remove('actif'); });
+  el.classList.add('actif');
+  b.textContent = el.dataset.tip;
+  var r = el.getBoundingClientRect();
+  var x = Math.max(80, Math.min(window.innerWidth - 80, r.left + r.width / 2));
+  b.style.left = x + 'px';
+  if (r.top < 60) {
+    b.style.top = (r.bottom + 8) + 'px';
+    b.classList.add('dessous');
+  } else {
+    b.style.top = (r.top - 8) + 'px';
+    b.classList.remove('dessous');
+  }
+  b.classList.add('vis');
+  clearTimeout(bulleMinuteur);
+  bulleMinuteur = setTimeout(cacherBulle, 3000);
+}
+function cacherBulle() {
+  var b = document.getElementById('bulle');
+  if (b) {
+    b.classList.remove('vis');
+  }
+  document.querySelectorAll('.actif').forEach(function (x) { x.classList.remove('actif'); });
+}
+window.addEventListener('scroll', cacherBulle, {passive: true});
 function seg(groupe, items) {
   return '<div class="seg">' + items.map(function (it) {
     var cls = '';
@@ -405,6 +551,10 @@ function melanger(a) {
   }
   return l;
 }
+
+try {
+  EXCLUS = JSON.parse(lsGet('bm_exclus') || '{}');
+} catch (e) {}
 
 // ---------- feuille (fenêtre qui monte du bas) ----------
 function ouvrirFeuille(html) {
@@ -431,6 +581,12 @@ ACTIONS.fermer = fermerFeuille;
 
 // clics et changements délégués : data-seg, data-act, data-chg
 document.addEventListener('click', function (e) {
+  var tip = e.target.closest('[data-tip]');
+  if (tip) {
+    montrerBulle(tip);
+  } else {
+    cacherBulle();
+  }
   var s = e.target.closest('[data-seg]');
   if (s) {
     var p = s.dataset.seg.split(':');
@@ -653,12 +809,108 @@ function modele(S) {
     return n;
   });
   var jours = {};
-  (S.streak_caches || []).forEach(function (s) { jours[s._key] = (s.bids || []).length || 1; });
-  return {livres: livres, lectures: lectures, notes: notes, series: series, jours: jours, parId: parId};
+  var joursLivres = {};
+  (S.streak_caches || []).forEach(function (s) {
+    jours[s._key] = (s.bids || []).length || 1;
+    joursLivres[s._key] = s.bids || [];
+  });
+  return {livres: livres, lectures: lectures, notes: notes, series: series, jours: jours, joursLivres: joursLivres, parId: parId};
 }
 
+// un livre compte-t-il dans la catégorie de stats en cours ?
+function compte(b) {
+  return !(CAT && EXCLUS[b.id] && EXCLUS[b.id][CAT]);
+}
+function lect() {
+  return M.lectures.filter(function (r) { return compte(r.book); });
+}
 function finies() {
-  return M.lectures.filter(function (r) { return r.status === 'DONE' && r.end; });
+  return lect().filter(function (r) { return r.status === 'DONE' && r.end; });
+}
+// jours de lecture, sans ceux où l'on n'a lu que des livres exclus
+function jours() {
+  if (!CAT) {
+    return M.jours;
+  }
+  var j = {};
+  Object.keys(M.jours).forEach(function (k) {
+    var l = M.joursLivres[k];
+    if (!l.length) {
+      j[k] = M.jours[k];
+      return;
+    }
+    var n = l.filter(function (id) { return !M.parId[id] || compte(M.parId[id]); }).length;
+    if (n) {
+      j[k] = n;
+    }
+  });
+  return j;
+}
+// calcule f() en ne comptant que les livres non exclus de la catégorie
+function avec(cat, f) {
+  var avant = CAT;
+  CAT = cat;
+  try {
+    return f();
+  } finally {
+    CAT = avant;
+  }
+}
+var CATS_EXCLUSION = [['stats', '📊 Stats'], ['bilan', '👑 Bilan'], ['quetes', '🎯 Quêtes'], ['reco', '💖 Recos']];
+function exclusDe(cat) {
+  return Object.keys(EXCLUS).filter(function (id) { return EXCLUS[id][cat] && M.parId[id]; });
+}
+function noteExclus(cat) {
+  var n = exclusDe(cat).length;
+  if (!n) {
+    return '';
+  }
+  var s = '';
+  if (n > 1) {
+    s = 's';
+  }
+  return '<p class="small muted exclus-note">🙈 ' + n + ' livre' + s + ' exclu' + s + ' de ces stats · <a href="#" data-act="voirExclus">voir</a></p>';
+}
+ACTIONS.voirExclus = function (el, e) {
+  e.preventDefault();
+  var ids = Object.keys(EXCLUS).filter(function (id) { return M.parId[id]; });
+  var lignes = ids.map(function (id) {
+    var b = M.parId[id];
+    var cats = CATS_EXCLUSION.filter(function (c) { return EXCLUS[id][c[0]]; }).map(function (c) { return c[1]; }).join(' · ');
+    return ligneLivre(b, 'exclu de : ' + cats, 'data-act="livre" data-id="' + id + '"');
+  }).join('');
+  if (!lignes) {
+    lignes = '<p class="muted">Aucun livre exclu.</p>';
+  }
+  ouvrirFeuille('<h3>Livres exclus</h3><p class="small muted">Touche un livre pour le remettre dans les stats.</p>' + lignes);
+};
+ACTIONS.exclure = function (el) {
+  var id = el.dataset.id;
+  var c = el.dataset.c;
+  var e = EXCLUS[id] || {};
+  if (e[c]) {
+    delete e[c];
+  } else {
+    e[c] = 1;
+  }
+  if (Object.keys(e).length) {
+    EXCLUS[id] = e;
+  } else {
+    delete EXCLUS[id];
+  }
+  lsSet('bm_exclus', JSON.stringify(EXCLUS));
+  el.classList.toggle('on');
+  rendre();
+};
+function blocExclusion(b) {
+  var e = EXCLUS[b.id] || {};
+  return '<h4>Compter ce livre dans…</h4><div>' + CATS_EXCLUSION.map(function (c) {
+    var cls = 'chip on';
+    if (e[c[0]]) {
+      cls = 'chip';
+    }
+    return '<button class="' + cls + '" data-act="exclure" data-id="' + b.id + '" data-c="' + c[0] + '">' + c[1] + '</button>';
+  }).join('') + '</div><p class="small muted">Décoche pour retirer ce livre d\'une catégorie de stats. Il reste toujours sur ton étagère.</p>';
 }
 function annee(ts) {
   return new Date(ts).getFullYear();
@@ -672,7 +924,8 @@ function pagesLecture(r) {
 
 // ---------- calculs partagés ----------
 function series_jours(filtre) {
-  var keys = Object.keys(M.jours).sort();
+  var J = jours();
+  var keys = Object.keys(J).sort();
   if (filtre) {
     keys = keys.filter(filtre);
   }
@@ -691,11 +944,11 @@ function series_jours(filtre) {
     prev = d;
   });
   var d = new Date();
-  if (!M.jours[dkey(d)]) {
+  if (!J[dkey(d)]) {
     d = new Date(Date.now() - DAY);
   }
   var actuelle = 0;
-  while (M.jours[dkey(d)]) {
+  while (J[dkey(d)]) {
     actuelle++;
     d = new Date(d.getTime() - DAY);
   }
@@ -705,7 +958,7 @@ function series_jours(filtre) {
 // pages lues par jour (livres papier/ebook suivis page par page)
 function pagesParJour() {
   var p = {};
-  M.lectures.forEach(function (r) {
+  lect().forEach(function (r) {
     if (r.fmt === 'audioBook' || r.page_type !== 'PAGE') {
       return;
     }
@@ -728,7 +981,7 @@ function pagesParJour() {
 
 function affinites() {
   var t = {};
-  M.lectures.forEach(function (r) {
+  lect().forEach(function (r) {
     r.book.tagList.forEach(function (tag) {
       if (!t[tag]) {
         t[tag] = {n: 0, notes: [], abandons: 0};
@@ -787,7 +1040,13 @@ function rendre() {
 
 // ---------- Accueil ----------
 function vAccueil() {
+  return avec('stats', vAccueilCorps);
+}
+function vAccueilCorps() {
   var h = '';
+  if (typeof banniereFete === 'function') {
+    h += banniereFete();
+  }
   var enCours = M.lectures.filter(function (r) { return r.status === 'READING' || r.status === 'PAUSE'; });
   if (enCours.length) {
     h += card('Sur ma table de chevet', enCours.map(projection).join(''));
@@ -920,15 +1179,17 @@ function projection(r) {
 
 // ---------- Stats : rythme, goûts, argent ----------
 function vStats() {
-  var h = seg('stats', [['rythme', '🌙 Rythme'], ['gouts', '💖 Goûts'], ['argent', '💰 Argent']]);
-  if (sous.stats === 'gouts') {
-    h += vGouts();
-  } else if (sous.stats === 'argent') {
-    h += vArgent();
-  } else {
-    h += vRythme();
-  }
-  return h;
+  return avec('stats', function () {
+    var h = seg('stats', [['rythme', '🌙 Rythme'], ['gouts', '💖 Goûts'], ['argent', '💰 Argent']]) + noteExclus('stats');
+    if (sous.stats === 'gouts') {
+      h += vGouts();
+    } else if (sous.stats === 'argent') {
+      h += vArgent();
+    } else {
+      h += vRythme();
+    }
+    return h;
+  });
 }
 vStats.apres = function () {
   var s = document.querySelector('.scroll');
@@ -944,10 +1205,11 @@ function vRythme() {
   // calendrier des 53 dernières semaines, en commençant un lundi
   var debut = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 52 * 7);
   debut = new Date(debut.getTime() - ((debut.getDay() + 6) % 7) * DAY);
-  var cells = '', nb = 0, d = debut;
+  var J = jours();
+  var cells = '', nb = 0, d = debut, semaine = 0, mois = '';
   while (d <= now || (d.getDay() + 6) % 7 !== 0) {
     var k = dkey(d);
-    var v = M.jours[k] || 0;
+    var v = J[k] || 0;
     var cls = '';
     if (d > now) {
       cls = 'out';
@@ -961,19 +1223,36 @@ function vRythme() {
     if (v >= 1 && d <= now) {
       nb++;
     }
-    cells += '<i class="' + cls + '" title="' + k + '"></i>';
+    if (d.getDate() === 1) {
+      mois += '<span style="left:' + (semaine * 14) + 'px">' + MOIS[d.getMonth()] + '</span>';
+    }
+    var quoi = 'pas de lecture';
+    if (v === 1) {
+      quoi = '1 livre lu';
+    } else if (v > 1) {
+      quoi = v + ' livres lus';
+    }
+    var tip = '';
+    if (d <= now) {
+      tip = ' data-tip="' + JOURS_LONGS[(d.getDay() + 6) % 7] + ' ' + fdate(d.getTime()) + ' · ' + quoi + '"';
+    }
+    cells += '<i class="' + cls + '"' + tip + '></i>';
+    if ((d.getDay() + 6) % 7 === 6) {
+      semaine++;
+    }
     d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
   }
-  h += card('Jours de lecture', '<div class="scroll"><div class="heat">' + cells + '</div></div><p class="small muted">' + nb + ' jours de lecture sur les 12 derniers mois · ' + sj.total + ' au total · record : ' + sj.best + ' jours d\'affilée (fin le ' + fdate(new Date(sj.bestFin + 'T12:00').getTime()) + ')</p>', 'une case par jour, plus foncé quand tu as lu plusieurs livres');
+  var legende = '<div class="heat-legende"><span>moins</span><i></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><span>plus</span></div>';
+  h += card('Jours de lecture', '<div class="scroll"><div class="heat-mois" style="width:' + (semaine * 14) + 'px">' + mois + '</div><div class="heat">' + cells + '</div></div>' + legende + '<p class="small muted">' + nb + ' jours de lecture sur les 12 derniers mois · ' + sj.total + ' au total · record : ' + sj.best + ' jours d\'affilée (fin le ' + fdate(new Date(sj.bestFin + 'T12:00').getTime()) + ')</p>', 'touche une case pour voir le jour');
 
   var parJour = [0, 0, 0, 0, 0, 0, 0];
-  Object.keys(M.jours).forEach(function (k) {
+  Object.keys(jours()).forEach(function (k) {
     parJour[(new Date(k + 'T12:00').getDay() + 6) % 7]++;
   });
-  h += card('Tes jours de lecture', colonnes(parJour, JOURS), 'nombre de jours lus, par jour de la semaine');
+  h += card('Tes jours de lecture', colonnes(parJour, JOURS, {noms: JOURS_LONGS, unite: ' jours'}), 'nombre de jours lus, par jour de la semaine');
 
   var heures = new Array(24).fill(0);
-  M.lectures.forEach(function (r) {
+  lect().forEach(function (r) {
     r.logs.forEach(function (l) { heures[new Date(l.created_at).getHours()]++; });
   });
   var lh = heures.map(function (x, i) {
@@ -982,7 +1261,7 @@ function vRythme() {
     }
     return '';
   });
-  h += card('Tes heures de lecture', colonnes(heures, lh), 'heure où tu notes ta progression');
+  h += card('Tes heures de lecture', colonnes(heures, lh, {noms: heures.map(function (x, i) { return 'Entre ' + i + 'h et ' + (i + 1) + 'h'; }), unite: ' relevés'}), 'heure où tu notes ta progression');
 
   var ppj = pagesParJour();
   var cles = Object.keys(ppj).sort();
@@ -1004,10 +1283,14 @@ function vRythme() {
       }
       return '';
     });
+    var noms = sem.map(function (x, i) {
+      var fin = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i * 7);
+      return 'Semaine du ' + fdate(fin.getTime() - 6 * DAY);
+    }).reverse();
     h += card('Pages lues', kpis([
       [Math.round(moy(vals)), 'pages par jour de lecture'],
       [Math.max.apply(null, vals), 'record (' + fdate(new Date(maxK + 'T12:00').getTime()) + ')']
-    ]) + '<p class="small muted" style="margin:12px 0 4px">Pages par semaine, 12 dernières semaines</p>' + colonnes(sem, ls), 'livres papier et ebook suivis page par page');
+    ]) + '<p class="small muted" style="margin:12px 0 4px">Pages par semaine, 12 dernières semaines</p>' + colonnes(sem, ls, {noms: noms, unite: ' pages'}), 'livres papier et ebook suivis page par page');
   }
 
   // durée pour finir un livre (lectures saisies en direct uniquement)
@@ -1023,12 +1306,12 @@ function vRythme() {
     return {l: FORMATS[f] || f, v: mediane(parFmt[f]), txt: mediane(parFmt[f]) + ' j', c: 'var(--' + FMT_CLASS[f] + ')'};
   });
   if (lignes.length) {
-    h += card('Temps pour finir un livre', bars(lignes), 'médiane, lectures saisies au fil de l\'eau');
+    h += card('Temps pour finir un livre', bars(lignes, {unite: ' j'}), 'médiane, lectures saisies au fil de l\'eau');
   }
 
   // par année et format
   var ans = {};
-  M.lectures.forEach(function (r) {
+  lect().forEach(function (r) {
     if (!r.date) {
       return;
     }
@@ -1054,7 +1337,7 @@ function vRythme() {
 function vGouts() {
   var h = '';
   var fm = {};
-  M.lectures.forEach(function (r) {
+  lect().forEach(function (r) {
     if (!fm[r.fmt]) {
       fm[r.fmt] = {n: 0, ab: 0, notes: []};
     }
@@ -1073,13 +1356,13 @@ function vGouts() {
     }).join('') + '</table>');
 
   var dist = {};
-  M.lectures.forEach(function (r) {
+  lect().forEach(function (r) {
     if (r.star) {
       dist[r.star] = (dist[r.star] || 0) + 1;
     }
   });
   h += card('Tes notes', bars(Object.keys(dist).sort(function (a, b) { return b - a; }).map(function (k) {
-    return {l: k + ' ★', v: dist[k]};
+    return {l: k + ' ★', v: dist[k], txt: dist[k] + ' livres'};
   })));
 
   var aff = affinites();
@@ -1093,7 +1376,7 @@ function vGouts() {
   // évolution des genres
   var top = tags.filter(function (t) { return t !== 'Fiction'; }).slice(0, 6);
   var parAn = {};
-  M.lectures.forEach(function (r) {
+  lect().forEach(function (r) {
     if (!r.date) {
       return;
     }
@@ -1114,7 +1397,7 @@ function vGouts() {
 
   // auteurs
   var au = {};
-  M.lectures.forEach(function (r) {
+  lect().forEach(function (r) {
     (r.book.authors || []).forEach(function (a) {
       if (!au[a]) {
         au[a] = {n: 0, notes: [], premier: r.date || Infinity};
@@ -1131,7 +1414,7 @@ function vGouts() {
   var topAu = Object.keys(au).sort(function (a, b) { return au[b].n - au[a].n; }).slice(0, 10);
   h += card('Auteurs les plus lus', bars(topAu.map(function (a) {
     return {l: a, v: au[a].n, txt: au[a].n + ' · ' + etoiles(moy(au[a].notes))};
-  })));
+  }), {unite: ' livres'}));
   var decouv = {};
   Object.keys(au).forEach(function (a) {
     if (au[a].premier !== Infinity) {
@@ -1140,11 +1423,11 @@ function vGouts() {
     }
   });
   var ys = Object.keys(decouv).sort();
-  h += card('Nouveaux auteurs découverts', colonnes(ys.map(function (y) { return decouv[y]; }), ys.map(function (y) { return "'" + String(y).slice(2); })), Object.keys(au).length + ' auteurs au total');
+  h += card('Nouveaux auteurs découverts', colonnes(ys.map(function (y) { return decouv[y]; }), ys.map(function (y) { return "'" + String(y).slice(2); }), {noms: ys, unite: ' nouveaux auteurs'}), Object.keys(au).length + ' auteurs au total');
 
   // moment de l'abandon
   var tranches = [['avant 10 %', 0], ['10–25 %', 0], ['25–50 %', 0], ['50–75 %', 0], ['après 75 %', 0], ['sans info', 0]];
-  M.lectures.filter(function (r) { return r.status === 'GIVE_UP'; }).forEach(function (r) {
+  lect().filter(function (r) { return r.status === 'GIVE_UP'; }).forEach(function (r) {
     var tot = r.total_page || r.book.total_page;
     if (!tot || !r.page) {
       tranches[5][1]++;
@@ -1163,13 +1446,13 @@ function vGouts() {
     }
     tranches[i][1]++;
   });
-  h += card('Quand tu abandonnes', bars(tranches.map(function (t) { return {l: t[0], v: t[1]}; })), 'à quel moment du livre');
+  h += card('Quand tu abandonnes', bars(tranches.map(function (t) { return {l: t[0], v: t[1], txt: t[1] + ' abandons'}; })), 'à quel moment du livre');
   return h;
 }
 
 function vArgent() {
   var achats = [];
-  M.livres.forEach(function (b) {
+  M.livres.filter(compte).forEach(function (b) {
     (b.purchases || []).forEach(function (p) {
       if (p.price) {
         var r = (b.reads || []).filter(function (x) { return x.star; })[0];
@@ -1192,7 +1475,7 @@ function vArgent() {
     [Math.round(total) + ' €', achats.length + ' livres achetés'],
     [round(total / achats.length, 2) + ' €', 'prix moyen'],
     [lus.length + '/' + achats.length, 'achats déjà lus']
-  ]) + '<p class="small muted" style="margin:12px 0 4px">Dépenses par année</p>' + bars(Object.keys(parAn).sort().reverse().map(function (y) { return {l: y, v: parAn[y], txt: Math.round(parAn[y]) + ' €'}; })) +
+  ]) + '<p class="small muted" style="margin:12px 0 4px">Dépenses par année</p>' + bars(Object.keys(parAn).sort().reverse().map(function (y) { return {l: y, v: parAn[y], txt: Math.round(parAn[y]) + ' €'}; }), {unite: ' €'}) +
     '<table style="margin-top:10px"><tr><th>Livre</th><th class="n">Prix</th><th class="n">€/★</th><th class="n">cts/page</th></tr>' + achats.sort(function (a, b) { return b.prix - a.prix; }).map(function (a) {
       var parEt = '–';
       if (a.star) {
@@ -1234,13 +1517,16 @@ ACTIONS.livre = function (el) {
     resume = '<h4>Mon carnet</h4>' + resumeNote(NOTES[b.id]);
   }
   ouvrirFeuille('<div class="tete">' + cover(b) + '<div><h3>' + esc(titre(b)) + '</h3><div class="small muted">' + esc((b.authors || []).join(', ')) + '</div><div style="margin-top:4px">' + pill(b.book_type) + ' ' + (b.total_page || '') + ' p.</div></div></div>' + lignes +
-    '<div class="small muted" style="margin-top:6px">' + esc(b.tagList.slice(0, 6).join(' · ')) + '</div>' + resume +
+    '<div class="small muted" style="margin-top:6px">' + esc(b.tagList.slice(0, 6).join(' · ')) + '</div>' + resume + blocExclusion(b) +
     '<div class="row" style="margin-top:16px"><button class="act" data-act="noter" data-id="' + b.id + '">✒️ Ma note détaillée</button></div>');
 };
 
 // ---------- Bilan annuel ----------
 var anBilan = null;
 function vBilan() {
+  return avec('bilan', vBilanCorps);
+}
+function vBilanCorps() {
   var ans = {};
   finies().forEach(function (r) { ans[annee(r.end)] = 1; });
   var liste = Object.keys(ans).sort().reverse();
@@ -1254,10 +1540,10 @@ function vBilan() {
       sel = ' selected';
     }
     return '<option' + sel + '>' + a + '</option>';
-  }).join('') + '</select><button class="act" data-act="wrapped" data-an="' + y + '">✨ Revivre mon année en stories</button></div>';
+  }).join('') + '</select><button class="act" data-act="wrapped" data-an="' + y + '">✨ Revivre mon année en stories</button></div>' + noteExclus('bilan');
 
   var fin = finies().filter(function (r) { return annee(r.end) === y; });
-  var ab = M.lectures.filter(function (r) { return r.status === 'GIVE_UP' && r.date && annee(r.date) === y; });
+  var ab = lect().filter(function (r) { return r.status === 'GIVE_UP' && r.date && annee(r.date) === y; });
   var pages = 0, sec = 0, audioSansDuree = 0;
   fin.forEach(function (r) {
     if (r.page_type === 'TIME') {
@@ -1269,7 +1555,7 @@ function vBilan() {
     }
   });
   var notes = fin.filter(function (r) { return r.star; }).map(function (r) { return r.star; });
-  var joursAn = Object.keys(M.jours).filter(function (k) { return k.slice(0, 4) === String(y); }).length;
+  var joursAn = Object.keys(jours()).filter(function (k) { return k.slice(0, 4) === String(y); }).length;
   var mois = new Array(12).fill(0);
   fin.forEach(function (r) { mois[new Date(r.end).getMonth()]++; });
   var au = {}, tg = {};
@@ -1294,7 +1580,7 @@ function vBilan() {
   }
   tuiles.push([etoiles(moy(notes)), 'note moyenne'], [joursAn, 'jours de lecture'], [ab.length, 'abandons']);
   h += card('Ton année ' + y, kpis(tuiles) + '<p style="margin:12px 0 0">✍️ Auteur de l\'année : <b>' + esc(premierDe(au)) + '</b><br>🏷️ Genre de l\'année : <b>' + esc(premierDe(tg)) + '</b></p>');
-  h += card('Livres finis par mois', colonnes(mois, MOIS.map(function (m) { return m.slice(0, 1).toUpperCase(); })));
+  h += card('Livres finis par mois', colonnes(mois, MOIS.map(function (m) { return m.slice(0, 1).toUpperCase(); }), {noms: MOIS_LONGS, unite: ' livres'}));
 
   var coeur = fin.filter(function (r) { return r.star >= 5; });
   if (coeur.length) {
@@ -1480,7 +1766,7 @@ function vALire() {
 
   var pal = M.livres.filter(function (b) { return b.statut === 'NOT_STARTED' && !b.wishlist; }).sort(function (a, b) { return a.created_at - b.created_at; });
   var envies = M.livres.filter(function (b) { return b.wishlist; }).sort(function (a, b) { return a.created_at - b.created_at; });
-  var aff = affinites();
+  var aff = avec('reco', affinites);
   function score(b) {
     var s = b.tagList.map(function (t) {
       if (aff[t] && aff[t].notes.length >= 2) {
@@ -1494,14 +1780,14 @@ function vALire() {
     }
     return m;
   }
-  var reco = pal.concat(envies).map(function (b) { return {b: b, s: score(b)}; }).filter(function (x) { return x.s > 0; }).sort(function (a, b) { return b.s - a.s; }).slice(0, 5);
+  var reco = pal.concat(envies).filter(function (b) { return !(EXCLUS[b.id] && EXCLUS[b.id].reco); }).map(function (b) { return {b: b, s: score(b)}; }).filter(function (x) { return x.s > 0; }).sort(function (a, b) { return b.s - a.s; }).slice(0, 5);
   h += card('Les élus de ton cœur', reco.map(function (x) {
     var ou = ' · PAL';
     if (x.b.wishlist) {
       ou = ' · envie';
     }
     return ligneLivre(x.b, 'affinité ' + round(x.s, 1) + '/5' + ou, 'data-act="livre" data-id="' + x.b.id + '"');
-  }).join(''), 'calculé sur tes notes et abandons par genre');
+  }).join('') + noteExclus('reco'), 'calculé sur tes notes et abandons par genre');
   h += card('Ma pile à lire (' + pal.length + ')', pal.map(function (b) { return ligneLivre(b, 'depuis ' + depuis(b.created_at), 'data-act="livre" data-id="' + b.id + '"'); }).join('') || '<p class="muted">Vide !</p>', 'les plus anciens d\'abord');
   h += card('Envies (' + envies.length + ')', envies.slice(0, 15).map(function (b) { return ligneLivre(b, 'depuis ' + depuis(b.created_at), 'data-act="livre" data-id="' + b.id + '"'); }).join(''), 'les 15 plus anciennes');
   return h;
@@ -1675,7 +1961,7 @@ function statsCarnet(ids) {
     var v = ids.map(function (id) { return NOTES[id][c[0]]; }).filter(Boolean);
     return {l: c[1] + ' ' + c[2], v: moy(v) || 0, txt: round(moy(v) || 0, 1) + '/5'};
   });
-  h += bars(moyennes);
+  h += bars(moyennes, {max: 5});
   var hum = {};
   var tro = {};
   ids.forEach(function (id) {
@@ -1907,6 +2193,9 @@ var anBingo = null;
 
 // XP : 1 par page, 40 par heure d'écoute, 60 par livre fini, 5 par jour de lecture
 function niveau() {
+  return avec('quetes', niveauCorps);
+}
+function niveauCorps() {
   var fin = finies();
   var pages = 0, sec = 0;
   fin.forEach(function (r) {
@@ -1916,7 +2205,7 @@ function niveau() {
       pages += pagesLecture(r);
     }
   });
-  var xp = Math.round(pages + sec / 3600 * 40 + fin.length * 60 + Object.keys(M.jours).length * 5);
+  var xp = Math.round(pages + sec / 3600 * 40 + fin.length * 60 + Object.keys(jours()).length * 5);
   var i = 0;
   while (i + 1 < NIVEAUX.length && xp >= NIVEAUX[i + 1][0]) {
     i++;
@@ -1951,7 +2240,7 @@ function anneePub(b) {
 function premiersAuteurs() {
   var vu = {};
   var premier = {};
-  M.lectures.filter(function (r) { return r.date; }).sort(function (a, b) { return a.date - b.date; }).forEach(function (r) {
+  lect().filter(function (r) { return r.date; }).sort(function (a, b) { return a.date - b.date; }).forEach(function (r) {
     (r.book.authors || []).forEach(function (a) {
       if (!vu[a]) {
         vu[a] = 1;
@@ -1963,7 +2252,7 @@ function premiersAuteurs() {
 }
 function casesBingo(y) {
   var fin = finies().filter(function (r) { return annee(r.end) === y; });
-  var tout = M.lectures.filter(function (r) { return r.date && annee(r.date) === y; });
+  var tout = lect().filter(function (r) { return r.date && annee(r.date) === y; });
   var nouveaux = premiersAuteurs();
   function lecture(test) {
     return fin.filter(test)[0] || null;
@@ -1971,7 +2260,8 @@ function casesBingo(y) {
   function tag(re) {
     return lecture(function (r) { return re.test(tagsDe(r.book)); });
   }
-  var joursAn = Object.keys(M.jours).filter(function (k) { return k.slice(0, 4) === String(y); });
+  var J = jours();
+  var joursAn = Object.keys(J).filter(function (k) { return k.slice(0, 4) === String(y); });
   var serie7 = series_jours(function (k) { return k.slice(0, 4) === String(y); }).best >= 7;
   var minuit = tout.filter(function (r) {
     return r.logs.some(function (l) {
@@ -1980,7 +2270,7 @@ function casesBingo(y) {
     });
   })[0] || null;
   var achat = null;
-  M.livres.forEach(function (b) {
+  M.livres.filter(compte).forEach(function (b) {
     (b.purchases || []).forEach(function (p) {
       if (annee(p.purchased_at || p.created_at) === y) {
         achat = {book: b};
@@ -1999,7 +2289,7 @@ function casesBingo(y) {
     if (d.getDay() !== 6) {
       return false;
     }
-    return !!M.jours[dkey(new Date(d.getTime() + DAY))];
+    return !!J[dkey(new Date(d.getTime() + DAY))];
   });
   return [
     ['🧱', 'Un pavé de 500 p.', lecture(function (r) { return pagesLecture(r) >= 500; })],
@@ -2092,7 +2382,7 @@ function vSceaux() {
   var ppj = pagesParJour();
   var maxPages = Math.max.apply(null, Object.keys(ppj).map(function (k) { return ppj[k]; }).concat([0]));
   var nuit = 0;
-  M.lectures.forEach(function (r) {
+  lect().forEach(function (r) {
     r.logs.forEach(function (l) {
       var hh = new Date(l.created_at).getHours();
       if (hh >= 23 || hh < 4) {
@@ -2104,7 +2394,7 @@ function vSceaux() {
   fin.forEach(function (r) { (r.book.authors || []).forEach(function (a) { au[a] = (au[a] || 0) + 1; }); });
   var maxAu = Math.max.apply(null, Object.keys(au).map(function (k) { return au[k]; }).concat([0]));
   var pave = Math.max.apply(null, fin.filter(function (r) { return r.fmt !== 'audioBook'; }).map(function (r) { return r.total_page || 0; }).concat([0]));
-  var relu = M.lectures.some(function (r) { return r.nth >= 2; });
+  var relu = lect().some(function (r) { return r.nth >= 2; });
   var fmtAn = {};
   fin.forEach(function (r) {
     var y = annee(r.end);
@@ -2142,7 +2432,9 @@ function vSceaux() {
 }
 
 function vQuetes() {
-  return carteNiveau() + vBingo() + vSceaux();
+  return avec('quetes', function () {
+    return noteExclus('quetes') + carteNiveau() + vBingo() + vSceaux();
+  });
 }
 </script>
 
@@ -2163,6 +2455,11 @@ var FONDS = [
 ];
 
 function slidesAnnee(y) {
+  return avec('bilan', function () {
+    return slidesAnneeCorps(y);
+  });
+}
+function slidesAnneeCorps(y) {
   var fin = finies().filter(function (r) { return annee(r.end) === y; }).sort(function (a, b) { return a.end - b.end; });
   var s = [];
   s.push('<div class="moon" style="font-size:54px">☾</div><div class="script">Ton année</div><div class="gros">' + y + '</div><div class="sous">en lecture ✨</div>');
@@ -2187,7 +2484,7 @@ function slidesAnnee(y) {
   var mois = new Array(12).fill(0);
   fin.forEach(function (r) { mois[new Date(r.end).getMonth()]++; });
   var mMax = mois.indexOf(Math.max.apply(null, mois));
-  var joursAn = Object.keys(M.jours).filter(function (k) { return k.slice(0, 4) === String(y); }).length;
+  var joursAn = Object.keys(jours()).filter(function (k) { return k.slice(0, 4) === String(y); }).length;
   s.push('<div class="sous">Ton mois le plus livresque</div><div class="titre" style="font-size:44px">' + MOIS_LONGS[mMax] + '</div><div class="sous">' + mois[mMax] + ' livres terminés · ' + joursAn + ' jours de lecture dans l\'année</div>');
 
   var au = {}, tg = {};
@@ -2308,6 +2605,215 @@ ACTIONS.fermerStory = function () {
 };
 </script>
 
+<script>
+// ---------- Thèmes au fil de l'année : saisons et jours de fête ----------
+// c : couleurs de base (le reste est calculé dans Styles, thème « fete »)
+var FETES = {
+  printemps: {nom: 'Printemps', emoji: '🌸', motifs: ['🌸', '🌷'], phrase: 'Les bourgeons et les pages s\'ouvrent',
+    c: {bg: '#f3f8ef', bg2: '#fdeef4', card: '#fffdfb', ink: '#3f3548', muted: '#8a7f8e', line: '#e3ead9', accent: '#e0679b', lav: '#6fae6b', gold: '#e2b23c', ebook: '#8fb8e8'}},
+  ete: {nom: 'Été', emoji: '☀️', motifs: ['☀️', '🐚'], phrase: 'Lectures au soleil et pages salées',
+    c: {bg: '#fff6ea', bg2: '#e9f7f7', card: '#fffdf8', ink: '#3b3340', muted: '#8b7e78', line: '#f1e1cc', accent: '#ef7d57', lav: '#2fa5b5', gold: '#e8a723', ebook: '#e66a9b'}},
+  automne: {nom: 'Automne', emoji: '🍂', motifs: ['🍂', '🍁'], phrase: 'Plaid, thé et grimoires',
+    c: {bg: '#f8efe3', bg2: '#f1dcc6', card: '#fffaf2', ink: '#4a2c20', muted: '#93725f', line: '#ecd6bf', accent: '#c0573a', lav: '#8e5b7c', gold: '#c48a2c', ebook: '#6f8f4e'}},
+  hiver: {nom: 'Hiver', emoji: '❄️', motifs: ['❄', '✧'], phrase: 'Flocons dehors, chapitres dedans',
+    c: {bg: '#eef3fb', bg2: '#f3eefb', card: '#fbfdff', ink: '#2f3550', muted: '#7d84a0', line: '#dde4f2', accent: '#6f86d6', lav: '#9b7fd1', gold: '#9fb3c8', ebook: '#5fb3c9'}},
+  noel: {nom: 'Noël', emoji: '🎄', motifs: ['❄', '🎄'], phrase: 'Joyeux Noël, lectrice des neiges',
+    c: {bg: '#14231c', bg2: '#2a1416', card: '#1f2f27', ink: '#fbf3e6', muted: '#c9b9a0', line: '#3c4a3f', accent: '#d64545', lav: '#3f9a6b', gold: '#e3b34c', ebook: '#e3b34c'}},
+  nouvelan: {nom: 'Nouvel An', emoji: '🥂', motifs: ['✨', '🎆'], phrase: 'Une nouvelle année de pages à tourner',
+    c: {bg: '#0f1430', bg2: '#2a1440', card: '#1c2045', ink: '#f6f1ff', muted: '#b7b0d6', line: '#33386a', accent: '#e8b84a', lav: '#9b7fe8', gold: '#f5d27a', ebook: '#f08bb8'}},
+  halloween: {nom: 'Halloween', emoji: '🎃', motifs: ['🎃', '🦇'], phrase: 'Frissons et sortilèges au fil des pages',
+    c: {bg: '#1a1020', bg2: '#2b1608', card: '#251a2e', ink: '#f8ecdf', muted: '#c2a8a0', line: '#3f2c45', accent: '#f07d1e', lav: '#8a5cc7', gold: '#e8c547', ebook: '#7bc96f'}},
+  imaginaire: {nom: 'Mois de l\'Imaginaire', emoji: '🐉', motifs: ['🐉', '✧'], phrase: 'Dragons, fées et mondes à explorer',
+    c: {bg: '#121a2b', bg2: '#241536', card: '#1d2438', ink: '#eef0ff', muted: '#a9b0cf', line: '#313a58', accent: '#9b6bf0', lav: '#3fb8a8', gold: '#d9b46a', ebook: '#f08bb8'}},
+  valentin: {nom: 'Saint-Valentin', emoji: '💌', motifs: ['💕', '♡'], phrase: 'Romances et coups de cœur',
+    c: {bg: '#fff0f3', bg2: '#fde3ec', card: '#fffafb', ink: '#4a2235', muted: '#9a6f83', line: '#f6d3de', accent: '#e0386b', lav: '#b0518f', gold: '#d9a14a', ebook: '#e88aa8'}},
+  chandeleur: {nom: 'Chandeleur', emoji: '🥞', motifs: ['🥞', '✦'], phrase: 'Une crêpe, un chapitre',
+    c: {bg: '#fbf4e6', bg2: '#f6ead6', card: '#fffcf6', ink: '#4b3622', muted: '#9a826a', line: '#efe1c8', accent: '#d68b2c', lav: '#b3632f', gold: '#e9b949', ebook: '#8fa86b'}},
+  paques: {nom: 'Pâques', emoji: '🐰', motifs: ['🥚', '🐰'], phrase: 'Chasse aux œufs et aux chapitres',
+    c: {bg: '#f7f3ff', bg2: '#f0fbf2', card: '#fffefd', ink: '#3e3550', muted: '#8b819c', line: '#e6e0f2', accent: '#b48be0', lav: '#7cc28d', gold: '#f2c14e', ebook: '#f0a0b8'}},
+  poisson: {nom: 'Poisson d\'avril', emoji: '🐟', motifs: ['🐟', '🐠'], phrase: 'Attention aux livres farceurs',
+    c: {bg: '#eefaf9', bg2: '#eef3ff', card: '#fbffff', ink: '#23414a', muted: '#6e8f96', line: '#d3eceb', accent: '#2fa7b8', lav: '#f07fa4', gold: '#f3b93f', ebook: '#7d8ff0'}},
+  livre: {nom: 'Journée mondiale du livre', emoji: '🌹', motifs: ['🌹', '📚'], phrase: 'Un livre, une rose',
+    c: {bg: '#f6efe2', bg2: '#f3e3e3', card: '#fffaf1', ink: '#3d2a24', muted: '#8c7468', line: '#e8d9c3', accent: '#b02e4a', lav: '#6b4a8c', gold: '#c4932f', ebook: '#5f8f6b'}},
+  musique: {nom: 'Fête de la musique', emoji: '🎶', motifs: ['🎵', '🎶'], phrase: 'Lire en musique',
+    c: {bg: '#f6efff', bg2: '#ffeef7', card: '#fffcff', ink: '#352a4a', muted: '#8a7ea3', line: '#e8ddf6', accent: '#ff4f9a', lav: '#6a5cff', gold: '#ffb703', ebook: '#21b8a6'}},
+  chat: {nom: 'Journée du chat', emoji: '🐈‍⬛', motifs: ['🐾', '🐈‍⬛'], phrase: 'Ronrons et pages tournées',
+    c: {bg: '#f8f3ee', bg2: '#f0eef6', card: '#fffdfa', ink: '#3a3030', muted: '#8c7f78', line: '#ebe1d8', accent: '#d9785b', lav: '#6e6a8f', gold: '#d6a446', ebook: '#7aa58a'}},
+  etoiles: {nom: 'Nuit des étoiles', emoji: '☄️', motifs: ['☄️', '✦'], phrase: 'Fais un vœu à chaque étoile filante',
+    c: {bg: '#0b1026', bg2: '#1b1240', card: '#151a3a', ink: '#eef2ff', muted: '#a8b0d8', line: '#2b3260', accent: '#7aa2ff', lav: '#c38bff', gold: '#ffd76a', ebook: '#6fe0c8'}},
+  rentree: {nom: 'Rentrée littéraire', emoji: '📖', motifs: ['📖', '✒️'], phrase: 'Les nouveautés de la rentrée',
+    c: {bg: '#f5f3ec', bg2: '#eef2f7', card: '#fffefb', ink: '#2f3440', muted: '#7f8593', line: '#e3e1d6', accent: '#c0503f', lav: '#3e6fb0', gold: '#d2a13c', ebook: '#5f9a6b'}},
+  pleinelune: {nom: 'Pleine lune', emoji: '🌕', motifs: ['🌕', '✧'], phrase: 'Nuit de pleine lune, lecture magique',
+    c: {bg: '#10142a', bg2: '#1e1a3a', card: '#1a1f3c', ink: '#f2f2ff', muted: '#b0b4d8', line: '#2e3462', accent: '#b9a6ff', lav: '#7fc8e8', gold: '#f1e3a8', ebook: '#f0a0c8'}},
+  vendredi13: {nom: 'Vendredi 13', emoji: '🍀', motifs: ['🍀', '🐈‍⬛'], phrase: 'Porte-bonheur et pages chanceuses',
+    c: {bg: '#0f1a14', bg2: '#1d1a12', card: '#18241d', ink: '#eef6ee', muted: '#a6b8a8', line: '#2c3d33', accent: '#5fbf7a', lav: '#c9a227', gold: '#d9c25a', ebook: '#7fb6e0'}}
+};
+
+// dimanche de Pâques (calcul grégorien)
+function paquesDe(y) {
+  var a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4;
+  var f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+  var h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4;
+  var l = (32 + 2 * e + 2 * i - h - k) % 7;
+  var m = Math.floor((a + 11 * h + 22 * l) / 451);
+  var mois = Math.floor((h + l - 7 * m + 114) / 31);
+  var jour = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(y, mois - 1, jour);
+}
+// la lune est-elle pleine ce jour-là ? (à environ un jour près)
+function pleineLune(d) {
+  var ref = Date.UTC(2000, 0, 6, 18, 14);
+  var lunaison = 29.530588853;
+  var midi = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12).getTime();
+  var phase = (((midi - ref) / DAY / lunaison) % 1 + 1) % 1;
+  return Math.abs(phase - 0.5) < 0.5 / lunaison;
+}
+function feteDuJour(d) {
+  var m = d.getMonth() + 1, j = d.getDate(), y = d.getFullYear();
+  if ((m === 12 && j >= 27) || (m === 1 && j <= 3)) {
+    return 'nouvelan';
+  }
+  if (m === 12) {
+    return 'noel';
+  }
+  if ((m === 10 && j >= 25) || (m === 11 && j === 1)) {
+    return 'halloween';
+  }
+  if (m === 2 && j >= 10 && j <= 14) {
+    return 'valentin';
+  }
+  if (m === 2 && j === 2) {
+    return 'chandeleur';
+  }
+  var p = paquesDe(y).getTime();
+  var t = new Date(y, m - 1, j).getTime();
+  if (t >= p - 3 * DAY && t <= p + DAY) {
+    return 'paques';
+  }
+  if (m === 4 && j === 1) {
+    return 'poisson';
+  }
+  if (m === 4 && j === 23) {
+    return 'livre';
+  }
+  if (m === 6 && j === 21) {
+    return 'musique';
+  }
+  if (m === 8 && j === 8) {
+    return 'chat';
+  }
+  if (m === 8 && j >= 10 && j <= 13) {
+    return 'etoiles';
+  }
+  if (j === 13 && d.getDay() === 5) {
+    return 'vendredi13';
+  }
+  if (pleineLune(d)) {
+    return 'pleinelune';
+  }
+  if (m === 9 && j <= 15) {
+    return 'rentree';
+  }
+  if (m === 10) {
+    return 'imaginaire';
+  }
+  var md = m * 100 + j;
+  if (md >= 320 && md <= 620) {
+    return 'printemps';
+  }
+  if (md >= 621 && md <= 922) {
+    return 'ete';
+  }
+  if (md >= 923 && md <= 1220) {
+    return 'automne';
+  }
+  return 'hiver';
+}
+
+var THEMES = [['fetes', '✨', 'Au fil de l\'année'], ['auto', '🌗', 'Auto'], ['light', '🌸', 'Rose féerique'], ['dark', '🌙', 'Nuit enchantée'], ['autumn', '🍂', 'Automne cosy']];
+var feteActive = null;
+
+function appliquerTheme(t) {
+  var racine = document.documentElement;
+  racine.removeAttribute('style');
+  feteActive = null;
+  var id = null;
+  if (t === 'fetes') {
+    id = feteDuJour(new Date());
+  } else if (t.indexOf('f:') === 0) {
+    id = t.slice(2);
+  }
+  var motifs = ['✦', '✧'];
+  var orn = '✦ ❀ ✦';
+  if (id && FETES[id]) {
+    var f = FETES[id];
+    feteActive = id;
+    racine.setAttribute('data-theme', 'fete');
+    Object.keys(f.c).forEach(function (k) {
+      racine.style.setProperty('--' + k, f.c[k]);
+    });
+    motifs = f.motifs;
+    orn = '✦ ' + f.emoji + ' ✦';
+    document.querySelectorAll('meta[name=theme-color]').forEach(function (m) { m.setAttribute('content', f.c.bg); });
+  } else {
+    if (t === 'auto') {
+      racine.removeAttribute('data-theme');
+    } else {
+      racine.setAttribute('data-theme', t);
+    }
+    if (t === 'autumn') {
+      motifs = ['🍂', '🍁'];
+    }
+  }
+  document.querySelectorAll('.etoiles i').forEach(function (el, i) {
+    el.textContent = motifs[i % 2];
+  });
+  var o = document.querySelector('header .orn');
+  if (o) {
+    o.textContent = orn;
+  }
+  var essai = '<select data-chg="themeFete"><option value="">🎉 Essayer une fête…</option>' + Object.keys(FETES).map(function (k) {
+    var sel = '';
+    if (t === 'f:' + k) {
+      sel = ' selected';
+    }
+    return '<option value="' + k + '"' + sel + '>' + FETES[k].emoji + ' ' + FETES[k].nom + '</option>';
+  }).join('') + '</select>';
+  document.getElementById('themes').innerHTML = THEMES.map(function (th) {
+    var cls = 'chip';
+    if (th[0] === t) {
+      cls += ' on';
+    }
+    return '<button class="' + cls + '" data-act="theme" data-t="' + th[0] + '">' + th[1] + ' ' + th[2] + '</button>';
+  }).join('') + '<div>' + essai + '</div>';
+}
+ACTIONS.theme = function (el) {
+  lsSet('bm_theme', el.dataset.t);
+  appliquerTheme(el.dataset.t);
+  if (M) {
+    rendre();
+  }
+};
+ACTIONS.themeFete = function (el) {
+  var t = 'fetes';
+  if (el.value) {
+    t = 'f:' + el.value;
+  }
+  lsSet('bm_theme', t);
+  appliquerTheme(t);
+  if (M) {
+    rendre();
+  }
+};
+function banniereFete() {
+  if (!feteActive) {
+    return '';
+  }
+  var f = FETES[feteActive];
+  return '<div class="fete-banniere"><b>' + f.emoji + ' ' + f.nom + '</b><span>' + f.phrase + '</span></div>';
+}
+</script>
+
 <style>
 .import-btn{left:16px;right:auto}
 .vide{text-align:center}
@@ -2391,7 +2897,7 @@ ACTIONS.choisirExport = function () {
 };
 
 function demarrer() {
-  appliquerTheme(lsGet('bm_theme') || 'auto');
+  appliquerTheme(lsGet('bm_theme') || 'fetes');
   try {
     var s = JSON.parse(lsGet('bm_sous') || '{}');
     Object.keys(s).forEach(function (k) { sous[k] = s[k]; });
@@ -2453,11 +2959,12 @@ function ouvrirDernier() {
 var vCarnetBase = vCarnet;
 vCarnet = function () {
   var n = Object.keys(NOTES).length;
-  return vCarnetBase() + card('Sauvegarde du carnet', '<p class="small muted">Ton carnet (' + n + ' livre(s) noté(s)) est gardé uniquement sur ce téléphone. Fais-en une copie de temps en temps, par exemple dans ton Drive.</p><div class="row"><button class="act" data-act="sauvegarderCarnet">💾 Sauvegarder</button><button class="act doux" data-act="restaurerCarnet">↩️ Restaurer</button></div><input type="file" id="fichierCarnet" accept=".json,application/json,text/plain" hidden>');
+  var x = Object.keys(EXCLUS).length;
+  return vCarnetBase() + card('Sauvegarde du carnet', '<p class="small muted">Ton carnet (' + n + ' livre(s) noté(s), ' + x + ' livre(s) exclu(s) de certaines stats) est gardé uniquement sur ce téléphone. Fais-en une copie de temps en temps, par exemple dans ton Drive.</p><div class="row"><button class="act" data-act="sauvegarderCarnet">💾 Sauvegarder</button><button class="act doux" data-act="restaurerCarnet">↩️ Restaurer</button></div><input type="file" id="fichierCarnet" accept=".json,application/json,text/plain" hidden>');
 };
 ACTIONS.sauvegarderCarnet = function () {
   var nom = 'grimoire_notes.json';
-  var f = new File([JSON.stringify(NOTES)], nom, {type: 'application/json'});
+  var f = new File([JSON.stringify({notes: NOTES, exclus: EXCLUS})], nom, {type: 'application/json'});
   if (navigator.canShare && navigator.canShare({files: [f]})) {
     navigator.share({files: [f], title: 'Mon carnet de lectures'}).catch(function () {});
     return;
@@ -2476,10 +2983,18 @@ ACTIONS.restaurerCarnet = function () {
     }
     f.text().then(function (t) {
       var n = JSON.parse(t);
-      if (!confirm('Remplacer ton carnet actuel par ce fichier (' + Object.keys(n).length + ' livre(s)) ?')) {
+      var ex = {};
+      // ancien format (carnet Drive) : directement les notes
+      if (n.notes) {
+        ex = n.exclus || {};
+        n = n.notes;
+      }
+      if (!confirm('Remplacer ton carnet actuel par ce fichier (' + Object.keys(n).length + ' livre(s) noté(s)) ?')) {
         return;
       }
       NOTES = n;
+      EXCLUS = ex;
+      lsSet('bm_exclus', JSON.stringify(EXCLUS));
       sauverNotes();
       rendre();
     }).catch(function () {
