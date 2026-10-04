@@ -4144,16 +4144,18 @@ function lignePari() {
 .hibou-scene::before{content:"";position:absolute;right:26px;top:20px;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#fff7d6,#e7c36b);box-shadow:0 0 18px color-mix(in srgb,var(--gold) 60%,transparent);opacity:.85}
 .hibou-attente{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px;padding:16px;color:var(--muted);font-size:13px;text-align:center}
 .hibou-attente .branche{width:130px;height:8px;border-radius:4px;background:linear-gradient(90deg,#6a3f22,#a87346,#6a3f22);margin-top:-14px}
-.hibou-vol{position:absolute;left:-170px;top:60px;width:160px;z-index:2;animation:hibou-traverse 2.1s cubic-bezier(.45,.05,.55,.95) forwards}
-.hibou-vol svg{display:block;width:100%;height:auto;animation:hibou-balance .34s ease-in-out infinite}
+/* le vol : avance horizontale et hauteur animées séparément (trajectoire en courbe douce), uniquement en transform */
+.hibou-vol{position:absolute;left:-170px;top:6px;width:160px;z-index:2;will-change:transform;animation:hibou-avance 3.2s forwards}
+.hibou-vol .haut{will-change:transform;animation:hibou-monte 3.2s forwards}
+.hibou-vol svg{display:block;width:100%;height:auto;animation:hibou-balance .3s ease-in-out infinite alternate}
 .hibou-vol .aile{transform-box:fill-box}
-.hibou-vol .aile.g{transform-origin:100% 85%;animation:hibou-bat-g .34s ease-in-out infinite}
-.hibou-vol .aile.d{transform-origin:0% 85%;animation:hibou-bat-d .34s ease-in-out infinite}
-.hibou-vol .lettre-portee{animation:hibou-lache 2.1s linear forwards}
-.enveloppe-h{position:absolute;left:50%;top:40px;width:150px;margin-left:-75px;padding:0;border:0;background:none;cursor:pointer;opacity:0;animation:hibou-tombe 1.15s ease-out forwards .86s}
+.hibou-vol .aile.g{transform-origin:100% 85%;animation:hibou-bat-g .3s ease-in-out infinite alternate}
+.hibou-vol .aile.d{transform-origin:0% 85%;animation:hibou-bat-d .3s ease-in-out infinite alternate}
+.hibou-vol .lettre-portee{animation:hibou-lache 3.2s linear forwards}
+.enveloppe-h{position:absolute;left:50%;top:40px;width:150px;margin-left:-75px;padding:0;border:0;background:none;cursor:pointer;opacity:0;will-change:transform;animation:hibou-tombe 1.6s ease-in-out forwards 1.42s}
 .enveloppe-h.posee{opacity:1;animation:none;transform:translateY(60px) rotate(-4deg)}
 .enveloppe-h svg{display:block;width:150px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
-.indice-sceau{position:absolute;left:0;right:0;bottom:14px;text-align:center;font:700 12.5px Nunito,sans-serif;color:var(--gold);opacity:0;animation:jeu-fondu .4s ease forwards 1.8s,hibou-pulse 1.6s ease-in-out infinite 2.2s}
+.indice-sceau{position:absolute;left:0;right:0;bottom:14px;text-align:center;font:700 12.5px Nunito,sans-serif;color:var(--gold);opacity:0;animation:jeu-fondu .5s ease forwards 3s,hibou-pulse 2s ease-in-out infinite 3.5s}
 .indice-sceau.vite{animation:hibou-pulse 1.6s ease-in-out infinite;opacity:1}
 .lettre-h{position:absolute;left:50%;top:18px;width:260px;max-width:88%;transform:translateX(-50%);padding:14px 14px 12px;border-radius:8px;background:linear-gradient(#fbf3e1,#f0e2c2);color:#3a2618;box-shadow:0 10px 24px rgba(0,0,0,.45);text-align:center;animation:hibou-deplie .6s cubic-bezier(.3,1.3,.5,1) both}
 .lettre-h .ecrit{font:700 20px "Dancing Script",cursive}
@@ -4164,12 +4166,13 @@ function lignePari() {
 .lettre-h .sceau-l{position:absolute;top:-14px;left:50%;margin-left:-14px;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffb3c4,#c2385d 60%,#701a33);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}
 .bas-hibou .pari-tirage{margin-top:8px}
 .bas-hibou .row{justify-content:center}
-@keyframes hibou-traverse{0%{left:-170px;top:74px}42%{left:calc(50% - 80px);top:8px}56%{left:calc(50% - 40px);top:-6px}100%{left:calc(100% + 30px);top:-40px}}
-@keyframes hibou-balance{0%,100%{transform:translateY(2px) rotate(-5deg)}45%{transform:translateY(-4px) rotate(-2deg)}}
-@keyframes hibou-bat-g{0%,100%{transform:rotate(14deg)}45%{transform:rotate(-34deg)}}
-@keyframes hibou-bat-d{0%,100%{transform:rotate(-14deg)}45%{transform:rotate(34deg)}}
-@keyframes hibou-lache{0%,40%{opacity:1}41%,100%{opacity:0}}
-@keyframes hibou-tombe{0%{opacity:1;transform:translateY(8px) rotate(-6deg) scale(.22)}30%{opacity:1;transform:translate(-12px,20px) rotate(12deg) scale(.6)}62%{opacity:1;transform:translate(10px,42px) rotate(-9deg) scale(.9)}100%{opacity:1;transform:translateY(60px) rotate(-4deg) scale(1)}}
+@keyframes hibou-avance{0%{transform:translateX(0);animation-timing-function:cubic-bezier(.25,.6,.4,1)}45%{transform:translateX(calc(var(--l,340px) / 2 + 90px));animation-timing-function:cubic-bezier(.6,0,.8,.45)}100%{transform:translateX(calc(var(--l,340px) + 210px))}}
+@keyframes hibou-monte{0%{transform:translateY(70px);animation-timing-function:cubic-bezier(.3,.6,.4,1)}45%{transform:translateY(0);animation-timing-function:ease-in-out}60%{transform:translateY(-10px);animation-timing-function:cubic-bezier(.5,0,.8,.5)}100%{transform:translateY(-80px)}}
+@keyframes hibou-balance{from{transform:translateY(3px) rotate(-4deg)}to{transform:translateY(-3px) rotate(-2deg)}}
+@keyframes hibou-bat-g{from{transform:rotate(16deg)}to{transform:rotate(-30deg)}}
+@keyframes hibou-bat-d{from{transform:rotate(-16deg)}to{transform:rotate(30deg)}}
+@keyframes hibou-lache{0%,44%{opacity:1}45%,100%{opacity:0}}
+@keyframes hibou-tombe{0%{opacity:1;transform:translate(0,8px) rotate(-6deg) scale(.22)}25%{opacity:1;transform:translate(-14px,19px) rotate(13deg) scale(.55)}50%{opacity:1;transform:translate(12px,33px) rotate(-11deg) scale(.8)}75%{opacity:1;transform:translate(-6px,48px) rotate(6deg) scale(.95)}100%{opacity:1;transform:translate(0,60px) rotate(-4deg) scale(1)}}
 @keyframes hibou-deplie{0%{opacity:0;transform:translateX(-50%) translateY(50px) scaleY(.2)}100%{opacity:1;transform:translateX(-50%)}}
 @keyframes hibou-pulse{0%,100%{opacity:1}50%{opacity:.45}}
 @media (prefers-reduced-motion:reduce){.hibou-vol{display:none}.enveloppe-h{animation:none;opacity:1;transform:translateY(60px) rotate(-4deg)}.indice-sceau{animation:none;opacity:1}.lettre-h{animation:none}}
@@ -4296,12 +4299,12 @@ ACTIONS.filtreHibou = function (el) {
 function attenteHibou() {
   return '<div class="hibou-attente">' + chouettePerchee() + '<div class="branche"></div><div>Le hibou attend sur sa branche.<br>Appelle-le : il t\'apportera un livre de ta PAL.</div></div>';
 }
-function enveloppeHibou(vole) {
+function enveloppeHibou(vole, largeur) {
   var vol = '';
   var cls = 'enveloppe-h';
   var indice = 'indice-sceau';
   if (vole) {
-    vol = '<div class="hibou-vol">' + chouetteVol() + '</div>';
+    vol = '<div class="hibou-vol" style="--l:' + (largeur || 340) + 'px"><div class="haut">' + chouetteVol() + '</div></div>';
   } else {
     cls += ' posee';
     indice += ' vite';
@@ -4332,12 +4335,12 @@ function basHibou(n) {
   }
   return '<div class="row" style="margin-top:8px"><button class="act" data-act="appelerHibou"' + (n ? '' : ' disabled') + '>🦉 Appeler le hibou</button></div>';
 }
-function sceneHibou(vole) {
+function sceneHibou(vole, largeur) {
   if (!hibou.lettre || !M.parId[hibou.lettre]) {
     return attenteHibou();
   }
   if (!hibou.ouverte) {
-    return enveloppeHibou(vole);
+    return enveloppeHibou(vole, largeur);
   }
   return lettreHibou(M.parId[hibou.lettre]);
 }
@@ -4365,7 +4368,7 @@ function majHibou(vole) {
   var s = document.getElementById('hibouScene');
   var bas = document.getElementById('hibouBas');
   if (s) {
-    s.innerHTML = sceneHibou(vole);
+    s.innerHTML = sceneHibou(vole, s.clientWidth);
   }
   if (bas) {
     bas.innerHTML = basHibou(candidatsHibou().length);
@@ -4386,7 +4389,7 @@ ACTIONS.appelerHibou = function () {
   hibou.dernier = b.id;
   hibou.ouverte = false;
   majHibou(true);
-  setTimeout(function () { vibrerFete([30]); }, 1700);
+  setTimeout(function () { vibrerFete([30]); }, 2950);
 };
 ACTIONS.ouvrirLettre = function () {
   hibou.ouverte = true;
@@ -9937,7 +9940,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-04 22:13:01';
+var VERSION_APPLI = '2026-10-04 22:16:40';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
