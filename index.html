@@ -4144,13 +4144,13 @@ function lignePari() {
 .hibou-scene::before{content:"";position:absolute;right:26px;top:20px;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#fff7d6,#e7c36b);box-shadow:0 0 18px color-mix(in srgb,var(--gold) 60%,transparent);opacity:.85}
 .hibou-attente{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px;padding:16px;color:var(--muted);font-size:13px;text-align:center}
 .hibou-attente .branche{width:130px;height:8px;border-radius:4px;background:linear-gradient(90deg,#6a3f22,#a87346,#6a3f22);margin-top:-14px}
-.hibou-vol{position:absolute;left:-170px;top:60px;width:160px;z-index:2;animation:hibou-traverse 2.1s ease-in-out forwards}
-.hibou-vol svg{display:block;width:100%;height:auto}
+.hibou-vol{position:absolute;left:-170px;top:60px;width:160px;z-index:2;animation:hibou-traverse 2.1s cubic-bezier(.45,.05,.55,.95) forwards}
+.hibou-vol svg{display:block;width:100%;height:auto;animation:hibou-balance .34s ease-in-out infinite}
 .hibou-vol .aile{transform-box:fill-box}
-.hibou-vol .aile.g{transform-origin:100% 85%;animation:hibou-bat-g .26s ease-in-out infinite alternate}
-.hibou-vol .aile.d{transform-origin:0% 85%;animation:hibou-bat-d .26s ease-in-out infinite alternate}
+.hibou-vol .aile.g{transform-origin:100% 85%;animation:hibou-bat-g .34s ease-in-out infinite}
+.hibou-vol .aile.d{transform-origin:0% 85%;animation:hibou-bat-d .34s ease-in-out infinite}
 .hibou-vol .lettre-portee{animation:hibou-lache 2.1s linear forwards}
-.enveloppe-h{position:absolute;left:50%;top:40px;width:150px;margin-left:-75px;padding:0;border:0;background:none;cursor:pointer;opacity:0;animation:hibou-tombe .9s cubic-bezier(.3,1.3,.5,1) forwards .85s}
+.enveloppe-h{position:absolute;left:50%;top:40px;width:150px;margin-left:-75px;padding:0;border:0;background:none;cursor:pointer;opacity:0;animation:hibou-tombe 1.15s ease-out forwards .86s}
 .enveloppe-h.posee{opacity:1;animation:none;transform:translateY(60px) rotate(-4deg)}
 .enveloppe-h svg{display:block;width:150px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
 .indice-sceau{position:absolute;left:0;right:0;bottom:14px;text-align:center;font:700 12.5px Nunito,sans-serif;color:var(--gold);opacity:0;animation:jeu-fondu .4s ease forwards 1.8s,hibou-pulse 1.6s ease-in-out infinite 2.2s}
@@ -4164,11 +4164,12 @@ function lignePari() {
 .lettre-h .sceau-l{position:absolute;top:-14px;left:50%;margin-left:-14px;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffb3c4,#c2385d 60%,#701a33);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}
 .bas-hibou .pari-tirage{margin-top:8px}
 .bas-hibou .row{justify-content:center}
-@keyframes hibou-traverse{0%{left:-170px;top:70px}45%{left:calc(50% - 80px);top:6px}100%{left:calc(100% + 30px);top:-30px}}
-@keyframes hibou-bat-g{from{transform:rotate(10deg)}to{transform:rotate(-38deg)}}
-@keyframes hibou-bat-d{from{transform:rotate(-10deg)}to{transform:rotate(38deg)}}
-@keyframes hibou-lache{0%,40%{opacity:1}42%,100%{opacity:0}}
-@keyframes hibou-tombe{0%{opacity:1;transform:translateY(-10px) rotate(-25deg) scale(.55)}100%{opacity:1;transform:translateY(60px) rotate(-4deg) scale(1)}}
+@keyframes hibou-traverse{0%{left:-170px;top:74px}42%{left:calc(50% - 80px);top:8px}56%{left:calc(50% - 40px);top:-6px}100%{left:calc(100% + 30px);top:-40px}}
+@keyframes hibou-balance{0%,100%{transform:translateY(2px) rotate(-5deg)}45%{transform:translateY(-4px) rotate(-2deg)}}
+@keyframes hibou-bat-g{0%,100%{transform:rotate(14deg)}45%{transform:rotate(-34deg)}}
+@keyframes hibou-bat-d{0%,100%{transform:rotate(-14deg)}45%{transform:rotate(34deg)}}
+@keyframes hibou-lache{0%,40%{opacity:1}41%,100%{opacity:0}}
+@keyframes hibou-tombe{0%{opacity:1;transform:translateY(8px) rotate(-6deg) scale(.22)}30%{opacity:1;transform:translate(-12px,20px) rotate(12deg) scale(.6)}62%{opacity:1;transform:translate(10px,42px) rotate(-9deg) scale(.9)}100%{opacity:1;transform:translateY(60px) rotate(-4deg) scale(1)}}
 @keyframes hibou-deplie{0%{opacity:0;transform:translateX(-50%) translateY(50px) scaleY(.2)}100%{opacity:1;transform:translateX(-50%)}}
 @keyframes hibou-pulse{0%,100%{opacity:1}50%{opacity:.45}}
 @media (prefers-reduced-motion:reduce){.hibou-vol{display:none}.enveloppe-h{animation:none;opacity:1;transform:translateY(60px) rotate(-4deg)}.indice-sceau{animation:none;opacity:1}.lettre-h{animation:none}}
@@ -4222,14 +4223,17 @@ function chouetteVol() {
     var traits = [[[40, 22], [58, 40]], [[50, 30], [66, 46]], [[62, 40], [74, 52]]].map(function (t) {
       return '<path d="M' + m(t[0][0]) + ' ' + t[0][1] + ' L' + m(t[1][0]) + ' ' + t[1][1] + '" stroke="' + p.corps + '" stroke-width="1.4" opacity=".5" stroke-linecap="round"/>';
     }).join('');
-    return '<g class="aile ' + (sens < 0 ? 'g' : 'd') + '"><path d="' + chemin + ' Z" fill="' + p.aile + '"/><path d="M' + cv[0] + ' C ' + cv[1] + ', ' + cv[2] + ', ' + cv[3] + ' C ' + cv[4] + ', ' + cv[5] + ', ' + cv[6] + ' Z" fill="' + p.corps + '" opacity=".55"/>' + traits + '</g>';
+    var mouches = [[52, 40], [40, 34], [30, 46], [44, 26], [60, 47], [34, 16]].map(function (t) {
+      return '<ellipse cx="' + m(t[0]) + '" cy="' + t[1] + '" rx="2.2" ry="1.4" fill="#2b2b33" opacity=".75"/>';
+    }).join('');
+    return '<g class="aile ' + (sens < 0 ? 'g' : 'd') + '"><path d="' + chemin + ' Z" fill="' + p.aile + '"/><path d="M' + cv[0] + ' C ' + cv[1] + ', ' + cv[2] + ', ' + cv[3] + ' C ' + cv[4] + ', ' + cv[5] + ', ' + cv[6] + ' Z" fill="' + p.corps + '" opacity=".55"/>' + traits + mouches + '</g>';
   }
-  var taches = [[52, 40], [40, 34], [148, 40], [160, 34], [30, 46], [170, 46], [96, 78], [104, 84]].map(function (t) {
+  var taches = [[94, 80], [106, 86], [100, 90], [94, 35], [106, 35]].map(function (t) {
     return '<ellipse cx="' + t[0] + '" cy="' + t[1] + '" rx="2.2" ry="1.4" fill="#2b2b33" opacity=".75"/>';
   }).join('');
-  return '<svg viewBox="0 0 200 130" aria-hidden="true">' + aile(-1) + aile(1) + taches +
+  return '<svg viewBox="0 0 200 130" aria-hidden="true">' + aile(-1) + aile(1) +
     '<path d="M100 32 C 120 32, 126 52, 124 70 C 122 88, 112 96, 100 96 C 88 96, 78 88, 76 70 C 74 52, 80 32, 100 32 Z" fill="' + p.corps + '"/>' +
-    '<ellipse cx="100" cy="76" rx="15" ry="17" fill="' + p.ventre + '"/>' +
+    '<ellipse cx="100" cy="76" rx="15" ry="17" fill="' + p.ventre + '"/>' + taches +
     '<circle cx="92" cy="50" r="11" fill="' + p.face + '"/><circle cx="108" cy="50" r="11" fill="' + p.face + '"/>' +
     '<circle cx="92" cy="50" r="7" fill="#fffaf0"/><circle cx="108" cy="50" r="7" fill="#fffaf0"/><circle cx="92.5" cy="50.5" r="5" fill="' + p.iris + '"/><circle cx="107.5" cy="50.5" r="5" fill="' + p.iris + '"/><circle cx="92.8" cy="50.8" r="3" fill="#1d1430"/><circle cx="107.2" cy="50.8" r="3" fill="#1d1430"/><circle cx="94.5" cy="49" r="1.3" fill="#fff"/><circle cx="109" cy="49" r="1.3" fill="#fff"/>' +
     '<path d="M97 56 Q100 55 103 56 L100 62 Z" fill="' + p.bec + '"/>' +
@@ -9933,7 +9937,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-04 22:08:28';
+var VERSION_APPLI = '2026-10-04 22:13:01';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
