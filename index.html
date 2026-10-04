@@ -234,14 +234,50 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .bingo .c.ok::after{content:"✦";position:absolute;top:2px;right:4px;color:var(--gold);font-size:11px}
 .bingo .c.ligne{box-shadow:inset 0 0 0 2px var(--gold),0 0 12px var(--gold)}
 
-/* étagère */
-.etagere{margin:6px 0 22px}
-.etagere h4{margin:0 0 4px;font:700 17px "Cormorant Garamond",Georgia,serif}
-.shelf{display:flex;align-items:flex-end;gap:3px;padding:12px 10px 0;min-height:170px;border-bottom:12px solid var(--shelf);border-radius:6px 6px 3px 3px;box-shadow:0 10px 12px -8px rgba(0,0,0,.35);overflow-x:auto;background:linear-gradient(180deg,transparent 70%,color-mix(in srgb,var(--shelf) 25%,transparent))}
-.spine{flex:none;border-radius:4px 4px 1px 1px;writing-mode:vertical-rl;transform:rotate(180deg);font:700 10px Nunito,sans-serif;color:#fff;display:flex;align-items:center;justify-content:center;padding:8px 0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;position:relative;text-shadow:0 1px 2px rgba(0,0,0,.3);box-shadow:inset -3px 0 0 rgba(255,255,255,.28),inset 3px 0 0 rgba(0,0,0,.12)}
-.spine::before,.spine::after{content:"";position:absolute;left:0;right:0;height:2px;background:rgba(255,236,190,.75)}
-.spine::before{top:9px}.spine::after{bottom:9px}
-.spine.coeur{box-shadow:inset -3px 0 0 rgba(255,255,255,.28),inset 3px 0 0 rgba(0,0,0,.12),0 0 10px var(--gold)}
+/* étagère : meuble en bois, guirlande lumineuse, tranches ou couvertures (rangées fixes : 168 px de livres + 14 px de planche) */
+.etagere{margin:6px 0 20px}
+.etagere h4{display:inline-flex;align-items:baseline;gap:6px;margin:0 0 8px;padding:3px 14px 4px;border-radius:999px;border:1px solid color-mix(in srgb,var(--gold) 60%,transparent);background:color-mix(in srgb,var(--gold) 10%,transparent);font:700 18px "Cormorant Garamond",Georgia,serif}
+.etagere h4 .small{font-family:Nunito,sans-serif}
+.bascule-vue{display:flex;gap:6px;margin:0 0 12px}
+.bascule-vue button{display:inline-flex;align-items:center;gap:5px;font:700 13px Nunito,sans-serif;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line);background:none;color:var(--muted);cursor:pointer}
+.bascule-vue button.on{color:var(--ink);border-color:var(--gold);background:color-mix(in srgb,var(--gold) 14%,transparent)}
+.bascule-vue .ic{width:15px;height:15px}
+.meuble{border-radius:14px;padding:9px 9px 0;background:linear-gradient(160deg,#a87346,#7a4b2a 45%,#8e5c35 70%,#6a3f22);box-shadow:0 8px 16px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,220,170,.35)}
+.fond-meuble{border-radius:8px 8px 0 0;padding-top:10px;background:linear-gradient(180deg,rgba(0,0,0,.5),transparent 26px),linear-gradient(90deg,rgba(0,0,0,.45),transparent 16px,transparent calc(100% - 16px),rgba(0,0,0,.45)),repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0 2px,transparent 2px 12px,rgba(0,0,0,.08) 12px 14px,transparent 14px 25px),#3a2618}
+.rangs,.vitrine{--haut:168px;--per:182px;position:relative;padding:0 10px 14px;background:repeating-linear-gradient(180deg,transparent 0 var(--haut),#e0a86d var(--haut) calc(var(--haut) + 1.5px),#c0844d calc(var(--haut) + 1.5px) calc(var(--haut) + 7px),#94603a calc(var(--haut) + 7px) calc(var(--haut) + 11px),#4a2c17 calc(var(--haut) + 11px) var(--per))}
+.rangs::before,.rangs::after,.vitrine::before,.vitrine::after{content:"";position:absolute;inset:0;pointer-events:none;animation:guirlande 2.6s ease-in-out infinite}
+.rangs::before,.vitrine::before{background:radial-gradient(circle at 12px calc(var(--haut) + 8px),#fffbe6 0 1.3px,color-mix(in srgb,var(--gold) 85%,transparent) 2.2px,color-mix(in srgb,var(--gold) 22%,transparent) 4.5px,transparent 6.5px) 0 0/24px var(--per) repeat}
+.rangs::after,.vitrine::after{background:radial-gradient(circle at 0 calc(var(--haut) + 9px),#fff0f6 0 1.3px,rgba(255,150,200,.75) 2.2px,rgba(255,150,200,.18) 4.5px,transparent 6.5px) 0 0/24px var(--per) repeat;animation-delay:-1.3s}
+@keyframes guirlande{0%,100%{opacity:1}50%{opacity:.4}}
+.rangs{display:flex;flex-wrap:wrap;align-items:flex-end;column-gap:3px;row-gap:14px}
+.place-l,.deco-e{height:168px;display:flex;align-items:flex-end;flex:none}
+.deco-e{margin-left:4px}
+.deco-e.cachee{display:none}
+.tr-l{position:relative;flex:none;cursor:pointer;color:#fff;border-radius:3px 3px 1px 1px;background:linear-gradient(90deg,rgba(0,0,0,.3),rgba(255,255,255,.2) 28%,rgba(255,255,255,.05) 52%,rgba(0,0,0,.32)),var(--c);box-shadow:3px 1px 4px rgba(0,0,0,.4)}
+.tr-l.relie{border-radius:7px 7px 1px 1px}
+.tr-l::before{content:"✦";position:absolute;top:4px;left:0;right:0;text-align:center;font-size:8px;line-height:1;color:rgba(255,232,170,.95)}
+.tr-l::after{content:"";position:absolute;left:3px;right:3px;bottom:6px;height:3px;border-top:1px solid rgba(255,232,170,.8);border-bottom:1px solid rgba(255,232,170,.8)}
+.tr-l .t{position:absolute;left:0;right:0;top:16px;bottom:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.tr-l .t span{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:100%;font:800 10px/1.05 Nunito,sans-serif;letter-spacing:.2px;text-shadow:0 1px 1px rgba(0,0,0,.35)}
+.tr-l.coeur{background:linear-gradient(180deg,#f3d58a 0 3px,transparent 3px),linear-gradient(90deg,rgba(0,0,0,.3),rgba(255,255,255,.2) 28%,rgba(255,255,255,.05) 52%,rgba(0,0,0,.32)),var(--c);box-shadow:3px 1px 4px rgba(0,0,0,.4),0 0 12px color-mix(in srgb,var(--gold) 80%,transparent)}
+.tr-l.coeur::before{content:"★";color:#fff3c4;top:6px;font-size:9px}
+.tr-l.coeur .t{top:20px}
+.tr-l .audio{position:absolute;left:0;right:0;bottom:13px;display:flex;justify-content:center}
+.tr-l .audio .ic{width:10px;height:10px;stroke-width:2.4}
+.tr-l.ecoute .t{bottom:27px}
+.penche .tr-l{transform:rotate(13deg);transform-origin:100% 100%}
+.vitrine{--haut:112px;--per:126px;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:112px;column-gap:10px;row-gap:14px;padding:0 12px 14px}
+.case-v{display:flex;align-items:flex-end;justify-content:center;cursor:pointer}
+.cadre-v{position:relative;width:100%;max-width:75px}
+.couv-v{position:relative;width:100%;aspect-ratio:2/3;border-radius:2px 5px 5px 2px;overflow:hidden;box-shadow:4px 3px 7px rgba(0,0,0,.6);background:var(--c)}
+.couv-v img{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover;display:block}
+.couv-v::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;z-index:2;background:linear-gradient(90deg,rgba(0,0,0,.35),rgba(255,255,255,.25) 60%,transparent)}
+.couv-v .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:6px;text-align:center;font:700 13px/1.1 "Cormorant Garamond",Georgia,serif;color:#fff;overflow:hidden;word-break:break-word}
+.coeur-v{position:absolute;top:-6px;right:-6px;z-index:3;width:20px;height:20px;border-radius:50%;background:var(--gold);color:#3a2618;display:flex;align-items:center;justify-content:center;box-shadow:0 0 8px color-mix(in srgb,var(--gold) 80%,transparent)}
+.coeur-v .ic{width:11px;height:11px;fill:currentColor;stroke-width:1.5}
+.audio-v{position:absolute;left:4px;bottom:4px;z-index:3;width:18px;height:18px;border-radius:50%;background:rgba(14,31,29,.85);color:#fff;display:flex;align-items:center;justify-content:center}
+.audio-v .ic{width:11px;height:11px;stroke-width:2.4}
+@media (prefers-reduced-motion:reduce){.rangs::before,.rangs::after,.vitrine::before,.vitrine::after{animation:none}}
 .legende{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted)}
 .legende i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 
@@ -420,6 +456,7 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 <symbol id="i-flashlight" viewBox="0 0 24 24"><path d="M12 13v1" /> <path d="M17 2a1 1 0 0 1 1 1v4a3 3 0 0 1-.6 1.8l-.6.8A4 4 0 0 0 16 12v8a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-8a4 4 0 0 0-.8-2.4l-.6-.8A3 3 0 0 1 6 7V3a1 1 0 0 1 1-1z" /> <path d="M6 6h12" /></symbol>
 <symbol id="i-flower-2" viewBox="0 0 24 24"><path d="M12 5a3 3 0 1 1 3 3m-3-3a3 3 0 1 0-3 3m3-3v1M9 8a3 3 0 1 0 3 3M9 8h1m5 0a3 3 0 1 1-3 3m3-3h-1m-2 3v-1" /> <circle cx="12" cy="8" r="2" /> <path d="M12 10v12" /> <path d="M12 22c4.2 0 7-1.667 7-5-4.2 0-7 1.667-7 5Z" /> <path d="M12 22c-4.2 0-7-1.667-7-5 4.2 0 7 1.667 7 5Z" /></symbol>
 <symbol id="i-folder-open" viewBox="0 0 24 24"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2" /></symbol>
+<symbol id="i-headphones" viewBox="0 0 24 24"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3" /></symbol>
 <symbol id="i-heart" viewBox="0 0 24 24"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /></symbol>
 <symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></symbol>
 <symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol>
@@ -1990,25 +2027,98 @@ function couleurLivre(b) {
   }
   return PASTELS[h % PASTELS.length];
 }
-function tranche(b, star) {
+// titre d'une tranche : sans la partie entre parenthèses ni le sous-titre (après « : » ou « - »)
+function titreTranche(b) {
+  var t = titre(b).replace(/\s*\([^)]*\)\s*$/, '');
+  var morceaux = t.split(/\s+[:–-]\s+/);
+  if (morceaux.length > 1 && morceaux[0].length >= 4) {
+    t = morceaux[0];
+  }
+  return t;
+}
+// une tranche ; penche : le dernier livre de l'étagère, posé de biais
+function tranche(b, star, penche) {
   var p = b.total_page || 300;
   if (b.book_type === 'audioBook' || b.page_type === 'TIME') {
     p = 380;
   }
   var haut = Math.round(108 + Math.min(52, p / 14));
-  var larg = Math.round(15 + Math.min(17, p / 45));
-  var c = couleurLivre(b);
-  var cls = 'spine';
-  var deco = '';
+  var larg = Math.round(16 + Math.min(16, p / 45));
+  var cls = 'tr-l';
+  var plus = '';
   if (star >= 5) {
     cls += ' coeur';
-    deco = '★ ';
   }
   if (b.book_type === 'audioBook') {
-    deco += '🎧 ';
+    cls += ' ecoute';
+    plus = '<span class="audio">' + ic('headphones') + '</span>';
   }
-  return '<div class="' + cls + '" data-act="livre" data-id="' + b.id + '" title="' + esc(titre(b)) + '" style="height:' + haut + 'px;width:' + larg + 'px;background:linear-gradient(90deg,' + c + ',color-mix(in srgb,' + c + ' 78%,#fff))">' + deco + esc(titre(b)) + '</div>';
+  if (p > 450) {
+    cls += ' relie';
+  }
+  var place = '<div class="place-l">';
+  if (penche) {
+    // la marge à droite laisse la place au haut du livre penché
+    place = '<div class="place-l penche" style="margin:0 ' + (Math.round(haut * 0.23) + 2) + 'px 0 6px">';
+  }
+  return place + '<div class="' + cls + '" data-act="livre" data-id="' + b.id + '" title="' + esc(titre(b)) + '" style="--c:' + couleurLivre(b) + ';height:' + haut + 'px;width:' + larg + 'px">' + plus + '<div class="t"><span>' + esc(titreTranche(b)) + '</span></div></div></div>';
 }
+// une couverture de face (vue « Couvertures »)
+function couvertureVitrine(b, star) {
+  var badges = '';
+  if (star >= 5) {
+    badges += '<span class="coeur-v">' + ic('heart') + '</span>';
+  }
+  var img = '';
+  if (b.image && /^(https?|blob):/.test(b.image)) {
+    img = '<img loading="lazy" src="' + esc(b.image) + '" alt="" onerror="this.remove()">';
+  }
+  if (b.book_type === 'audioBook') {
+    img += '<span class="audio-v">' + ic('headphones') + '</span>';
+  }
+  return '<div class="case-v" data-act="livre" data-id="' + b.id + '" title="' + esc(titre(b)) + '"><div class="cadre-v">' + badges + '<div class="couv-v" style="--c:' + couleurLivre(b) + '"><div class="ph">' + esc(titreTranche(b)) + '</div>' + img + '</div></div></div>';
+}
+
+// petites décorations au bout de la dernière étagère (une différente par meuble)
+var DECOS_ETAGERE = [
+  '<svg width="40" height="62" viewBox="0 0 40 62" aria-hidden="true"><path d="M20 40 C 8 34, 4 22, 10 14 C 16 20, 19 30, 20 40Z" fill="#5fb38e"/><path d="M20 40 C 32 33, 37 20, 30 10 C 24 18, 21 28, 20 40Z" fill="#4a9a78"/><path d="M20 40 C 17 26, 18 12, 21 2 C 25 14, 24 28, 20 40Z" fill="#78c9a0"/><path d="M9 40 h22 l-3 20 h-16z" fill="#c9784f"/><rect x="7" y="38" width="26" height="5" rx="1.5" fill="#dd8c5f"/></svg>',
+  '<svg width="30" height="56" viewBox="0 0 30 56" aria-hidden="true"><path d="M5 56 C 3 40, 6 28, 9 22 L 7 10 L 12 16 C 14 15, 17 15, 19 16 L 24 10 L 22 22 C 26 30, 27 42, 25 56 Z" fill="#1d1430"/><circle cx="12" cy="22" r="1.6" fill="#e7c36b"/><circle cx="19" cy="22" r="1.6" fill="#e7c36b"/><path d="M25 50 C 31 46, 30 38, 26 36" stroke="#1d1430" stroke-width="3" fill="none" stroke-linecap="round"/></svg>',
+  '<svg width="22" height="58" viewBox="0 0 22 58" aria-hidden="true"><ellipse cx="11" cy="9" rx="8" ry="10" fill="rgba(255,210,120,.25)"/><path d="M11 2 C 14 7, 14 11, 11 13 C 8 11, 8 7, 11 2Z" fill="#ffd27a"/><rect x="10.3" y="12" width="1.4" height="4" fill="#3a2618"/><rect x="5" y="16" width="12" height="34" rx="2" fill="#f4e6cf"/><path d="M5 20 q3 4 0 8" stroke="#e8d6b8" fill="none"/><ellipse cx="11" cy="52" rx="10" ry="3.5" fill="#c9a24e"/><rect x="2" y="50" width="18" height="4" rx="2" fill="#e7c36b"/></svg>',
+  '<svg width="40" height="54" viewBox="0 0 40 54" aria-hidden="true"><defs><radialGradient id="bouleCristal" cx="35%" cy="30%"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".25" stop-color="#d9c6ff"/><stop offset=".7" stop-color="#8b6bd9"/><stop offset="1" stop-color="#4a3496"/></radialGradient></defs><circle cx="20" cy="22" r="20" fill="rgba(168,121,255,.25)"/><circle cx="20" cy="22" r="15" fill="url(#bouleCristal)"/><circle cx="25" cy="27" r="1.3" fill="#fff"/><circle cx="14" cy="26" r=".9" fill="#fff"/><path d="M8 40 h24 l-3 -5 h-18z" fill="#c9a24e"/><rect x="5" y="40" width="30" height="6" rx="2" fill="#e7c36b"/></svg>'
+];
+function vueEtagere() {
+  return lsGet('bm_vue_etagere') || 'tranches';
+}
+ACTIONS.vueEtagere = function (el) {
+  lsSet('bm_vue_etagere', el.dataset.v);
+  rendre();
+};
+// un meuble : livres = [{b, star}], i = numéro du meuble (choisit la décoration)
+function meuble(livres, i) {
+  if (!livres.length) {
+    return '<p class="small muted">Rien sur cette étagère pour l\'instant.</p>';
+  }
+  var h;
+  if (vueEtagere() === 'couvertures') {
+    h = '<div class="vitrine">' + livres.map(function (x) { return couvertureVitrine(x.b, x.star); }).join('') + '</div>';
+  } else {
+    h = '<div class="rangs">' + livres.map(function (x, k) {
+      return tranche(x.b, x.star, livres.length > 1 && k === livres.length - 1);
+    }).join('') + '<div class="deco-e">' + DECOS_ETAGERE[i % DECOS_ETAGERE.length] + '</div></div>';
+  }
+  return '<div class="meuble"><div class="fond-meuble">' + h + '</div></div>';
+}
+// la décoration ne doit pas occuper seule une étagère de plus
+function rangerDecos() {
+  document.querySelectorAll('.rangs .deco-e').forEach(function (d) {
+    d.classList.remove('cachee');
+    var avant = d.previousElementSibling;
+    if (avant && d.offsetTop > avant.offsetTop + 10) {
+      d.classList.add('cachee');
+    }
+  });
+}
+window.addEventListener('resize', rangerDecos);
 
 function vEtagere() {
   var h = seg('etagere', [['etagere', '' + ic('library-big') + ' Étagère'], ['alire', '' + ic('ferris-wheel') + ' À lire'], ['series', '' + ic('key-round') + ' Séries'], ['tous', '' + ic('search') + ' Tous']]);
@@ -2024,6 +2134,7 @@ function vEtagere() {
   return h;
 }
 vEtagere.apres = function () {
+  rangerDecos();
   var r = document.getElementById('rechercheLivres');
   if (r) {
     r.addEventListener('input', function () {
@@ -2164,9 +2275,9 @@ function vShelf() {
       }
       parAn[y].push(r);
     });
-    Object.keys(parAn).sort().reverse().forEach(function (y) {
+    Object.keys(parAn).sort().reverse().forEach(function (y, i) {
       var l = parAn[y].sort(function (a, b) { return a.end - b.end; });
-      rayons += '<div class="etagere"><h4>' + y + ' <span class="small muted">· ' + l.length + ' livres</span></h4><div class="shelf">' + l.map(function (r) { return tranche(r.book, r.star); }).join('') + '</div></div>';
+      rayons += '<div class="etagere"><h4>' + y + ' <span class="small muted">· ' + l.length + ' livres</span></h4>' + meuble(l.map(function (r) { return {b: r.book, star: r.star}; }), i) + '</div>';
     });
   } else {
     var envie = filtreEtagere === 'envies';
@@ -2175,10 +2286,25 @@ function vShelf() {
     if (envie) {
       nom = 'Tes envies';
     }
-    rayons = '<div class="etagere"><h4>' + nom + ' <span class="small muted">· ' + l.length + ' livres, les plus anciens à gauche</span></h4><div class="shelf">' + l.map(function (b) { return tranche(b, 0); }).join('') + '</div></div>';
+    var num = 2;
+    if (envie) {
+      num = 3;
+    }
+    rayons = '<div class="etagere"><h4>' + nom + ' <span class="small muted">· ' + l.length + ' livres</span></h4><p class="small muted" style="margin:-2px 0 8px">Les plus anciens en premier.</p>' + meuble(l.map(function (b) { return {b: b, star: 0}; }), num) + '</div>';
   }
-  var legende = '<div class="legende">' + GENRES_COULEURS.map(function (g) { return '<span><i style="background:' + g[1] + '"></i>' + g[2] + '</span>'; }).join('') + '<span>★ coup de cœur · 🎧 audio</span></div>';
-  return h + card('Mon étagère magique', rayons + legende, 'touche une tranche pour ouvrir le livre');
+  var vue = vueEtagere();
+  var bascule = '<div class="bascule-vue">' + [['tranches', 'library-big', 'Tranches'], ['couvertures', 'image', 'Couvertures']].map(function (v) {
+    var cls = '';
+    if (v[0] === vue) {
+      cls = ' class="on"';
+    }
+    return '<button' + cls + ' data-act="vueEtagere" data-v="' + v[0] + '">' + ic(v[1]) + ' ' + v[2] + '</button>';
+  }).join('') + '</div>';
+  var legende = '<div class="legende">' + GENRES_COULEURS.map(function (g) { return '<span><i style="background:' + g[1] + '"></i>' + g[2] + '</span>'; }).join('') + '<span>★ coup de cœur · ' + ic('headphones') + ' audio</span></div>';
+  if (vue === 'couvertures') {
+    legende = '<div class="legende"><span>' + ic('heart') + ' coup de cœur · ' + ic('headphones') + ' audio · sans couverture : le titre sur la couleur du genre</span></div>';
+  }
+  return h + card('Mon étagère magique', bascule + rayons + legende, 'touche un livre pour l\'ouvrir');
 }
 ACTIONS.filtreEtagere = function (el) {
   filtreEtagere = el.dataset.f;
@@ -2346,7 +2472,7 @@ function vSeries() {
     if (manquants.length && !abandonnee) {
       info += ' · absent(s) de ta bibliothèque : tome ' + manquants.join(', ');
     }
-    return '<div style="margin:10px 0 16px' + (abandonnee ? ';opacity:.6' : '') + '"><b style="font:700 18px Cormorant Garamond,Georgia,serif">' + esc(s.name) + '</b> <button class="mini-btn" data-act="formSerie" data-id="' + esc(k) + '">' + ic('pencil') + '</button><div class="shelf" style="min-height:0;padding-top:8px">' + l.map(function (x) { return tranche(x.b, 0); }).join('') + '</div><div class="prog"><div style="width:' + (100 * lus / l.length) + '%"></div></div><div class="small muted">' + info + '</div></div>';
+    return '<div style="margin:10px 0 16px' + (abandonnee ? ';opacity:.6' : '') + '"><b style="font:700 18px Cormorant Garamond,Georgia,serif">' + esc(s.name) + '</b> <button class="mini-btn" data-act="formSerie" data-id="' + esc(k) + '">' + ic('pencil') + '</button><div class="meuble" style="margin:6px 0 8px"><div class="fond-meuble"><div class="rangs">' + l.map(function (x) { return tranche(x.b, 0); }).join('') + '</div></div></div><div class="prog"><div style="width:' + (100 * lus / l.length) + '%"></div></div><div class="small muted">' + info + '</div></div>';
   }).join(''));
 }
 </script>
@@ -7967,7 +8093,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-04 18:58:05';
+var VERSION_APPLI = '2026-10-04 19:37:54';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
