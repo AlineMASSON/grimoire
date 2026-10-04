@@ -1,0 +1,31 @@
+{
+  "name": "Mon grimoire de lectures",
+  "short_name": "Grimoire",
+  "description": "Mes stats, mon étagère et mon carnet de lectures Bookmory",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fcf0f6",
+  "theme_color": "#f3c3da",
+  "icons": [
+    {"src": "icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "share_target": {
+    "action": "./partage",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "titre",
+      "files": [
+        {
+          "name": "export",
+          "accept": ["application/zip", "application/x-zip-compressed", "application/octet-stream", "application/x-sqlite3", ".zip", ".db", "*/*"]
+        }
+      ]
+    }
+  }
+}
