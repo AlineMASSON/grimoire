@@ -7731,7 +7731,8 @@ ACTIONS.reglages = function () {
     h += '</div>';
   }
 
-  h += '<div class="reglage"><h4>📱 Stockage sur le téléphone</h4><p class="small" id="etatStockage">…</p></div>';
+  var v = VERSION_APPLI;
+  h += '<div class="reglage"><h4>📱 Stockage sur le téléphone</h4><p class="small" id="etatStockage">…</p><p class="small muted">Version de l\'appli : ' + esc(v.slice(8, 10) + '/' + v.slice(5, 7) + '/' + v.slice(0, 4) + ' à ' + v.slice(11, 16)) + '</p></div>';
   ouvrirFeuille(h);
   afficherStockage();
 };
@@ -7823,6 +7824,7 @@ ACTIONS.restaurerFichierDrive = function (el) {
 .vide .etapes{text-align:left;margin:12px auto;max-width:320px;line-height:1.8}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--card);font:700 14px Nunito,sans-serif;padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transition:all .3s;z-index:70;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
 .toast.vis{opacity:1;transform:translate(-50%,0)}
+.maj-dispo{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top));transform:translateX(-50%);z-index:75;display:flex;align-items:center;gap:8px;border:0;background:var(--ink);color:var(--card);font:700 14px Nunito,sans-serif;padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.3);white-space:nowrap;max-width:92vw;animation:fondu .3s ease}
 </style>
 <script>
 // ---------- Version appli (PWA) : démarrage, fichiers reçus (partage Android ou 📥) ----------
@@ -7962,6 +7964,68 @@ ACTIONS.choisirExport = function () {
   document.getElementById('fichierImport').click();
 };
 
+// ---------- mises à jour de l'appli ----------
+// assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
+// que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
+var VERSION_APPLI = '2026-10-04 18:58:05';
+function appliOccupee() {
+  return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
+}
+function proposerMiseAJour() {
+  if (document.getElementById('majDispo')) {
+    return;
+  }
+  var b = document.createElement('button');
+  b.id = 'majDispo';
+  b.className = 'maj-dispo';
+  b.innerHTML = ic('refresh-cw') + ' Nouvelle version : toucher pour l\'avoir';
+  b.addEventListener('click', function () {
+    location.reload();
+  });
+  document.body.appendChild(b);
+}
+function verifierMiseAJour() {
+  if (VERSION_APPLI.indexOf('__') === 0 || !navigator.onLine) {
+    return;
+  }
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.getRegistration().then(function (r) {
+      if (r) {
+        r.update();
+      }
+    }).catch(function () {});
+  }
+  fetch('version.txt', {cache: 'no-store'}).then(function (r) {
+    if (!r.ok) {
+      return '';
+    }
+    return r.text();
+  }).then(function (v) {
+    v = v.trim();
+    if (!v || v <= VERSION_APPLI) {
+      return;
+    }
+    // un seul rechargement automatique par version (si le serveur tarde à servir la nouvelle page, on n'insiste pas)
+    var deja = '';
+    try {
+      deja = sessionStorage.getItem('bm_maj') || '';
+    } catch (e) {}
+    if (appliOccupee() || deja === v) {
+      proposerMiseAJour();
+      return;
+    }
+    try {
+      sessionStorage.setItem('bm_maj', v);
+    } catch (e) {}
+    location.reload();
+  }).catch(function () {});
+}
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible') {
+    verifierMiseAJour();
+  }
+});
+
 function demarrer() {
   appliquerTheme(lsGet('bm_theme') || 'fetes');
   try {
@@ -8007,6 +8071,8 @@ function demarrer() {
       return fetch(params.get('db')).then(function (r) { return r.arrayBuffer(); }).then(recevoirFichier);
     }
     return ouvrirGrimoire();
+  }).then(function () {
+    setTimeout(verifierMiseAJour, 2000);
   }).catch(erreurEcran);
 }
 

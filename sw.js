@@ -1,5 +1,5 @@
 // Service worker du grimoire : fonctionnement hors ligne + réception des fichiers partagés (sauvegarde, export Bookmory).
-var VERSION = 'grimoire-v6';
+var VERSION = 'grimoire-v7';
 var PARTAGE = 'grimoire-partage';
 var FICHIERS = [
   './',
@@ -13,8 +13,11 @@ var FICHIERS = [
 ];
 
 self.addEventListener('install', function (e) {
+  // cache: 'reload' : on prend les fichiers sur le serveur, pas une copie gardée par le navigateur
   e.waitUntil(caches.open(VERSION).then(function (c) {
-    return c.addAll(FICHIERS);
+    return c.addAll(FICHIERS.map(function (f) {
+      return new Request(f, {cache: 'reload'});
+    }));
   }));
   self.skipWaiting();
 });
@@ -65,8 +68,9 @@ self.addEventListener('fetch', function (e) {
   }
 
   // La page : réseau d'abord (pour recevoir les mises à jour), cache si hors ligne.
+  // cache: 'no-cache' : le navigateur redemande toujours au serveur (sinon il garde la page 10 min).
   if (e.request.mode === 'navigate') {
-    e.respondWith(fetch(e.request).then(function (rep) {
+    e.respondWith(fetch(e.request.url, {cache: 'no-cache', credentials: 'same-origin'}).then(function (rep) {
       var copie = rep.clone();
       caches.open(VERSION).then(function (c) {
         c.put('./index.html', copie);
@@ -78,8 +82,8 @@ self.addEventListener('fetch', function (e) {
     return;
   }
 
-  // Les API (Google Books, Open Library, relais de sauvegarde…) : toujours le réseau, jamais le cache.
-  if (!cacheable(e.request, url)) {
+  // Les API (Google Books, Open Library, relais de sauvegarde…) et le numéro de version : toujours le réseau.
+  if (!cacheable(e.request, url) || url.pathname.endsWith('/version.txt')) {
     return;
   }
 
