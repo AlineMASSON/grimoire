@@ -1416,7 +1416,7 @@ ACTIONS.allerQuetes = function () {
 };
 // citation du jour : avec sa photo s'il y en a une
 function carteCitationDuJour() {
-  var cit = M.notes.filter(function (n) { return n.texte.length > 20 || n.photo; });
+  var cit = M.notes.filter(function (n) { return n.type !== 'NOTE' && (n.texte.length > 20 || n.photo); });
   if (!cit.length) {
     return '';
   }
@@ -2943,7 +2943,7 @@ function casesBingo(y) {
       }
     });
   });
-  var citation = M.notes.filter(function (n) { return n.texte && annee(n.created_at) === y; })[0];
+  var citation = M.notes.filter(function (n) { return n.type !== 'NOTE' && n.texte && annee(n.created_at) === y; })[0];
   var cit = null;
   if (citation && citation.book) {
     cit = {book: citation.book};
@@ -3184,7 +3184,7 @@ function slidesAnneeCorps(y) {
   var sj = series_jours(function (k) { return k.slice(0, 4) === String(y); });
   s.push('<div class="sous">Ta plus belle série</div><div class="gros">' + sj.best + '</div><div class="titre">jours d\'affilée</div><div class="sous">sans lâcher ton livre 🔥</div>');
 
-  var cits = M.notes.filter(function (n) { return n.texte.length > 20 && annee(n.created_at) === y; });
+  var cits = M.notes.filter(function (n) { return n.type !== 'NOTE' && n.texte.length > 20 && annee(n.created_at) === y; });
   if (cits.length) {
     var c = cits[0];
     var src = '';
@@ -4389,6 +4389,8 @@ function modeleDepuisBase() {
     var type = 'BOOK_CONTENT';
     if (c.type === 'pensee') {
       type = 'THOUGHT';
+    } else if (c.type === 'note') {
+      type = 'NOTE';
     }
     return {_key: c.id, texte: c.texte || '', book: parId[c.livreId], bid: c.livreId, page: c.page || 0, page_end: c.pageFin || 0, type: type, created_at: c.creeLe, photo: urlPhoto(c.photoId), favori: !!c.favori};
   });
@@ -7492,6 +7494,19 @@ var TESSERACT = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/';
 var TESSERACT_CORE = 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1';
 var TESSERACT_FRA = 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/fra@1.0.0/4.0.0_best_int';
 var fc = null;
+// types d'une entrée du carnet ; les notes (infos, rappels…) ne s'affichent pas comme des citations
+var TYPES_CITATION = [['citation', '❝ Citation'], ['pensee', '💭 Pensée'], ['note', '📝 Note']];
+var INDICES_CITATION = {citation: 'La phrase qui t\'a marquée…', pensee: 'Ce que ça t\'inspire…', note: 'Un personnage, une info, un rappel…'};
+var NOMS_CITATION = {citation: 'la citation', pensee: 'la pensée', note: 'la note'};
+function iconeTypeCitation(type) {
+  if (type === 'pensee' || type === 'THOUGHT') {
+    return '💭 ';
+  }
+  if (type === 'note' || type === 'NOTE') {
+    return '📝 ';
+  }
+  return '';
+}
 
 function carteCitations() {
   var cit = M.notes.filter(function (n) { return n.texte || n.photo; }).sort(function (a, b) { return b.created_at - a.created_at; });
@@ -7503,10 +7518,7 @@ function carteCitations() {
         src += ', p. ' + n.page;
       }
     }
-    var type = '';
-    if (n.type === 'THOUGHT') {
-      type = '💭 ';
-    }
+    var type = iconeTypeCitation(n.type);
     var fav = '';
     if (n.favori) {
       fav = '⭐ ';
@@ -7520,7 +7532,7 @@ function carteCitations() {
       texte = '<div class="quote">' + fav + type + esc(n.texte) + '</div>';
     }
     var image = '';
-    if (n.texte) {
+    if (n.texte && n.type !== 'NOTE') {
       image = '<button class="act doux" data-act="imageCitation" data-k="' + esc(n._key) + '">' + ic('image') + ' En faire une image</button>';
     }
     return '<div style="margin:14px 0 18px"><div class="quotebox">' + texte + photo + '<p class="qsrc">' + src + ' · ' + fdate(n.created_at) + '</p></div><div class="row" style="justify-content:center;margin-top:8px"><button class="act doux" data-act="formCitation" data-id="' + esc(n._key) + '">' + ic('pencil') + '</button>' + image + '</div></div>';
@@ -7539,10 +7551,7 @@ function blocCitationsLivre(id) {
     if (c.page) {
       p = 'p. ' + c.page + ' · ';
     }
-    var icone = '';
-    if (c.type === 'pensee') {
-      icone = '💭 ';
-    }
+    var icone = iconeTypeCitation(c.type);
 
     var vignette = '';
     if (c.photoId && urlPhoto(c.photoId)) {
@@ -7569,10 +7578,10 @@ ACTIONS.formCitation = function (el) {
     }
     choixLivre = '<label>Livre</label>' + champ('ciLivre', actuel, 'list="dlLivres" placeholder="Titre du livre" autocomplete="off"') + listeDeChoix('dlLivres', titres);
   }
-  var h = '<h3>' + (c ? 'Modifier la citation' : 'Nouvelle citation') + '</h3>' + (livre && el.dataset.livre ? '<p class="small muted">' + esc(livre.titre) + '</p>' : '') + '<div class="form">' + choixLivre +
-    '<label>Type</label>' + choix('ciType', [['citation', '❝ Citation'], ['pensee', '💭 Pensée']], v.type) +
+  var h = '<h3>' + (c ? 'Modifier ' + (NOMS_CITATION[v.type] || 'la citation') : 'Nouvelle citation') + '</h3>' + (livre && el.dataset.livre ? '<p class="small muted">' + esc(livre.titre) + '</p>' : '') + '<div class="form">' + choixLivre +
+    '<label>Type</label>' + choix('ciType', TYPES_CITATION, v.type) +
     '<label>Photo de la page</label><div id="zPhotoCit"></div>' +
-    '<label>Texte</label><textarea class="champ" id="ciTexte" placeholder="La phrase qui t\'a marquée…">' + esc(v.texte) + '</textarea>' +
+    '<label>Texte</label><textarea class="champ" id="ciTexte" placeholder="' + esc(INDICES_CITATION[v.type] || '') + '">' + esc(v.texte) + '</textarea>' +
     '<div class="deux"><div><label>Page</label>' + champ('ciPage', v.page, 'inputmode="numeric"') + '</div><div><label>Jusqu\'à la page</label>' + champ('ciPageFin', v.pageFin, 'inputmode="numeric"') + '</div></div>' +
     '<label class="small" style="text-transform:none;letter-spacing:0;margin-top:12px"><input type="checkbox" id="ciFavori"' + (v.favori ? ' checked' : '') + '> ⭐ favorite</label>' +
     '<div class="row" style="margin-top:16px"><button class="act" data-act="ciEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="ciAnnuler">Annuler</button></div>';
@@ -7580,6 +7589,9 @@ ACTIONS.formCitation = function (el) {
     h += '<button class="lien danger" data-act="ciSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer</button>';
   }
   var f = ouvrirFeuille(h + '</div><input type="file" id="ciFichier" accept="image/*" hidden>');
+  f.querySelector('#ciType').addEventListener('change', function (e) {
+    document.getElementById('ciTexte').placeholder = INDICES_CITATION[e.target.value] || '';
+  });
   rendrePhotoCitation();
   f.querySelector('#ciFichier').addEventListener('change', function (e) {
     var fic = e.target.files[0];
@@ -8171,7 +8183,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-04 19:47:38';
+var VERSION_APPLI = '2026-10-04 20:39:27';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
