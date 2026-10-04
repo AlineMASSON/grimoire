@@ -353,15 +353,108 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 
 </head>
 <body>
+<!-- Icônes : Lucide v1.52.0 (licence ISC, https://lucide.dev) -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+<symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" /></symbol>
+<symbol id="i-book-open" viewBox="0 0 24 24"><path d="M12 5v16" /> <path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z" /></symbol>
+<symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" /></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" /> <circle cx="12" cy="13" r="3" /></symbol>
+<symbol id="i-chart-column" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16" /> <path d="M18 17V9" /> <path d="M13 17V5" /> <path d="M8 17v-3" /></symbol>
+<symbol id="i-check-check" viewBox="0 0 24 24"><path d="M18 6 7 17l-5-5" /> <path d="m22 10-7.5 7.5L13 16" /></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
+<symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></symbol>
+<symbol id="i-chevron-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6" /></symbol>
+<symbol id="i-cloud-download" viewBox="0 0 24 24"><path d="M12 13v8l-4-4" /> <path d="m12 21 4-4" /> <path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284" /></symbol>
+<symbol id="i-cloud-upload" viewBox="0 0 24 24"><path d="M12 13v8" /> <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /> <path d="m8 17 4-4 4 4" /></symbol>
+<symbol id="i-crown" viewBox="0 0 24 24"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /> <path d="M5 21h14" /></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 15V3" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <path d="m7 10 5 5 5-5" /></symbol>
+<symbol id="i-eraser" viewBox="0 0 24 24"><path d="M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21" /> <path d="m5.082 11.09 8.828 8.828" /></symbol>
+<symbol id="i-feather" viewBox="0 0 24 24"><path d="M14.086 18.412A2 2 0 0112.67 19H5v-7.672a2 2 0 01.586-1.414L11.75 3.75a6 6 0 118.49 8.49z" /> <path d="M16 8 2 22" /> <path d="M17.488 15H9" /></symbol>
+<symbol id="i-ferris-wheel" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" /> <path d="M12 2v4" /> <path d="m6.8 15-3.5 2" /> <path d="m20.7 7-3.5 2" /> <path d="M6.8 9 3.3 7" /> <path d="m20.7 17-3.5-2" /> <path d="m9 22 3-8 3 8" /> <path d="M8 22h8" /> <path d="M18 18.7a9 9 0 1 0-12 0" /></symbol>
+<symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></symbol>
+<symbol id="i-flashlight" viewBox="0 0 24 24"><path d="M12 13v1" /> <path d="M17 2a1 1 0 0 1 1 1v4a3 3 0 0 1-.6 1.8l-.6.8A4 4 0 0 0 16 12v8a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-8a4 4 0 0 0-.8-2.4l-.6-.8A3 3 0 0 1 6 7V3a1 1 0 0 1 1-1z" /> <path d="M6 6h12" /></symbol>
+<symbol id="i-flower-2" viewBox="0 0 24 24"><path d="M12 5a3 3 0 1 1 3 3m-3-3a3 3 0 1 0-3 3m3-3v1M9 8a3 3 0 1 0 3 3M9 8h1m5 0a3 3 0 1 1-3 3m3-3h-1m-2 3v-1" /> <circle cx="12" cy="8" r="2" /> <path d="M12 10v12" /> <path d="M12 22c4.2 0 7-1.667 7-5-4.2 0-7 1.667-7 5Z" /> <path d="M12 22c-4.2 0-7-1.667-7-5 4.2 0 7 1.667 7 5Z" /></symbol>
+<symbol id="i-folder-open" viewBox="0 0 24 24"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2" /></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5" /></symbol>
+<symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" /></symbol>
+<symbol id="i-house" viewBox="0 0 24 24"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" /> <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /> <circle cx="9" cy="9" r="2" /> <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></symbol>
+<symbol id="i-key-round" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z" /> <circle cx="16.5" cy="7.5" r=".5" fill="currentColor" /></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" /> <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" /> <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" /></symbol>
+<symbol id="i-leaf" viewBox="0 0 24 24"><path d="M11 20a10 10 0 0010-10 25.9 25.9 0 00-1.04-7.281 1 1 0 00-1.755-.325C15.833 5.5 13 5.5 9.8 6.1A7 7 0 0011 20" /> <path d="M2 21a5 5 0 012.911-4.544C7.613 15.212 8.351 15.24 11 13" /></symbol>
+<symbol id="i-library-big" viewBox="0 0 24 24"><rect width="8" height="18" x="3" y="3" rx="1" /> <path d="M7 3v18" /> <path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z" /></symbol>
+<symbol id="i-library" viewBox="0 0 24 24"><path d="m16 6 4 14" /> <path d="M12 6v14" /> <path d="M8 8v12" /> <path d="M4 4v16" /></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /> <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M3 5h.01" /> <path d="M3 12h.01" /> <path d="M3 19h.01" /> <path d="M8 5h13" /> <path d="M8 12h13" /> <path d="M8 19h13" /></symbol>
+<symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14" /></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><rect x="14" y="3" width="5" height="18" rx="1" /> <rect x="5" y="3" width="5" height="18" rx="1" /></symbol>
+<symbol id="i-pen-line" viewBox="0 0 24 24"><path d="M13 21h8" /> <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" /></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" /></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></symbol>
+<symbol id="i-quote" viewBox="0 0 24 24"><path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" /> <path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" /></symbol>
+<symbol id="i-refresh-cw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" /></symbol>
+<symbol id="i-rotate-ccw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /></symbol>
+<symbol id="i-scan-barcode" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2" /> <path d="M17 3h2a2 2 0 0 1 2 2v2" /> <path d="M21 17v2a2 2 0 0 1-2 2h-2" /> <path d="M7 21H5a2 2 0 0 1-2-2v-2" /> <path d="M8 7v10" /> <path d="M12 7v10" /> <path d="M17 7v10" /></symbol>
+<symbol id="i-scan-text" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2" /> <path d="M17 3h2a2 2 0 0 1 2 2v2" /> <path d="M21 17v2a2 2 0 0 1-2 2h-2" /> <path d="M7 21H5a2 2 0 0 1-2-2v-2" /> <path d="M7 8h8" /> <path d="M7 12h10" /> <path d="M7 16h6" /></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /> <circle cx="12" cy="12" r="3" /></symbol>
+<symbol id="i-share-2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3" /> <circle cx="6" cy="12" r="3" /> <circle cx="18" cy="19" r="3" /> <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /> <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" /></symbol>
+<symbol id="i-shopping-bag" viewBox="0 0 24 24"><path d="M16 10a4 4 0 0 1-8 0" /> <path d="M3.103 6.034h17.794" /> <path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z" /></symbol>
+<symbol id="i-shuffle" viewBox="0 0 24 24"><path d="m18 14 4 4-4 4" /> <path d="m18 2 4 4-4 4" /> <path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22" /> <path d="M2 6h1.972a4 4 0 0 1 3.6 2.2" /> <path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45" /></symbol>
+<symbol id="i-smile" viewBox="0 0 24 24"><path d="M15 10V9" /> <path d="M16.472 15a6 6 0 01-8.943 0" /> <path d="M9 10V9" /> <circle cx="12" cy="12" r="10" /></symbol>
+<symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /> <path d="M20 2v4" /> <path d="M22 4h-4" /> <circle cx="4" cy="20" r="2" /></symbol>
+<symbol id="i-square" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></symbol>
+<symbol id="i-sun-moon" viewBox="0 0 24 24"><path d="M12 2v2" /> <path d="M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715" /> <path d="M16 12a4 4 0 0 0-4-4" /> <path d="m19 5-1.256 1.256" /> <path d="M20 12h2" /></symbol>
+<symbol id="i-tag" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" /> <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" /></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <circle cx="12" cy="12" r="6" /> <circle cx="12" cy="12" r="2" /></symbol>
+<symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2" /> <line x1="12" x2="15" y1="14" y2="11" /> <circle cx="12" cy="14" r="8" /></symbol>
+<symbol id="i-trash-2" viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></symbol>
+<symbol id="i-unlink" viewBox="0 0 24 24"><path d="m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71" /> <path d="m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71" /> <line x1="8" x2="8" y1="2" y2="5" /> <line x1="2" x2="5" y1="8" y2="8" /> <line x1="16" x2="16" y1="19" y2="22" /> <line x1="19" x2="22" y1="16" y2="16" /></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /> <path d="M16 3.128a4 4 0 0 1 0 7.744" /> <path d="M22 21v-2a4 4 0 0 0-3-3.87" /> <circle cx="9" cy="7" r="4" /></symbol>
+<symbol id="i-wallet" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" /> <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" /></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></symbol>
+</svg>
+<style>
+/* icônes au trait (Lucide) : elles prennent la couleur du texte */
+.ic{width:1.15em;height:1.15em;flex:none;vertical-align:-.2em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.act .ic,.mini-btn .ic,.lien .ic,.chip .ic,.seg .ic,.act-h .ic{width:16px;height:16px;margin-right:2px}
+.act.grand .ic{width:19px;height:19px}
+.choix-ajout .act .ic{width:20px;height:20px;margin-right:6px}
+.chip .x .ic{width:12px;height:12px;margin:0}
+nav button span .ic{width:22px;height:22px;display:block;margin:0 auto 2px;vertical-align:0}
+.tete-n .rond .ic{width:20px;height:20px;vertical-align:-.25em}
+.fab-scan .ic{width:28px;height:28px;stroke-width:2.2;vertical-align:-.25em}
+.sheet-x .ic{width:16px;height:16px;vertical-align:-.2em}
+.carte-livre .lire .ic{width:24px;height:24px;margin-left:2px}
+.carte-livre .lire.en-cours .ic{margin-left:0}
+.lecteur .b .ic{width:20px;height:20px}
+.rond-m .ic{width:22px;height:22px}
+.gros-m .ic{width:42px;height:42px;stroke-width:2}
+.page-minuteur .haut button .ic{width:16px;height:16px}
+.scan .haut button .ic{width:20px;height:20px}
+.story .x .ic{width:20px;height:20px}
+.mini-btn .ic:only-child{margin:0}
+</style>
+<script>
+// ic('pencil') → l'icône du même nom, à placer dans un bouton
+function ic(nom) {
+  return '<svg class="ic" aria-hidden="true"><use href="#i-' + nom + '"/></svg>';
+}
+</script>
+
 <div class="etoiles" aria-hidden="true"></div>
 <header>
-<div class="tete-n"><h1>Mon grimoire <span>de lectures</span></h1><button class="rond" id="reglagesBtn" data-act="reglages" aria-label="Réglages">⚙️</button></div>
+<div class="tete-n"><h1>Mon grimoire <span>de lectures</span></h1><button class="rond" id="reglagesBtn" data-act="reglages" aria-label="Réglages"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg></button></div>
 <div id="puceFete"></div>
 <div class="src" id="src"></div>
 <input type="file" id="fichierImport" accept="application/zip,application/x-zip-compressed,application/octet-stream,application/x-sqlite3,.zip,.db" hidden>
 </header>
 <main id="app"><div id="load">J'ouvre ton grimoire…</div></main>
-<button class="fab-scan" id="fabAjout" data-act="ajouter" aria-label="Ajouter un livre" hidden>＋</button>
+<button class="fab-scan" id="fabAjout" data-act="ajouter" aria-label="Ajouter un livre" hidden><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button>
 <nav id="nav"></nav>
 <script>
 var DAY = 86400000;
@@ -589,7 +682,7 @@ function ouvrirFeuille(html) {
   var d = document.createElement('div');
   d.className = 'sheet-bg';
   d.id = 'feuille';
-  d.innerHTML = '<div class="sheet"><button class="sheet-x" data-act="fermer" aria-label="Fermer">✕</button>' + html + '</div>';
+  d.innerHTML = '<div class="sheet"><button class="sheet-x" data-act="fermer" aria-label="Fermer">' + ic('x') + '</button>' + html + '</div>';
   d.addEventListener('click', function (e) {
     if (e.target === d) {
       fermerFeuille();
@@ -736,7 +829,7 @@ function avec(cat, f) {
     CAT = avant;
   }
 }
-var CATS_EXCLUSION = [['stats', '📊 Stats'], ['bilan', '👑 Bilan'], ['quetes', '🎯 Quêtes'], ['reco', '💖 Recos']];
+var CATS_EXCLUSION = [['stats', '' + ic('chart-column') + ' Stats'], ['bilan', '' + ic('crown') + ' Bilan'], ['quetes', '' + ic('target') + ' Quêtes'], ['reco', '' + ic('heart') + ' Recos']];
 function exclusDe(cat) {
   return Object.keys(EXCLUS).filter(function (id) { return EXCLUS[id][cat] && M.parId[id]; });
 }
@@ -879,12 +972,12 @@ function affinites() {
 
 // ---------- onglets ----------
 var ONGLETS = [
-  ['accueil', '🏰', 'Accueil'],
-  ['stats', '🌙', 'Stats'],
-  ['etagere', '📚', 'Étagère'],
-  ['carnet', '✒️', 'Carnet'],
-  ['quetes', '🎯', 'Quêtes'],
-  ['bilan', '👑', 'Bilan']
+  ['accueil', 'house', 'Accueil'],
+  ['stats', 'moon', 'Stats'],
+  ['etagere', 'library-big', 'Étagère'],
+  ['carnet', 'feather', 'Carnet'],
+  ['quetes', 'target', 'Quêtes'],
+  ['bilan', 'crown', 'Bilan']
 ];
 function rendreNav() {
   document.getElementById('nav').innerHTML = ONGLETS.map(function (o) {
@@ -892,7 +985,7 @@ function rendreNav() {
     if (o[0] === onglet) {
       cls = ' class="on"';
     }
-    return '<button' + cls + ' data-o="' + o[0] + '"><span>' + o[1] + '</span>' + o[2] + '</button>';
+    return '<button' + cls + ' data-o="' + o[0] + '"><span>' + ic(o[1]) + '</span>' + o[2] + '</button>';
   }).join('');
 }
 document.getElementById('nav').addEventListener('click', function (e) {
@@ -941,7 +1034,7 @@ function derniereActivite(r) {
 function blocEnCeMoment() {
   var enCours = M.lectures.filter(function (r) { return r.status === 'READING'; }).sort(function (a, b) { return derniereActivite(b) - derniereActivite(a); });
   if (!enCours.length) {
-    return card('En ce moment', '<p class="muted" style="margin:0 0 10px">Aucune lecture en cours.</p><div class="row"><button class="act" data-act="allerALire">🎡 Choisir ma prochaine lecture</button></div>');
+    return card('En ce moment', '<p class="muted" style="margin:0 0 10px">Aucune lecture en cours.</p><div class="row"><button class="act" data-act="allerALire">' + ic('ferris-wheel') + ' Choisir ma prochaine lecture</button></div>');
   }
   var seul = '';
   if (enCours.length === 1) {
@@ -976,14 +1069,14 @@ function carteEnCours(r) {
     infos.push(est.fin);
   }
   var s = typeof sessionEnCours === 'function' ? sessionEnCours() : null;
-  var bouton = '<button class="lire" data-act="lireMaintenant" data-lecture="' + r._id + '" aria-label="Lire maintenant">▶</button>';
+  var bouton = '<button class="lire" data-act="lireMaintenant" data-lecture="' + r._id + '" aria-label="Lire maintenant">' + ic('play') + '</button>';
   if (s && s.lectureId === r._id) {
-    bouton = '<button class="lire en-cours" data-act="pageMinuteur" aria-label="Voir le minuteur">⏱️</button>';
+    bouton = '<button class="lire en-cours" data-act="pageMinuteur" aria-label="Voir le minuteur">' + ic('timer') + '</button>';
   }
   var position = 'J\'en suis à…';
   return '<div class="carte-livre"><div class="couv-carte" data-act="livre" data-id="' + b.id + '">' + cover(b) + '</div>' + bouton +
     '<div class="t" data-act="livre" data-id="' + b.id + '">' + esc(titre(b)) + '</div><div class="prog"><div style="width:' + pct + '%"></div></div>' +
-    '<div class="small muted">' + infos.join(' · ') + '</div><div class="carte-actions"><button class="mini-btn" data-act="progression" data-lecture="' + r._id + '">📍 ' + position + '</button></div></div>';
+    '<div class="small muted">' + infos.join(' · ') + '</div><div class="carte-actions"><button class="mini-btn" data-act="progression" data-lecture="' + r._id + '">' + ic('bookmark') + ' ' + position + '</button></div></div>';
 }
 // durée lisible : « 18 min », « 2 h 30 », « 6 h »
 function dureeCourte(sec) {
@@ -1120,7 +1213,7 @@ function carteAnnee() {
   if (obj.livres && cetteAnnee >= obj.livres) {
     badges.push('🎉 objectif atteint');
   }
-  return '<section class="card"><h2>Mon année ' + y + ' <button class="act-h" data-act="objectifs">🎯 Objectifs</button></h2><div class="annee">' + anneau + '<div style="flex:1;min-width:0">' + lignes + '</div></div>' +
+  return '<section class="card"><h2>Mon année ' + y + ' <button class="act-h" data-act="objectifs">' + ic('target') + ' Objectifs</button></h2><div class="annee">' + anneau + '<div style="flex:1;min-width:0">' + lignes + '</div></div>' +
     (badges.length ? '<div class="pastilles-annee">' + badges.map(function (b) { return '<span class="pastille-annee">' + b + '</span>'; }).join('') + '</div>' : '') + '</section>';
 }
 function ligneObjectif(emoji, fait, cible, unite) {
@@ -1228,7 +1321,7 @@ ACTIONS.objectifs = function () {
     '<label>📚 Livres finis</label>' + champ('objLivres', o.livres || '', 'inputmode="numeric" placeholder="25"') +
     '<label>📖 Pages lues</label>' + champ('objPages', o.pages || '', 'inputmode="numeric" placeholder="par ex. 10000"') +
     '<label>⏱️ Heures de lecture (minutées)</label>' + champ('objHeures', o.heures || '', 'inputmode="numeric" placeholder="par ex. 150"') +
-    '<div class="row" style="margin-top:16px"><button class="act" data-act="objEnregistrer">💾 Enregistrer</button><button class="act doux" data-act="fermer">Annuler</button></div></div>');
+    '<div class="row" style="margin-top:16px"><button class="act" data-act="objEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="fermer">Annuler</button></div></div>');
   ACTIONS.objEnregistrer = function () {
     sauverObjectif(y, {livres: parseInt(val('objLivres'), 10) || null, pages: parseInt(val('objPages'), 10) || null, heures: parseInt(val('objHeures'), 10) || null});
     fermerFeuille();
@@ -1238,7 +1331,7 @@ ACTIONS.objectifs = function () {
 // ---------- Stats : rythme, goûts, argent ----------
 function vStats() {
   return avec('stats', function () {
-    var h = seg('stats', [['rythme', '🌙 Rythme'], ['gouts', '💖 Goûts'], ['argent', '💰 Argent']]) + noteExclus('stats');
+    var h = seg('stats', [['rythme', '' + ic('activity') + ' Rythme'], ['gouts', '' + ic('heart') + ' Goûts'], ['argent', '' + ic('wallet') + ' Argent']]) + noteExclus('stats');
     if (sous.stats === 'gouts') {
       h += vGouts();
     } else if (sous.stats === 'argent') {
@@ -1643,7 +1736,7 @@ function vBilanCorps() {
       sel = ' selected';
     }
     return '<option' + sel + '>' + a + '</option>';
-  }).join('') + '</select><button class="act" data-act="wrapped" data-an="' + y + '">✨ Revivre mon année en stories</button></div>' + noteExclus('bilan');
+  }).join('') + '</select><button class="act" data-act="wrapped" data-an="' + y + '">' + ic('sparkles') + ' Revivre mon année en stories</button></div>' + noteExclus('bilan');
 
   var fin = finies().filter(function (r) { return annee(r.end) === y; });
   var ab = lect().filter(function (r) { return r.status === 'GIVE_UP' && r.date && annee(r.date) === y; });
@@ -1767,7 +1860,7 @@ function tranche(b, star) {
 }
 
 function vEtagere() {
-  var h = seg('etagere', [['etagere', '📚 Étagère'], ['alire', '🎡 À lire'], ['series', '🗝️ Séries'], ['tous', '🔎 Tous']]);
+  var h = seg('etagere', [['etagere', '' + ic('library-big') + ' Étagère'], ['alire', '' + ic('ferris-wheel') + ' À lire'], ['series', '' + ic('key-round') + ' Séries'], ['tous', '' + ic('search') + ' Tous']]);
   if (sous.etagere === 'alire') {
     h += vALire();
   } else if (sous.etagere === 'series') {
@@ -1791,7 +1884,7 @@ vEtagere.apres = function () {
 
 // ---------- tous mes livres : recherche, filtres, tris ----------
 var tous = {q: '', etat: '', fmt: '', tri: 'ajout', etagere: ''};
-var ETATS_LIVRE = [['', 'Tous'], ['encours', '📖 En cours'], ['lus', '✅ Lus'], ['pal', '🕯️ Pile à lire'], ['envies', '💫 Envies'], ['abandons', '🏳️ Abandonnés']];
+var ETATS_LIVRE = [['', 'Tous'], ['encours', '' + ic('book-open') + ' En cours'], ['lus', '' + ic('check') + ' Lus'], ['pal', '' + ic('layers') + ' Pile à lire'], ['envies', '' + ic('heart') + ' Envies'], ['abandons', '' + ic('flag') + ' Abandonnés']];
 var TRIS = [['ajout', 'Ajoutés récemment'], ['titre', 'Titre'], ['auteur', 'Auteur·ice'], ['note', 'Note'], ['lecture', 'Lus récemment']];
 function etatLivre(b) {
   if (b.reads.some(function (r) { return r.status === 'READING' || r.status === 'PAUSE'; })) {
@@ -1899,7 +1992,7 @@ ACTIONS.tousTri = function (el) {
 };
 
 function vShelf() {
-  var filtres = [['lus', '📖 Lus'], ['pal', '🕯️ Pile à lire'], ['envies', '💫 Envies']];
+  var filtres = [['lus', '' + ic('check') + ' Lus'], ['pal', '' + ic('layers') + ' Pile à lire'], ['envies', '' + ic('heart') + ' Envies']];
   var h = '<div class="row" style="margin-top:12px">' + filtres.map(function (f) {
     var cls = 'chip';
     if (f[0] === filtreEtagere) {
@@ -1992,7 +2085,7 @@ function vALire() {
   if (roue.livres.length >= 2) {
     roueHtml = '<div class="roue-wrap"><div class="roue-ptr">▼</div>' + svgRoue(roue.livres) + '<button class="roue-centre" data-act="tourner">Tourner</button></div>';
   }
-  h += card('La roue du destin', '<div class="row"><select data-chg="roueFmt">' + opts + '</select><label class="small"><input type="checkbox" data-chg="roueEnvies"' + coche + '> + envies</label><button class="act doux" data-act="melangerRoue">🔀 Autres livres</button></div>' + roueHtml + '<div id="tirage"></div>', '10 livres de ta PAL tirés au hasard');
+  h += card('La roue du destin', '<div class="row"><select data-chg="roueFmt">' + opts + '</select><label class="small"><input type="checkbox" data-chg="roueEnvies"' + coche + '> + envies</label><button class="act doux" data-act="melangerRoue">' + ic('shuffle') + ' Autres livres</button></div>' + roueHtml + '<div id="tirage"></div>', '10 livres de ta PAL tirés au hasard');
 
   var pal = M.livres.filter(function (b) { return b.statut === 'NOT_STARTED' && !b.wishlist; }).sort(function (a, b) { return a.created_at - b.created_at; });
   var envies = M.livres.filter(function (b) { return b.wishlist; }).sort(function (a, b) { return a.created_at - b.created_at; });
@@ -2067,7 +2160,7 @@ function vSeries() {
   });
   var cles = Object.keys(parSerie);
   if (!cles.length) {
-    return card('Tes séries', '<p class="muted">Aucune série pour l\'instant : ajoute-la depuis la fiche d\'un livre (✏️ Modifier).</p>');
+    return card('Tes séries', '<p class="muted">Aucune série pour l\'instant : ajoute-la depuis la fiche d\'un livre (' + ic('pencil') + ' Modifier).</p>');
   }
   return card('Tes séries', cles.map(function (k) {
     var s = M.series[k] || {name: 'Série'};
@@ -2095,7 +2188,7 @@ function vSeries() {
     if (manquants.length) {
       info += ' · absent(s) de ta bibliothèque : tome ' + manquants.join(', ');
     }
-    return '<div style="margin:10px 0 16px"><b style="font:700 18px Cormorant Garamond,Georgia,serif">' + esc(s.name) + '</b> <button class="mini-btn" data-act="formSerie" data-id="' + esc(k) + '">✏️</button><div class="shelf" style="min-height:0;padding-top:8px">' + l.map(function (x) { return tranche(x.b, 0); }).join('') + '</div><div class="prog"><div style="width:' + (100 * lus / l.length) + '%"></div></div><div class="small muted">' + info + '</div></div>';
+    return '<div style="margin:10px 0 16px"><b style="font:700 18px Cormorant Garamond,Georgia,serif">' + esc(s.name) + '</b> <button class="mini-btn" data-act="formSerie" data-id="' + esc(k) + '">' + ic('pencil') + '</button><div class="shelf" style="min-height:0;padding-top:8px">' + l.map(function (x) { return tranche(x.b, 0); }).join('') + '</div><div class="prog"><div style="width:' + (100 * lus / l.length) + '%"></div></div><div class="small muted">' + info + '</div></div>';
   }).join(''));
 }
 </script>
@@ -2245,7 +2338,7 @@ function pips(champ, val, symbole, max) {
 function zoneNouveau(t) {
   if (brouillon.nouveau !== t) {
     var quoi = {criteres: 'critère', humeurs: 'humeur', tropes: 'trope'}[t];
-    return '<button class="chip" data-act="ouvrirNouveau" data-t="' + t + '">＋ ' + quoi + '</button>';
+    return '<button class="chip" data-act="ouvrirNouveau" data-t="' + t + '">' + ic('plus') + ' ' + quoi + '</button>';
   }
   var emoji = '';
   if (t !== 'tropes') {
@@ -2273,7 +2366,7 @@ function rendreEditeur() {
     return '<button class="' + cls + '" data-act="puce" data-l="tropeIds" data-v="' + esc(x.id) + '">' + esc(libelle(x)) + '</button>';
   }).join('') + zoneNouveau('tropes') + '</div>';
   h += '<h4>Mon petit mot</h4><textarea id="mot" placeholder="Ce que je veux me rappeler de ce livre…">' + esc(b.mot) + '</textarea>';
-  h += '<div class="row" style="margin-top:16px"><button class="act" data-act="enregistrerNote">💾 Enregistrer</button>';
+  h += '<div class="row" style="margin-top:16px"><button class="act" data-act="enregistrerNote">' + ic('check') + ' Enregistrer</button>';
   if (D.avis[b.id]) {
     h += '<button class="act doux" data-act="effacerNote">Effacer</button>';
   }
@@ -2459,7 +2552,7 @@ ACTIONS.imageCitation = function (el) {
     ctx.fillStyle = couleurVar('--gold');
     ctx.fillText('✦  Mon grimoire de lectures  ✦', W / 2, H - 110);
     var url = cv.toDataURL('image/png');
-    ouvrirFeuille('<h3>Ta carte citation</h3><p class="small muted">Sur ton téléphone : appui long sur l\'image → « Enregistrer l\'image ».</p><img src="' + url + '" alt="Carte citation" style="width:100%;border-radius:14px;box-shadow:var(--shadow)"><div class="row" style="margin-top:12px"><a class="act" href="' + url + '" download="citation.png">⬇️ Télécharger</a></div>');
+    ouvrirFeuille('<h3>Ta carte citation</h3><p class="small muted">Sur ton téléphone : appui long sur l\'image → « Enregistrer l\'image ».</p><img src="' + url + '" alt="Carte citation" style="width:100%;border-radius:14px;box-shadow:var(--shadow)"><div class="row" style="margin-top:12px"><a class="act" href="' + url + '" download="citation.png">' + ic('download') + ' Télécharger</a></div>');
   });
 };
 </script>
@@ -2849,7 +2942,7 @@ function afficherStory() {
     return '<i class="' + cls + '"><b></b></i>';
   }).join('');
   el.style.background = FONDS[story.i % FONDS.length];
-  el.innerHTML = '<div class="bars">' + barres + '</div><button class="x" data-act="fermerStory" aria-label="Fermer">✕</button>' + paillettes() + '<div class="slide">' + story.slides[story.i] + '</div>';
+  el.innerHTML = '<div class="bars">' + barres + '</div><button class="x" data-act="fermerStory" aria-label="Fermer">' + ic('x') + '</button>' + paillettes() + '<div class="slide">' + story.slides[story.i] + '</div>';
   story.minuteur = setTimeout(function () { avancerStory(1); }, 6000);
 }
 function avancerStory(pas) {
@@ -3049,7 +3142,7 @@ function feteDuJour(d) {
   return 'hiver';
 }
 
-var THEMES = [['fetes', '✨', 'Au fil de l\'année'], ['auto', '🌗', 'Clair ou sombre (selon le téléphone)'], ['light', '🌸', 'Rose féerique'], ['dark', '🌙', 'Nuit enchantée'], ['autumn', '🍂', 'Automne cosy']];
+var THEMES = [['fetes', 'sparkles', 'Au fil de l\'année'], ['auto', 'sun-moon', 'Clair ou sombre (selon le téléphone)'], ['light', 'flower-2', 'Rose féerique'], ['dark', 'moon', 'Nuit enchantée'], ['autumn', 'leaf', 'Automne cosy']];
 var feteActive = null;
 var themeChoisi = 'fetes';
 
@@ -3149,7 +3242,7 @@ function choixThemesHtml() {
     if (th[0] === themeChoisi) {
       cls += ' on';
     }
-    return '<button class="' + cls + '" data-act="theme" data-t="' + th[0] + '">' + th[1] + ' ' + th[2] + '</button>';
+    return '<button class="' + cls + '" data-act="theme" data-t="' + th[0] + '">' + ic(th[1]) + ' ' + th[2] + '</button>';
   }).join('') + '</div>' + essai;
 }
 // la petite étiquette sous le titre : fête ou saison du moment
@@ -3259,7 +3352,7 @@ function ouvrirScanner(surCode) {
   var d = document.createElement('div');
   d.className = 'scan';
   d.id = 'scan';
-  d.innerHTML = '<video playsinline muted></video><div class="viseur"></div><div class="haut"><button data-act="fermerScanner" aria-label="Fermer">✕</button><button id="torche" data-act="torche" aria-label="Lampe" hidden>🔦</button></div><div class="consigne">Vise le code-barres du livre</div><div class="bas"><input id="isbnManuel" inputmode="numeric" placeholder="ou tape l\'ISBN"><button data-act="isbnManuel">Chercher</button></div>';
+  d.innerHTML = '<video playsinline muted></video><div class="viseur"></div><div class="haut"><button data-act="fermerScanner" aria-label="Fermer">' + ic('x') + '</button><button id="torche" data-act="torche" aria-label="Lampe" hidden>' + ic('flashlight') + '</button></div><div class="consigne">Vise le code-barres du livre</div><div class="bas"><input id="isbnManuel" inputmode="numeric" placeholder="ou tape l\'ISBN"><button data-act="isbnManuel">Chercher</button></div>';
   document.body.appendChild(d);
   if (!('BarcodeDetector' in window) || !navigator.mediaDevices) {
     d.querySelector('.consigne').textContent = 'Ce navigateur ne sait pas lire les codes-barres : tape l\'ISBN';
@@ -3513,7 +3606,7 @@ function resultatScan(isbn) {
     dernierScan = {isbn: isbn, infos: infos};
     var b = trouverDansBibliotheque(isbn, infos);
     var h = '';
-    var autre = '<div class="row" style="margin-top:16px"><button class="act" data-act="scanner">📷 Scanner un autre livre</button><button class="act doux" data-act="fermer">Fermer</button></div>';
+    var autre = '<div class="row" style="margin-top:16px"><button class="act" data-act="scanner">' + ic('scan-barcode') + ' Scanner un autre livre</button><button class="act doux" data-act="fermer">Fermer</button></div>';
     if (b) {
       var verdict = '';
       var r = (b.reads || []).slice().sort(function (x, y) { return (y.end || y.start || 0) - (x.end || x.start || 0); })[0];
@@ -3532,7 +3625,7 @@ function resultatScan(isbn) {
       if (NOTES[b.id]) {
         carnet = '<h4>Mon carnet</h4>' + resumeNote(NOTES[b.id]);
       }
-      h = '<div class="tete">' + cover(b) + '<div><h3>' + esc(titre(b)) + '</h3><div class="small muted">' + esc((b.authors || []).join(', ')) + '</div></div></div><div class="verdict">' + verdict + '</div>' + blocSerie(b) + blocAuteur(b.authors, b) + carnet + '<div class="row" style="margin-top:12px"><button class="act doux" data-act="livre" data-id="' + b.id + '">📖 Ouvrir sa fiche</button></div>' + autre;
+      h = '<div class="tete">' + cover(b) + '<div><h3>' + esc(titre(b)) + '</h3><div class="small muted">' + esc((b.authors || []).join(', ')) + '</div></div></div><div class="verdict">' + verdict + '</div>' + blocSerie(b) + blocAuteur(b.authors, b) + carnet + '<div class="row" style="margin-top:12px"><button class="act doux" data-act="livre" data-id="' + b.id + '">' + ic('book-open') + ' Ouvrir sa fiche</button></div>' + autre;
     } else if (infos) {
       var genres = genresDepuis(infos.categories);
       var a = affiniteEstimee(genres);
@@ -3560,11 +3653,11 @@ function resultatScan(isbn) {
       }
       h = '<div class="tete">' + img + '<div><h3>' + esc(infos.titre) + '</h3><div class="small muted">' + esc(infos.auteurs.join(', ')) + '</div><div class="small muted">' + details.join(' · ') + '</div></div></div><div class="verdict">✨ Nouveau pour toi<small>il n\'est pas encore dans ton grimoire</small></div>' +
         (genres.length ? '<div>' + genres.map(function (g) { return '<span class="chip">' + esc(g) + '</span>'; }).join('') + '</div>' : '') + jauge + blocAuteur(infos.auteurs, null) +
-        '<h4>L\'ajouter</h4><div class="row"><button class="act" data-act="ajoutScan" data-mode="pal">📚 Dans ma pile</button><button class="act doux" data-act="ajoutScan" data-mode="envie">💫 En envie</button><button class="act doux" data-act="ajoutScan" data-mode="achat">🛍️ Je l\'achète</button><button class="act doux" data-act="ajoutScan" data-mode="lecture">▶️ Je commence</button></div>' + autre;
+        '<h4>L\'ajouter</h4><div class="row"><button class="act" data-act="ajoutScan" data-mode="pal">' + ic('library') + ' Dans ma pile</button><button class="act doux" data-act="ajoutScan" data-mode="envie">' + ic('heart') + ' En envie</button><button class="act doux" data-act="ajoutScan" data-mode="achat">' + ic('shopping-bag') + ' Je l\'achète</button><button class="act doux" data-act="ajoutScan" data-mode="lecture">' + ic('book-open') + ' Je commence</button></div>' + autre;
     } else {
-      h = '<h3>Livre introuvable</h3><p class="small muted">ISBN ' + isbn + ' : il n\'est pas dans ton grimoire, et je n\'ai pas trouvé ses infos en ligne (ou tu es hors connexion).</p><div class="row"><button class="act" data-act="ajoutScanManuel">✍️ L\'ajouter à la main</button></div>' + autre;
+      h = '<h3>Livre introuvable</h3><p class="small muted">ISBN ' + isbn + ' : il n\'est pas dans ton grimoire, et je n\'ai pas trouvé ses infos en ligne (ou tu es hors connexion).</p><div class="row"><button class="act" data-act="ajoutScanManuel">' + ic('pen-line') + ' L\'ajouter à la main</button></div>' + autre;
     }
-    f.innerHTML = '<button class="sheet-x" data-act="fermer" aria-label="Fermer">✕</button>' + h;
+    f.innerHTML = '<button class="sheet-x" data-act="fermer" aria-label="Fermer">' + ic('x') + '</button>' + h;
   });
 }
 
@@ -5065,7 +5158,7 @@ function proposerBascule(ensuite) {
     sauv = '<p class="small">⚠️ <b>Ta sauvegarde Drive n\'est pas encore reliée.</b> Relie-la d\'abord dans ⚙️ Réglages : ensuite, ton grimoire sera la seule copie de tes lectures.</p>';
   }
   ouvrirFeuille('<h3>Rendre ton grimoire indépendant ✨</h3><p>Pour ajouter et modifier tes livres ici, ton grimoire doit arrêter de recopier Bookmory : sinon, le prochain export écraserait tes changements.</p><p class="small">À partir de maintenant, c\'est ici que tu notes tes lectures. Les exports Bookmory ne seront plus recopiés : tu peux désactiver la macro « Grimoire auto » dans MacroDroid.</p>' + sauv +
-    '<div class="row" style="margin-top:14px"><button class="act" data-act="basculer">✨ Oui, je passe au Grimoire</button><button class="act doux" data-act="fermer">Plus tard</button></div>');
+    '<div class="row" style="margin-top:14px"><button class="act" data-act="basculer">' + ic('sparkles') + ' Oui, je passe au Grimoire</button><button class="act doux" data-act="fermer">Plus tard</button></div>');
   ACTIONS.basculer = function () {
     ecrire([{t: 'reglages', o: {id: 'mode', v: 'independant'}}, {t: 'reglages', o: {id: 'bascule', v: Date.now()}}]).then(function () {
       fermerFeuille();
@@ -5127,13 +5220,13 @@ function ouvrirFiche(id) {
   }
 
   var enCours = lectureEnCours(id);
-  h += '<div class="actions-fiche"><button class="act doux" data-act="modifierLivre" data-id="' + id + '">✏️ Modifier</button>';
+  h += '<div class="actions-fiche"><button class="act doux" data-act="modifierLivre" data-id="' + id + '">' + ic('pencil') + ' Modifier</button>';
   if (enCours) {
-    h += '<button class="act" data-act="lancerMinuteur" data-lecture="' + enCours.id + '">⏱️ Lire maintenant</button><button class="act doux" data-act="progression" data-lecture="' + enCours.id + '">📍 J\'en suis à…</button>';
+    h += '<button class="act" data-act="lancerMinuteur" data-lecture="' + enCours.id + '">' + ic('play') + ' Lire maintenant</button><button class="act doux" data-act="progression" data-lecture="' + enCours.id + '">' + ic('bookmark') + ' J\'en suis à…</button>';
   } else {
-    h += '<button class="act" data-act="commencerLecture" data-livre="' + id + '">▶️ Commencer</button>';
+    h += '<button class="act" data-act="commencerLecture" data-livre="' + id + '">' + ic('book-open') + ' Commencer</button>';
   }
-  h += '<button class="act doux" data-act="noter" data-id="' + id + '">✒️ Carnet</button></div>';
+  h += '<button class="act doux" data-act="noter" data-id="' + id + '">' + ic('feather') + ' Carnet</button></div>';
 
   var ls = lecturesDe(id);
   h += '<h4>Lectures</h4>';
@@ -5147,9 +5240,9 @@ function ouvrirFiche(id) {
       prog = '<div class="prog"><div style="width:' + Math.min(100, 100 * (x.position || 0) / x.total) + '%"></div></div><div class="small muted">' + texteLongueur(x.unite, x.position) + ' / ' + texteLongueur(x.unite, x.total) + '</div>';
     }
     var fmt = FORMATS_FR.find(function (f) { return f[0] === x.format; });
-    return '<div class="ligne-ed"><div style="flex:1"><div class="small"><b>' + texteLecture(x) + '</b></div><div class="small muted">' + ((fmt && fmt[1]) || '') + ' · ' + etoiles(x.etoiles) + '</div>' + prog + '</div><div class="boutons"><button class="mini-btn" data-act="sessions" data-lecture="' + x.id + '">🕰️ ' + nb + '</button><button class="mini-btn" data-act="formLecture" data-id="' + x.id + '">✏️</button></div></div>';
+    return '<div class="ligne-ed"><div style="flex:1"><div class="small"><b>' + texteLecture(x) + '</b></div><div class="small muted">' + ((fmt && fmt[1]) || '') + ' · ' + etoiles(x.etoiles) + '</div>' + prog + '</div><div class="boutons"><button class="mini-btn" data-act="sessions" data-lecture="' + x.id + '">' + ic('history') + ' ' + nb + '</button><button class="mini-btn" data-act="formLecture" data-id="' + x.id + '">' + ic('pencil') + '</button></div></div>';
   }).join('');
-  h += '<button class="lien" data-act="formLecture" data-livre="' + id + '">＋ Ajouter une lecture passée</button>';
+  h += '<button class="lien" data-act="formLecture" data-livre="' + id + '">' + ic('plus') + ' Ajouter une lecture passée</button>';
 
   var achats = valeurs(D.achats).filter(function (a) { return a.livreId === id; }).sort(function (a, b) { return (a.date || 0) - (b.date || 0); });
   h += '<h4>Achats</h4>' + achats.map(function (a) {
@@ -5160,8 +5253,8 @@ function ouvrirFiche(id) {
     if (a.date) {
       details.push(fdate(a.date));
     }
-    return '<div class="ligne-ed"><div class="small"><b>' + prix(a.prix, a.devise) + '</b> · ' + details.join(' · ') + '</div><div class="boutons"><button class="mini-btn" data-act="formAchat" data-id="' + a.id + '">✏️</button></div></div>';
-  }).join('') + '<button class="lien" data-act="formAchat" data-livre="' + id + '">＋ Ajouter un achat</button>';
+    return '<div class="ligne-ed"><div class="small"><b>' + prix(a.prix, a.devise) + '</b> · ' + details.join(' · ') + '</div><div class="boutons"><button class="mini-btn" data-act="formAchat" data-id="' + a.id + '">' + ic('pencil') + '</button></div></div>';
+  }).join('') + '<button class="lien" data-act="formAchat" data-livre="' + id + '">' + ic('plus') + ' Ajouter un achat</button>';
 
   h += blocCitationsLivre(id);
   if (b.tagList.length) {
@@ -5245,21 +5338,21 @@ function ouvrirFormLivre(id, prerempli) {
     '<label>Titre</label>' + champ('flTitre', fl.titre, 'placeholder="Titre du livre"') +
     '<label>Auteur·ices et autres contributions</label><div id="zContrib"></div>' +
     '<div class="deux-un">' + champ('flAuteur', '', 'list="dlAuteurs" placeholder="Nom" autocomplete="off"') + choix('flRole', ROLES, 'auteur') + '</div>' +
-    '<button type="button" class="lien" data-act="flAjouterAuteur">＋ Ajouter</button>' + listeDeChoix('dlAuteurs', valeurs(D.auteurs).map(function (a) { return a.nom; })) +
+    '<button type="button" class="lien" data-act="flAjouterAuteur">' + ic('plus') + ' Ajouter</button>' + listeDeChoix('dlAuteurs', valeurs(D.auteurs).map(function (a) { return a.nom; })) +
     '<label>Série et tome</label><div class="deux-un">' + champ('flSerie', fl.serieNom, 'list="dlSeries" placeholder="Pas de série" autocomplete="off"') + champ('flTome', fl.tome === null || fl.tome === undefined ? '' : String(fl.tome).replace('.', ','), 'inputmode="decimal" placeholder="Tome"') + '</div>' + listeDeChoix('dlSeries', valeurs(D.series).map(function (s) { return s.nom; })) +
     '<div class="deux"><div><label>Format</label>' + choix('flFormat', FORMATS_FR, fl.format) + '</div><div><label>Chez moi</label>' + choix('flPossession', POSSESSIONS, fl.possession) + '</div></div>' +
     '<div class="deux"><div><label>Se compte en</label>' + choix('flUnite', UNITES, fl.unite) + '</div><div><label>Longueur</label><div id="zTotal">' + champLongueur('flTotal', fl.unite, fl.total) + '</div></div></div>' +
-    '<label>Genres</label><div id="zGenres"></div><div class="avec-bouton">' + champ('flGenre', '', 'list="dlGenres" placeholder="Ajouter un genre" autocomplete="off"') + '<button type="button" class="act doux" data-act="flAjouterGenre">＋</button></div>' + listeDeChoix('dlGenres', valeurs(D.genres).filter(function (g) { return !g.archive; }).map(function (g) { return g.nom; })) +
+    '<label>Genres</label><div id="zGenres"></div><div class="avec-bouton">' + champ('flGenre', '', 'list="dlGenres" placeholder="Ajouter un genre" autocomplete="off"') + '<button type="button" class="act doux" data-act="flAjouterGenre">' + ic('plus') + '</button></div>' + listeDeChoix('dlGenres', valeurs(D.genres).filter(function (g) { return !g.archive; }).map(function (g) { return g.nom; })) +
     (valeurs(D.etageres).length ? '<label>Étagères</label><div id="zEtageres"></div>' : '') +
     '<label>Couverture</label><div id="zCouv"></div>' +
-    '<label>ISBN</label><div class="avec-bouton">' + champ('flIsbn', fl.isbn, 'inputmode="numeric" placeholder="978…"') + '<button type="button" class="act doux" data-act="flScanIsbn">📷</button></div>' +
-    '<button type="button" class="lien" data-act="flCompleter">🔎 Compléter depuis internet</button>' +
+    '<label>ISBN</label><div class="avec-bouton">' + champ('flIsbn', fl.isbn, 'inputmode="numeric" placeholder="978…"') + '<button type="button" class="act doux" data-act="flScanIsbn">' + ic('scan-barcode') + '</button></div>' +
+    '<button type="button" class="lien" data-act="flCompleter">' + ic('search') + ' Compléter depuis internet</button>' +
     '<div class="deux"><div><label>Éditeur</label>' + champ('flEditeur', fl.editeur, 'list="dlEditeurs" autocomplete="off"') + '</div><div><label>Année</label>' + champ('flAnnee', fl.annee, 'type="number" inputmode="numeric"') + '</div></div>' + listeDeChoix('dlEditeurs', valeurs(D.livres).map(function (x) { return x.editeur; })) +
     '<label>Langue</label>' + champ('flLangue', fl.langue, 'placeholder="Français"') +
     '<label>Résumé</label><textarea class="champ" id="flResume">' + esc(fl.resume) + '</textarea>' +
-    '<div class="row" style="margin-top:16px"><button class="act" data-act="flEnregistrer">💾 Enregistrer</button><button class="act doux" data-act="flAnnuler">Annuler</button></div>';
+    '<div class="row" style="margin-top:16px"><button class="act" data-act="flEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="flAnnuler">Annuler</button></div>';
   if (id) {
-    h += '<button class="lien danger" data-act="supprimerLivre" data-id="' + id + '" style="margin-top:14px">🗑️ Supprimer ce livre</button>';
+    h += '<button class="lien danger" data-act="supprimerLivre" data-id="' + id + '" style="margin-top:14px">' + ic('trash-2') + ' Supprimer ce livre</button>';
   }
   h += '</div><input type="file" id="flFichierCouv" accept="image/*" hidden>';
   var f = ouvrirFeuille(h);
@@ -5310,7 +5403,7 @@ function rendreContrib() {
       var r = ROLES.find(function (x) { return x[0] === c.role; });
       role = ' <span class="muted">(' + esc(((r && r[1]) || c.role).toLowerCase()) + ')</span>';
     }
-    return '<span class="chip on">' + esc(c.nom) + role + '<span class="x" data-act="flRetirerAuteur" data-i="' + i + '">✕</span></span>';
+    return '<span class="chip on">' + esc(c.nom) + role + '<span class="x" data-act="flRetirerAuteur" data-i="' + i + '">' + ic('x') + '</span></span>';
   }).join('') || '<p class="small muted" style="margin:4px 0">Personne pour l\'instant.</p>';
 }
 ACTIONS.flAjouterAuteur = function () {
@@ -5333,7 +5426,7 @@ function rendreGenresForm() {
     return;
   }
   z.innerHTML = fl.genres.map(function (g, i) {
-    return '<span class="chip on">' + esc(g) + '<span class="x" data-act="flRetirerGenre" data-i="' + i + '">✕</span></span>';
+    return '<span class="chip on">' + esc(g) + '<span class="x" data-act="flRetirerGenre" data-i="' + i + '">' + ic('x') + '</span></span>';
   }).join('') || '<p class="small muted" style="margin:4px 0">Aucun genre.</p>';
 }
 ACTIONS.flAjouterGenre = function () {
@@ -5392,7 +5485,7 @@ function rendreCouv() {
   if (src) {
     img = '<img src="' + esc(src) + '" alt="">';
   }
-  z.innerHTML = '<div class="apercu-couv">' + img + '<div><button type="button" class="mini-btn" data-act="flPhotoCouv">📷 Photo</button> <button type="button" class="mini-btn" data-act="flLienCouv">🔗 Lien</button>' + (src ? ' <button type="button" class="mini-btn" data-act="flSansCouv">✕</button>' : '') + '</div></div>';
+  z.innerHTML = '<div class="apercu-couv">' + img + '<div><button type="button" class="mini-btn" data-act="flPhotoCouv">' + ic('camera') + ' Photo</button> <button type="button" class="mini-btn" data-act="flLienCouv">' + ic('link') + ' Lien</button>' + (src ? ' <button type="button" class="mini-btn" data-act="flSansCouv">' + ic('x') + '</button>' : '') + '</div></div>';
 }
 ACTIONS.flPhotoCouv = function () {
   document.getElementById('flFichierCouv').click();
@@ -5727,9 +5820,9 @@ function ouvrirFormLecture(lid, livreId) {
     '<label>Où j\'en suis</label><div id="zLePos">' + champLongueur('lePosition', v.unite, v.position) + '</div>' +
     '<label>Ma note</label>' + champEtoiles('leEtoiles', v.etoiles) +
     '<label>Commentaire</label><textarea class="champ" id="leCommentaire">' + esc(v.commentaire || '') + '</textarea>' +
-    '<div class="row" style="margin-top:16px"><button class="act" data-act="leEnregistrer">💾 Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
+    '<div class="row" style="margin-top:16px"><button class="act" data-act="leEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
   if (x) {
-    h += '<button class="lien danger" data-act="leSupprimer" style="margin-top:14px">🗑️ Supprimer cette lecture</button>';
+    h += '<button class="lien danger" data-act="leSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer cette lecture</button>';
   }
   var f = ouvrirFeuille(h + '</div>');
   var unite = v.unite;
@@ -5812,7 +5905,7 @@ ACTIONS.progression = function (el) {
     }
     ouvrirFeuille('<h3>J\'en suis à…</h3><p class="small muted">' + esc(l.titre) + ' · dernière position : ' + texteLongueur(x.unite, x.position) + reste + '</p><div class="form"><label>' + etiquette + '</label>' + champLongueur('prPosition', x.unite, '') +
       '<label>Temps de lecture (facultatif)</label>' + champ('prMinutes', '', 'type="number" min="0" inputmode="numeric" placeholder="minutes"') +
-      '<div class="row" style="margin-top:16px"><button class="act" data-act="prEnregistrer">💾 Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div></div>');
+      '<div class="row" style="margin-top:16px"><button class="act" data-act="prEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div></div>');
     setTimeout(function () {
       var c = document.getElementById('prPosition');
       if (c) {
@@ -5855,7 +5948,7 @@ function proposerFin(lid) {
   var x = D.lectures[lid];
   var l = D.livres[x.livreId];
   ouvrirFeuille('<h3>Tu l\'as fini ? 🎉</h3><p>' + esc(l.titre) + '</p><div class="form"><label>Ta note</label>' + champEtoiles('fiEtoiles', x.etoiles) +
-    '<div class="row" style="margin-top:16px"><button class="act" data-act="fiTerminer">✅ Oui, terminé !</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Pas encore</button></div></div>');
+    '<div class="row" style="margin-top:16px"><button class="act" data-act="fiTerminer">' + ic('check-check') + ' Oui, terminé !</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Pas encore</button></div></div>');
   ACTIONS.fiTerminer = function () {
     var lec = Object.assign({}, D.lectures[lid], {statut: 'terminee', fin: Date.now(), position: x.total || x.position, etoiles: valEtoiles('fiEtoiles')});
     ecrire([{t: 'lectures', o: lec}]).then(function () {
@@ -5910,9 +6003,9 @@ function afficherSessions(lid) {
     if (s.position !== null && s.position !== undefined) {
       page = ' · ' + texteLongueur(x.unite, s.position);
     }
-    return '<div class="ligne-ed"><div class="small"><div>' + JOURS[(d.getDay() + 6) % 7] + ' ' + fdate(s.debut) + page + '</div><div class="muted">' + texteSession(s) + '</div></div><div class="boutons"><button class="mini-btn" data-act="formSession" data-id="' + s.id + '">✏️</button></div></div>';
+    return '<div class="ligne-ed"><div class="small"><div>' + JOURS[(d.getDay() + 6) % 7] + ' ' + fdate(s.debut) + page + '</div><div class="muted">' + texteSession(s) + '</div></div><div class="boutons"><button class="mini-btn" data-act="formSession" data-id="' + s.id + '">' + ic('pencil') + '</button></div></div>';
   }).join('');
-  h += '<div class="row" style="margin-top:12px"><button class="act doux" data-act="formSession" data-lecture="' + lid + '">＋ Ajouter une session</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">↩️ Retour</button></div>';
+  h += '<div class="row" style="margin-top:12px"><button class="act doux" data-act="formSession" data-lecture="' + lid + '">' + ic('plus') + ' Ajouter une session</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">' + ic('chevron-left') + ' Retour</button></div>';
   ouvrirFeuille(h);
 }
 ACTIONS.formSession = function (el) {
@@ -5932,9 +6025,9 @@ ACTIONS.formSession = function (el) {
       '<div class="deux"><div><label>Début</label>' + champ('seHeure', heureVersChamp(v.debut), 'type="time"') + '</div><div><label>Fin</label>' + champ('seFin', fin, 'type="time"') + '</div></div>' +
       '<div class="deux"><div><label>Temps de lecture (min)</label>' + champ('seMinutes', v.dureeSec ? Math.round(v.dureeSec / 60) : '', 'type="number" min="0" inputmode="numeric"') + '</div><div><label>Arrivée à</label>' + champLongueur('sePosition', x.unite, v.position) + '</div></div>' +
       '<p class="small muted" style="margin:6px 0 0">Le temps de lecture compte sans les pauses : par ex. de 18 h à 19 h avec 15 min de pause, 45 min. Laisse-le vide pour compter tout le temps entre le début et la fin.</p>' +
-      '<div class="row" style="margin-top:16px"><button class="act" data-act="seEnregistrer">💾 Enregistrer</button><button class="act doux" data-act="seRetour">Annuler</button></div>';
+      '<div class="row" style="margin-top:16px"><button class="act" data-act="seEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="seRetour">Annuler</button></div>';
     if (s) {
-      h += '<button class="lien danger" data-act="seSupprimer" style="margin-top:14px">🗑️ Supprimer cette session</button>';
+      h += '<button class="lien danger" data-act="seSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer cette session</button>';
     }
     ouvrirFeuille(h + '</div>');
     ACTIONS.seRetour = function () {
@@ -6012,9 +6105,9 @@ function ouvrirFormAchat(aid, livreId) {
     '<div class="deux"><div><label>Date</label>' + champ('acDate', dateVersChamp(v.date), 'type="date"') + '</div><div><label>Format</label>' + choix('acFormat', FORMATS_FR, v.format) + '</div></div>' +
     '<label>Boutique</label>' + champ('acBoutique', v.boutique, 'list="dlBoutiques" autocomplete="off"') + listeDeChoix('dlBoutiques', valeurs(D.achats).map(function (x) { return x.boutique; })) +
     '<label>Mémo</label>' + champ('acMemo', v.memo) +
-    '<div class="row" style="margin-top:16px"><button class="act" data-act="acEnregistrer">💾 Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
+    '<div class="row" style="margin-top:16px"><button class="act" data-act="acEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
   if (a) {
-    h += '<button class="lien danger" data-act="acSupprimer" style="margin-top:14px">🗑️ Supprimer cet achat</button>';
+    h += '<button class="lien danger" data-act="acSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer cet achat</button>';
   }
   ouvrirFeuille(h + '</div>');
   ACTIONS.acEnregistrer = function () {
@@ -6056,8 +6149,8 @@ ACTIONS.formSerie = function (el) {
     ouvrirFeuille('<h3>Modifier la série</h3><div class="form"><label>Nom</label>' + champ('srNom', s.nom) +
       '<div class="deux"><div><label>Parution</label>' + choix('srStatut', STATUTS_SERIE, s.statut || '') + '</div><div><label>Nombre de tomes</label>' + champ('srTomes', s.nbTomes, 'type="number" min="1" inputmode="numeric" placeholder="?"') + '</div></div>' +
       '<p class="small muted">' + tomes + ' livre(s) de cette série dans ton grimoire. Les numéros de tome se modifient depuis chaque livre.</p>' +
-      '<div class="row" style="margin-top:12px"><button class="act" data-act="srEnregistrer">💾 Enregistrer</button><button class="act doux" data-act="fermer">Annuler</button></div>' +
-      '<button class="lien danger" data-act="srSupprimer" style="margin-top:14px">🗑️ Supprimer la série (les livres restent)</button></div>');
+      '<div class="row" style="margin-top:12px"><button class="act" data-act="srEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="fermer">Annuler</button></div>' +
+      '<button class="lien danger" data-act="srSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer la série (les livres restent)</button></div>');
     ACTIONS.srEnregistrer = function () {
       var nom = val('srNom');
       if (!nom) {
@@ -6095,7 +6188,7 @@ ACTIONS.auteurs = function () {
     var l = valeurs(D.auteurs).filter(function (a) { return !q || slug(a.nom).indexOf(q) >= 0; }).sort(function (a, b) { return (a.tri || '').localeCompare(b.tri || '', 'fr') || a.nom.localeCompare(b.nom, 'fr'); });
     document.getElementById('listeAuteurs').innerHTML = l.map(function (a) {
       var n = livresDeLAuteur(a.id).length;
-      return '<div class="ligne-ed"><div class="small"><b>' + esc(a.nom) + '</b> <span class="muted">· ' + n + ' livre' + (n > 1 ? 's' : '') + '</span></div><div class="boutons"><button class="mini-btn" data-act="formAuteur" data-id="' + esc(a.id) + '">✏️</button></div></div>';
+      return '<div class="ligne-ed"><div class="small"><b>' + esc(a.nom) + '</b> <span class="muted">· ' + n + ' livre' + (n > 1 ? 's' : '') + '</span></div><div class="boutons"><button class="mini-btn" data-act="formAuteur" data-id="' + esc(a.id) + '">' + ic('pencil') + '</button></div></div>';
     }).join('') || '<p class="small muted">Personne.</p>';
   }
   lister();
@@ -6109,8 +6202,8 @@ ACTIONS.formAuteur = function (el) {
     ouvrirFeuille('<h3>' + esc(a.nom) + '</h3><p class="small muted">' + livres.map(function (l) { return esc(l.titre); }).slice(0, 8).join(' · ') + (livres.length > 8 ? '…' : '') + '</p><div class="form"><label>Nom</label>' + champ('auNom', a.nom) +
       '<label>Fusionner avec (doublon)</label>' + champ('auCible', '', 'list="dlAuCible" placeholder="Nom de l\'autre fiche" autocomplete="off"') + listeDeChoix('dlAuCible', valeurs(D.auteurs).filter(function (x) { return x.id !== aid; }).map(function (x) { return x.nom; })) +
       '<p class="small muted">En fusionnant, ses livres passent sur l\'autre fiche, puis celle-ci disparaît.</p>' +
-      '<div class="row" style="margin-top:12px"><button class="act" data-act="auEnregistrer">💾 Enregistrer</button><button class="act doux" data-act="auteurs">↩️ Retour</button></div>' +
-      (livres.length ? '' : '<button class="lien danger" data-act="auSupprimer" style="margin-top:14px">🗑️ Supprimer</button>') + '</div>');
+      '<div class="row" style="margin-top:12px"><button class="act" data-act="auEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="auteurs">' + ic('chevron-left') + ' Retour</button></div>' +
+      (livres.length ? '' : '<button class="lien danger" data-act="auSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer</button>') + '</div>');
     ACTIONS.auEnregistrer = function () {
       var cibleNom = val('auCible');
       if (cibleNom) {
@@ -6160,10 +6253,10 @@ ACTIONS.formAuteur = function (el) {
 // ---------- bouton « + » : ajouter un livre, ou lire maintenant ----------
 ACTIONS.ajouter = function () {
   var enCours = M ? M.lectures.filter(function (r) { return r.status === 'READING'; }) : [];
-  var h = '<h3>Ajouter un livre</h3><div class="choix-ajout"><button class="act" data-act="scanner">📷 Scanner le code-barres</button><button class="act doux" data-act="chercherTitre">🔎 Chercher par titre</button><button class="act doux" data-act="nouveauManuel">✍️ À la main</button></div>';
+  var h = '<h3>Ajouter un livre</h3><div class="choix-ajout"><button class="act" data-act="scanner">' + ic('scan-barcode') + ' Scanner le code-barres</button><button class="act doux" data-act="chercherTitre">' + ic('search') + ' Chercher par titre</button><button class="act doux" data-act="nouveauManuel">' + ic('pen-line') + ' À la main</button></div>';
   if (enCours.length) {
     h += '<h4>Lire maintenant</h4>' + enCours.map(function (r) {
-      return ligneLivre(r.book, '⏱️ lancer le minuteur', 'data-act="lancerMinuteur" data-lecture="' + r._id + '"');
+      return ligneLivre(r.book, '' + ic('timer') + ' lancer le minuteur', 'data-act="lancerMinuteur" data-lecture="' + r._id + '"');
     }).join('');
   }
   ouvrirFeuille(h);
@@ -6174,7 +6267,7 @@ ACTIONS.nouveauManuel = function () {
   });
 };
 ACTIONS.chercherTitre = function () {
-  ouvrirFeuille('<h3>Chercher un livre</h3><div class="avec-bouton">' + champ('rechTitre', '', 'placeholder="Titre, auteur…" autocomplete="off" enterkeyhint="search"') + '<button class="act" data-act="lancerRecherche">🔎</button></div><div id="resultatsRecherche"></div>');
+  ouvrirFeuille('<h3>Chercher un livre</h3><div class="avec-bouton">' + champ('rechTitre', '', 'placeholder="Titre, auteur…" autocomplete="off" enterkeyhint="search"') + '<button class="act" data-act="lancerRecherche">' + ic('search') + '</button></div><div id="resultatsRecherche"></div>');
   var c = document.getElementById('rechTitre');
   c.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
@@ -6408,7 +6501,7 @@ function majMinuteur() {
     bar.id = 'lecteur';
     bar.className = 'lecteur';
     document.body.appendChild(bar);
-    bar.innerHTML = '<div class="ouvrir" data-act="pageMinuteur"><span class="couv-mini"></span><div class="txt"><div class="chrono"></div><div class="tt"></div></div></div><button class="b" data-act="basculerMinuteur" aria-label="Pause ou reprise"></button><button class="b stop" data-act="arreterMinuteur" aria-label="Terminer la session">⏹</button>';
+    bar.innerHTML = '<div class="ouvrir" data-act="pageMinuteur"><span class="couv-mini"></span><div class="txt"><div class="chrono"></div><div class="tt"></div></div></div><button class="b" data-act="basculerMinuteur" aria-label="Pause ou reprise"></button><button class="b stop" data-act="arreterMinuteur" aria-label="Terminer la session">' + ic('square') + '</button>';
   }
   if (bar.dataset.session !== s.id) {
     bar.dataset.session = s.id;
@@ -6417,7 +6510,11 @@ function majMinuteur() {
   bar.classList.toggle('pause', pause);
   bar.querySelector('.chrono').textContent = texteChrono(ecoule(s));
   bar.querySelector('.tt').textContent = (pause ? '⏸ EN PAUSE · ' : '') + titreCourt(l);
-  bar.querySelector('[data-act="basculerMinuteur"]').textContent = pause ? '▶' : '⏸';
+  var bascule = bar.querySelector('[data-act="basculerMinuteur"]');
+  if (bascule.dataset.etat !== String(pause)) {
+    bascule.dataset.etat = String(pause);
+    bascule.innerHTML = pause ? ic('play') : ic('pause');
+  }
   majPageMinuteur();
   if (!minuteurTic) {
     minuteurTic = setInterval(majMinuteur, 1000);
@@ -6454,11 +6551,11 @@ ACTIONS.pageMinuteur = function () {
     auteurs = b.authors.join(', ');
   }
   p.innerHTML = '<div class="bandeau-pause">⏸ EN PAUSE ⏸ EN PAUSE ⏸ EN PAUSE ⏸ EN PAUSE</div>' +
-    '<div class="haut"><button data-act="fermerPageMinuteur">‹ Retour</button><span class="small muted" id="eveilEcran"></span></div>' +
+    '<div class="haut"><button data-act="fermerPageMinuteur">' + ic('chevron-left') + ' Retour</button><span class="small muted" id="eveilEcran"></span></div>' +
     '<div class="couv">' + couvSession(s) + '</div><div class="titre">' + esc(titreCourt(l)) + '</div><div class="auteur">' + esc(auteurs) + '</div>' +
     '<div class="anneau-m"><div class="chrono-m" id="chronoGrand"></div><div class="etat-m" id="etatMinuteur"></div></div>' +
     '<div class="infos-m" id="infosMinuteur"></div>' +
-    '<div class="commandes"><button class="rond-m" data-act="annulerMinuteur">✕<small>annuler</small></button><button class="gros-m" id="boutonMinuteur" data-act="basculerMinuteur"></button><button class="rond-m" data-act="arreterMinuteur">⏹<small>terminer</small></button></div>';
+    '<div class="commandes"><button class="rond-m" data-act="annulerMinuteur">' + ic('x') + '<small>annuler</small></button><button class="gros-m" id="boutonMinuteur" data-act="basculerMinuteur"></button><button class="rond-m" data-act="arreterMinuteur">' + ic('square') + '<small>terminer</small></button></div>';
   majPageMinuteur();
   majVerrouEcran();
 };
@@ -6472,7 +6569,11 @@ function majPageMinuteur() {
   p.classList.toggle('pause', pause);
   document.getElementById('chronoGrand').textContent = texteChrono(ecoule(s));
   document.getElementById('etatMinuteur').textContent = pause ? '⏸ en pause' : '✨ lecture en cours';
-  document.getElementById('boutonMinuteur').textContent = pause ? '▶' : '⏸';
+  var gros = document.getElementById('boutonMinuteur');
+  if (gros.dataset.etat !== String(pause)) {
+    gros.dataset.etat = String(pause);
+    gros.innerHTML = pause ? ic('play') : ic('pause');
+  }
   var x = D.lectures[s.lectureId] || {};
   var info;
   if (pause) {
@@ -6610,7 +6711,7 @@ ACTIONS.arreterMinuteur = function () {
   var x = D.lectures[s.lectureId];
   var mn = Math.max(1, Math.round(sec / 60));
   var pauseSec = Math.max(0, (finArret - s.debut) / 1000 - sec);
-  var plage = '🕰️ ' + heureLisible(s.debut) + ' → ' + heureLisible(finArret);
+  var plage = '' + ic('history') + ' ' + heureLisible(s.debut) + ' → ' + heureLisible(finArret);
   if (pauseSec >= 60) {
     plage += ' · ⏸ ' + dureeLecture(pauseSec) + ' de pause';
   }
@@ -6644,10 +6745,10 @@ ACTIONS.arreterMinuteur = function () {
   ouvrirFeuille('<h3>Session terminée ✨</h3><p class="small muted" style="margin:0">' + esc(titreCourt(D.livres[s.livreId])) + '</p>' +
     '<div class="grand-chrono">' + dureeLecture(sec) + '</div><p class="small muted" style="text-align:center;margin:0">de lecture · ' + plage + '</p>' + oubli +
     '<p class="small" style="margin:6px 0 0;text-align:center">' + question + '</p>' +
-    '<div class="champ-page"><button class="rond-m" data-act="pasPage" data-n="-1">−</button>' + (x.unite === 'secondes' ? champ('arPosition', texteDuree(propose), 'inputmode="numeric"') : champ('arPosition', propose || '', 'inputmode="decimal"')) + '<button class="rond-m" data-act="pasPage" data-n="1">+</button></div>' +
+    '<div class="champ-page"><button class="rond-m" data-act="pasPage" data-n="-1">' + ic('minus') + '</button>' + (x.unite === 'secondes' ? champ('arPosition', texteDuree(propose), 'inputmode="numeric"') : champ('arPosition', propose || '', 'inputmode="decimal"')) + '<button class="rond-m" data-act="pasPage" data-n="1">' + ic('plus') + '</button></div>' +
     pas + '<p class="small muted" style="text-align:center;margin:8px 0 0" id="arResume"></p>' +
     '<div class="form" style="margin-top:6px"><label>Temps de lecture (min, pauses déduites)</label>' + champ('arMinutes', mn, 'type="number" min="1" inputmode="numeric"') + '</div>' +
-    '<div class="row" style="margin-top:14px"><button class="act" data-act="validerArret">💾 Enregistrer</button><button class="act doux" data-act="reprendreApresArret">↩️ Reprendre</button></div>');
+    '<div class="row" style="margin-top:14px"><button class="act" data-act="validerArret">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="reprendreApresArret">' + ic('play') + ' Reprendre</button></div>');
   function resume() {
     var pos = lireLongueur('arPosition', x.unite);
     var el = document.getElementById('arResume');
@@ -6724,11 +6825,11 @@ input[type=color].champ{height:44px;padding:4px 6px}
 <script>
 // ---------- Mes listes : genres, critères, humeurs, tropes, étagères ----------
 var LISTES = [
-  ['genres', '🏷️ Genres', 'genre', 'g:'],
-  ['criteres', '💗 Critères', 'critère', 'c:'],
-  ['humeurs', '🥰 Humeurs', 'humeur', 'h:'],
-  ['tropes', '💞 Tropes', 'trope', 't:'],
-  ['etageres', '📚 Étagères', 'étagère', 'e:']
+  ['genres', '' + ic('tag') + ' Genres', 'genre', 'g:'],
+  ['criteres', '' + ic('heart') + ' Critères', 'critère', 'c:'],
+  ['humeurs', '' + ic('smile') + ' Humeurs', 'humeur', 'h:'],
+  ['tropes', '' + ic('sparkles') + ' Tropes', 'trope', 't:'],
+  ['etageres', '' + ic('library-big') + ' Étagères', 'étagère', 'e:']
 ];
 var listeOuverte = 'humeurs';
 
@@ -6805,8 +6906,8 @@ ACTIONS.mesListes = function (el) {
     if (n > 1) {
       unite = ' livres';
     }
-    var haut = '<button class="mini-btn" data-act="deplacerElement" data-id="' + esc(x.id) + '" data-sens="-1"' + (i <= 0 ? ' disabled' : '') + '>↑</button>';
-    var bas = '<button class="mini-btn" data-act="deplacerElement" data-id="' + esc(x.id) + '" data-sens="1"' + (i < 0 || i >= actifs.length - 1 ? ' disabled' : '') + '>↓</button>';
+    var haut = '<button class="mini-btn" data-act="deplacerElement" data-id="' + esc(x.id) + '" data-sens="-1"' + (i <= 0 ? ' disabled' : '') + '>' + ic('chevron-up') + '</button>';
+    var bas = '<button class="mini-btn" data-act="deplacerElement" data-id="' + esc(x.id) + '" data-sens="1"' + (i < 0 || i >= actifs.length - 1 ? ' disabled' : '') + '>' + ic('chevron-down') + '</button>';
     if (x.archive) {
       haut = '';
       bas = '';
@@ -6815,9 +6916,9 @@ ACTIONS.mesListes = function (el) {
     if (t === 'genres' && x.couleur) {
       pastille = '<i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:' + esc(x.couleur) + ';margin-right:6px"></i>';
     }
-    return '<div class="ligne-ed' + (x.archive ? ' archive' : '') + '"><div class="nom small">' + pastille + '<b>' + esc(libelle(x)) + '</b> <span class="muted">· ' + n + unite + (x.archive ? ' · archivé' : '') + '</span></div><div class="boutons">' + haut + bas + '<button class="mini-btn" data-act="formElement" data-t="' + t + '" data-id="' + esc(x.id) + '">✏️</button></div></div>';
+    return '<div class="ligne-ed' + (x.archive ? ' archive' : '') + '"><div class="nom small">' + pastille + '<b>' + esc(libelle(x)) + '</b> <span class="muted">· ' + n + unite + (x.archive ? ' · archivé' : '') + '</span></div><div class="boutons">' + haut + bas + '<button class="mini-btn" data-act="formElement" data-t="' + t + '" data-id="' + esc(x.id) + '">' + ic('pencil') + '</button></div></div>';
   }).join('') + '</div>';
-  h += '<button class="lien" data-act="formElement" data-t="' + t + '">＋ Ajouter un·e ' + info[2] + '</button>';
+  h += '<button class="lien" data-act="formElement" data-t="' + t + '">' + ic('plus') + ' Ajouter un·e ' + info[2] + '</button>';
   ouvrirFeuille(h);
 };
 ACTIONS.deplacerElement = function (el) {
@@ -6851,13 +6952,13 @@ ACTIONS.formElement = function (el) {
   if (x) {
     h += '<label class="small" style="text-transform:none;letter-spacing:0;margin-top:14px"><input type="checkbox" id="elArchive"' + (x.archive ? ' checked' : '') + '> archivé (caché des choix, gardé sur les livres déjà notés)</label>';
   }
-  h += '<div class="row" style="margin-top:16px"><button class="act" data-act="elEnregistrer">💾 Enregistrer</button><button class="act doux" data-act="mesListes">↩️ Retour</button></div>';
+  h += '<div class="row" style="margin-top:16px"><button class="act" data-act="elEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="mesListes">' + ic('chevron-left') + ' Retour</button></div>';
   if (x) {
     var avec = '';
     if (n) {
       avec = ' (il sera retiré de ' + n + ' livre' + (n > 1 ? 's' : '') + ')';
     }
-    h += '<button class="lien danger" data-act="elSupprimer" style="margin-top:14px">🗑️ Supprimer' + avec + '</button>';
+    h += '<button class="lien danger" data-act="elSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer' + avec + '</button>';
   }
   ouvrirFeuille(h + '</div>');
   ACTIONS.elEnregistrer = function () {
@@ -6947,7 +7048,7 @@ var fc = null;
 
 function carteCitations() {
   var cit = M.notes.filter(function (n) { return n.texte || n.photo; }).sort(function (a, b) { return b.created_at - a.created_at; });
-  return card('Mon carnet de citations (' + cit.length + ')', '<div class="row"><button class="act" data-act="formCitation">＋ Ajouter une citation</button></div>' + cit.map(function (n) {
+  return card('Mon carnet de citations (' + cit.length + ')', '<div class="row"><button class="act" data-act="formCitation">' + ic('plus') + ' Ajouter une citation</button></div>' + cit.map(function (n) {
     var src = '';
     if (n.book) {
       src = esc(titre(n.book));
@@ -6973,9 +7074,9 @@ function carteCitations() {
     }
     var image = '';
     if (n.texte) {
-      image = '<button class="act doux" data-act="imageCitation" data-k="' + esc(n._key) + '">🖼️ En faire une image</button>';
+      image = '<button class="act doux" data-act="imageCitation" data-k="' + esc(n._key) + '">' + ic('image') + ' En faire une image</button>';
     }
-    return '<div style="margin:14px 0 18px"><div class="quotebox">' + texte + photo + '<p class="qsrc">' + src + ' · ' + fdate(n.created_at) + '</p></div><div class="row" style="justify-content:center;margin-top:8px"><button class="act doux" data-act="formCitation" data-id="' + esc(n._key) + '">✏️</button>' + image + '</div></div>';
+    return '<div style="margin:14px 0 18px"><div class="quotebox">' + texte + photo + '<p class="qsrc">' + src + ' · ' + fdate(n.created_at) + '</p></div><div class="row" style="justify-content:center;margin-top:8px"><button class="act doux" data-act="formCitation" data-id="' + esc(n._key) + '">' + ic('pencil') + '</button>' + image + '</div></div>';
   }).join(''));
 }
 
@@ -6995,15 +7096,13 @@ function blocCitationsLivre(id) {
     if (c.type === 'pensee') {
       icone = '💭 ';
     }
-    if (c.photoId) {
-      icone += '📷 ';
-    }
+
     var vignette = '';
     if (c.photoId && urlPhoto(c.photoId)) {
       vignette = '<img class="cit-vignette" style="width:48px;height:48px" src="' + esc(urlPhoto(c.photoId)) + '" alt="">';
     }
-    return '<div class="ligne-ed">' + vignette + '<div class="small" style="flex:1"><span class="muted">' + p + '</span>' + icone + '<i>' + esc(t) + '</i></div><div class="boutons"><button class="mini-btn" data-act="formCitation" data-id="' + esc(c.id) + '">✏️</button></div></div>';
-  }).join('') + '<button class="lien" data-act="formCitation" data-livre="' + id + '">＋ Ajouter une citation</button>';
+    return '<div class="ligne-ed">' + vignette + '<div class="small" style="flex:1"><span class="muted">' + p + '</span>' + icone + '<i>' + esc(t) + '</i></div><div class="boutons"><button class="mini-btn" data-act="formCitation" data-id="' + esc(c.id) + '">' + ic('pencil') + '</button></div></div>';
+  }).join('') + '<button class="lien" data-act="formCitation" data-livre="' + id + '">' + ic('plus') + ' Ajouter une citation</button>';
 }
 
 ACTIONS.formCitation = function (el) {
@@ -7029,9 +7128,9 @@ ACTIONS.formCitation = function (el) {
     '<label>Texte</label><textarea class="champ" id="ciTexte" placeholder="La phrase qui t\'a marquée…">' + esc(v.texte) + '</textarea>' +
     '<div class="deux"><div><label>Page</label>' + champ('ciPage', v.page, 'inputmode="numeric"') + '</div><div><label>Jusqu\'à la page</label>' + champ('ciPageFin', v.pageFin, 'inputmode="numeric"') + '</div></div>' +
     '<label class="small" style="text-transform:none;letter-spacing:0;margin-top:12px"><input type="checkbox" id="ciFavori"' + (v.favori ? ' checked' : '') + '> ⭐ favorite</label>' +
-    '<div class="row" style="margin-top:16px"><button class="act" data-act="ciEnregistrer">💾 Enregistrer</button><button class="act doux" data-act="ciAnnuler">Annuler</button></div>';
+    '<div class="row" style="margin-top:16px"><button class="act" data-act="ciEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="ciAnnuler">Annuler</button></div>';
   if (c) {
-    h += '<button class="lien danger" data-act="ciSupprimer" style="margin-top:14px">🗑️ Supprimer</button>';
+    h += '<button class="lien danger" data-act="ciSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer</button>';
   }
   var f = ouvrirFeuille(h + '</div><input type="file" id="ciFichier" accept="image/*" hidden>');
   rendrePhotoCitation();
@@ -7066,10 +7165,10 @@ function rendrePhotoCitation() {
   }
   var src = srcPhotoCitation();
   if (!src) {
-    z.innerHTML = '<div class="row"><button type="button" class="mini-btn" data-act="ciPhoto">📷 Prendre ou choisir une photo</button></div>';
+    z.innerHTML = '<div class="row"><button type="button" class="mini-btn" data-act="ciPhoto">' + ic('camera') + ' Prendre ou choisir une photo</button></div>';
     return;
   }
-  z.innerHTML = '<div style="display:flex;gap:12px;align-items:center"><img class="cit-vignette" src="' + esc(src) + '" alt=""><div class="row"><button type="button" class="mini-btn" data-act="ciLireTexte">🔤 Lire le texte</button><button type="button" class="mini-btn" data-act="ciPhoto">🔄</button><button type="button" class="mini-btn" data-act="ciSansPhoto">✕</button></div></div>';
+  z.innerHTML = '<div style="display:flex;gap:12px;align-items:center"><img class="cit-vignette" src="' + esc(src) + '" alt=""><div class="row"><button type="button" class="mini-btn" data-act="ciLireTexte">' + ic('scan-text') + ' Lire le texte</button><button type="button" class="mini-btn" data-act="ciPhoto">' + ic('refresh-cw') + '</button><button type="button" class="mini-btn" data-act="ciSansPhoto">' + ic('x') + '</button></div></div>';
 }
 ACTIONS.ciPhoto = function () {
   document.getElementById('ciFichier').click();
@@ -7216,7 +7315,7 @@ ACTIONS.ciLireTexte = function () {
   var d = document.createElement('div');
   d.className = 'recadrage';
   d.id = 'recadrage';
-  d.innerHTML = '<div class="consigne">Trace au doigt un cadre autour du passage à lire</div><div class="zone"><img src="' + esc(src) + '" alt=""><div class="cadre" hidden></div></div><div class="etat" id="etatOcr"></div><div class="bas"><button class="act" data-act="ocrZone">🔤 Lire la zone</button><button class="act doux" data-act="ocrTout">Toute la page</button><button class="act doux" data-act="fermerRecadrage">Annuler</button></div>';
+  d.innerHTML = '<div class="consigne">Trace au doigt un cadre autour du passage à lire</div><div class="zone"><img src="' + esc(src) + '" alt=""><div class="cadre" hidden></div></div><div class="etat" id="etatOcr"></div><div class="bas"><button class="act" data-act="ocrZone">' + ic('scan-text') + ' Lire la zone</button><button class="act doux" data-act="ocrTout">Toute la page</button><button class="act doux" data-act="fermerRecadrage">Annuler</button></div>';
   document.body.appendChild(d);
   var img = d.querySelector('img');
   var cadre = d.querySelector('.cadre');
@@ -7330,18 +7429,18 @@ ACTIONS.reglages = function () {
   if (liaison()) {
     h += '<p class="small">Ton grimoire est copié automatiquement dans le dossier <b>Grimoire sauvegardes</b> de ton Drive, 30 secondes après chaque modification (une copie par jour, gardée 30 jours, puis une par mois).</p>' +
       '<p class="small"><b id="etatDrive">' + esc(texteSauvegarde()) + '</b></p>' +
-      '<div class="row"><button class="act" data-act="sauverDrive">☁️ Sauvegarder maintenant</button><button class="act doux" data-act="restaurerDrive">↩️ Restaurer</button><button class="act doux" data-act="delierDrive">Délier</button></div>';
+      '<div class="row"><button class="act" data-act="sauverDrive">' + ic('cloud-upload') + ' Sauvegarder maintenant</button><button class="act doux" data-act="restaurerDrive">' + ic('rotate-ccw') + ' Restaurer</button><button class="act doux" data-act="delierDrive">Délier</button></div>';
   } else {
     h += '<p class="small">Colle ici le <b>code de liaison</b> : tu le trouves dans ton Drive, fichier <b>Grimoire sauvegardes / code-de-liaison.txt</b> (ouvre-le, copie tout le texte).</p>' +
       '<input class="champ" id="codeLiaison" type="password" autocomplete="off" placeholder="https://script.google.com/macros/s/…#…">' +
-      '<div class="row"><button class="act" data-act="relierDrive">🔗 Relier</button></div>';
+      '<div class="row"><button class="act" data-act="relierDrive">' + ic('link') + ' Relier</button></div>';
   }
   h += '</div>';
 
-  h += '<div class="reglage"><h4>💾 Fichier</h4><p class="small muted">Une copie complète (livres, carnet, citations et photos) à garder où tu veux. « Importer » accepte une sauvegarde du grimoire ou un export Bookmory.</p><div class="row"><button class="act doux" data-act="exporterSauvegarde">💾 Exporter</button><button class="act doux" data-act="choisirExport">📥 Importer un fichier</button></div></div>';
+  h += '<div class="reglage"><h4>💾 Fichier</h4><p class="small muted">Une copie complète (livres, carnet, citations et photos) à garder où tu veux. « Importer » accepte une sauvegarde du grimoire ou un export Bookmory.</p><div class="row"><button class="act doux" data-act="exporterSauvegarde">' + ic('share-2') + ' Exporter</button><button class="act doux" data-act="choisirExport">' + ic('folder-open') + ' Importer un fichier</button></div></div>';
 
-  h += '<div class="reglage"><h4>✍️ Ma bibliothèque</h4><div class="row"><button class="act doux" data-act="mesListes">📋 Mes listes</button><button class="act doux" data-act="auteurs">✍️ Auteur·ices</button><button class="act doux" data-act="objectifs">🎯 Objectifs</button></div><p class="small muted">Mes listes : genres, critères, humeurs, tropes et étagères, à ta façon.</p></div>';
-  var ocr = '<button class="act doux" data-act="preparerOcr">🔤 Préparer la lecture de texte</button><p class="small muted">Pour lire le texte des photos de citations, même hors connexion (≈ 5 Mo, une seule fois).</p>';
+  h += '<div class="reglage"><h4>✍️ Ma bibliothèque</h4><div class="row"><button class="act doux" data-act="mesListes">' + ic('list') + ' Mes listes</button><button class="act doux" data-act="auteurs">' + ic('users') + ' Auteur·ices</button><button class="act doux" data-act="objectifs">' + ic('target') + ' Objectifs</button></div><p class="small muted">Mes listes : genres, critères, humeurs, tropes et étagères, à ta façon.</p></div>';
+  var ocr = '<button class="act doux" data-act="preparerOcr">' + ic('scan-text') + ' Préparer la lecture de texte</button><p class="small muted">Pour lire le texte des photos de citations, même hors connexion (≈ 5 Mo, une seule fois).</p>';
   if (reglage('ocrPret')) {
     ocr = '<p class="small">✅ Lecture de texte prête (téléchargée le ' + fdate(reglage('ocrPret')) + ').</p>';
   }
@@ -7354,7 +7453,7 @@ ACTIONS.reglages = function () {
     if (imp) {
       quand = 'dernier export reçu le ' + fdate(imp.date) + ' (' + imp.recap.livres + ' livres)';
     }
-    h += '<p class="small">Pour l\'instant, ton grimoire recopie Bookmory à chaque export reçu : ' + quand + '. Ton carnet, tes exclusions et ton objectif restent à toi.</p><div class="row"><button class="act" data-act="proposerBascule">✨ Rendre mon grimoire indépendant</button></div>';
+    h += '<p class="small">Pour l\'instant, ton grimoire recopie Bookmory à chaque export reçu : ' + quand + '. Ton carnet, tes exclusions et ton objectif restent à toi.</p><div class="row"><button class="act" data-act="proposerBascule">' + ic('sparkles') + ' Rendre mon grimoire indépendant</button></div>';
     h += '</div>';
   }
 
@@ -7543,7 +7642,7 @@ function afficherSiPossible() {
 }
 function proposerRestauration(lu) {
   afficherSiPossible();
-  ouvrirFeuille('<h3>Restaurer une sauvegarde</h3><p>' + esc(resumeSauvegarde(lu.donnees)) + '</p><p class="small muted">Tout ce qui est actuellement dans le grimoire sera remplacé par cette sauvegarde.</p><div class="row"><button class="act" data-act="confirmerRestauration">↩️ Restaurer</button><button class="act doux" data-act="fermer">Annuler</button></div>');
+  ouvrirFeuille('<h3>Restaurer une sauvegarde</h3><p>' + esc(resumeSauvegarde(lu.donnees)) + '</p><p class="small muted">Tout ce qui est actuellement dans le grimoire sera remplacé par cette sauvegarde.</p><div class="row"><button class="act" data-act="confirmerRestauration">' + ic('rotate-ccw') + ' Restaurer</button><button class="act doux" data-act="fermer">Annuler</button></div>');
   ACTIONS.confirmerRestauration = function () {
     fermerFeuille();
     restaurerSauvegarde(lu).then(function () {
@@ -7557,7 +7656,7 @@ function proposerRestauration(lu) {
 function ecranVide() {
   M = null;
   document.getElementById('src').textContent = '';
-  document.getElementById('app').innerHTML = card('Bienvenue dans ton grimoire ✨', '<div class="vide"><p><b>Nouveau téléphone ?</b> Retrouve ton grimoire depuis ton Drive : ⚙️ Réglages → colle ton code de liaison (fichier <i>Grimoire sauvegardes / code-de-liaison.txt</i>) → ↩️ Restaurer.</p><div class="row" style="justify-content:center"><button class="act" data-act="reglages">☁️ Restaurer depuis mon Drive</button></div><p class="small muted" style="margin-top:16px">Ou choisis un fichier : une sauvegarde du grimoire, ou un export Bookmory.</p><div class="row" style="justify-content:center"><button class="act doux" data-act="choisirExport">📥 Choisir un fichier</button><button class="act doux" data-act="grimoireVide">✨ Commencer à zéro</button></div></div>');
+  document.getElementById('app').innerHTML = card('Bienvenue dans ton grimoire ✨', '<div class="vide"><p><b>Nouveau téléphone ?</b> Retrouve ton grimoire depuis ton Drive : ⚙️ Réglages → colle ton code de liaison (fichier <i>Grimoire sauvegardes / code-de-liaison.txt</i>) → ' + ic('rotate-ccw') + ' Restaurer.</p><div class="row" style="justify-content:center"><button class="act" data-act="reglages">' + ic('cloud-download') + ' Restaurer depuis mon Drive</button></div><p class="small muted" style="margin-top:16px">Ou choisis un fichier : une sauvegarde du grimoire, ou un export Bookmory.</p><div class="row" style="justify-content:center"><button class="act doux" data-act="choisirExport">' + ic('folder-open') + ' Choisir un fichier</button><button class="act doux" data-act="grimoireVide">' + ic('sparkles') + ' Commencer à zéro</button></div></div>');
 }
 ACTIONS.grimoireVide = function () {
   ecrire([{t: 'reglages', o: {id: 'mode', v: 'independant'}}, {t: 'reglages', o: {id: 'bascule', v: Date.now()}}]).then(function () {
@@ -7568,7 +7667,7 @@ ACTIONS.grimoireVide = function () {
 // première ouverture de la nouvelle version : l'ancien export est déjà sur le téléphone
 function proposerImportAncien(e) {
   M = null;
-  document.getElementById('app').innerHTML = card('Ton grimoire fait peau neuve ✨', '<div class="vide"><p>Il a maintenant sa propre base : tes lectures vont y être copiées, avec ton carnet, tes exclusions et ton objectif.</p><p class="small muted">Dernier export reçu : ' + fdate(e.date) + '. Pour avoir aussi les photos de tes citations, partage plutôt un nouvel export depuis Bookmory (ta macro le fait quand tu fermes Bookmory).</p><div class="row" style="justify-content:center"><button class="act" data-act="importerAncien">✨ Importer maintenant</button><button class="act doux" data-act="choisirExport">📥 Un autre fichier</button></div></div>');
+  document.getElementById('app').innerHTML = card('Ton grimoire fait peau neuve ✨', '<div class="vide"><p>Il a maintenant sa propre base : tes lectures vont y être copiées, avec ton carnet, tes exclusions et ton objectif.</p><p class="small muted">Dernier export reçu : ' + fdate(e.date) + '. Pour avoir aussi les photos de tes citations, partage plutôt un nouvel export depuis Bookmory (ta macro le fait quand tu fermes Bookmory).</p><div class="row" style="justify-content:center"><button class="act" data-act="importerAncien">' + ic('sparkles') + ' Importer maintenant</button><button class="act doux" data-act="choisirExport">' + ic('folder-open') + ' Un autre fichier</button></div></div>');
   ACTIONS.importerAncien = function () {
     recevoirFichier(e.octets.buffer.slice(e.octets.byteOffset, e.octets.byteOffset + e.octets.byteLength));
   };
