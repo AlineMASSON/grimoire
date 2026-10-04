@@ -4919,6 +4919,63 @@ function texteRecap(r) {
   return morceaux.join(' · ');
 }
 
+// Ajoute seulement les photos manquantes aux citations venues de Bookmory : rien d'autre ne change.
+// → {ajoutees, dejaLa, sansPhotoDansLeFichier, citationsSupprimees}
+function recupererPhotosBookmory(buf) {
+  return lireExportBookmory(buf).then(function (lu) {
+    var ops = [];
+    var r = {ajoutees: 0, dejaLa: 0, sansPhotoDansLeFichier: 0, citationsSupprimees: 0};
+    (lu.stores.notes || []).forEach(function (n) {
+      var fichier = ((n.images || [])[0] || '').split('/').pop();
+      if (!fichier) {
+        return;
+      }
+      var c = D.citations[n._key];
+      if (!c) {
+        r.citationsSupprimees++;
+        return;
+      }
+      if (c.photoId && D.photos[c.photoId]) {
+        r.dejaLa++;
+        return;
+      }
+      var blob = lu.images[fichier];
+      if (!blob) {
+        r.sansPhotoDansLeFichier++;
+        return;
+      }
+      var pid = 'p:' + fichier;
+      ops.push({t: 'photos', o: {id: pid, blob: blob, type: blob.type || 'image/jpeg', creeLe: n.created_at}});
+      ops.push({t: 'citations', o: Object.assign({}, c, {photoId: pid}), garderDate: true});
+      r.ajoutees++;
+    });
+    if (!ops.length) {
+      return r;
+    }
+    return ecrire(ops).then(function () {
+      return r;
+    });
+  });
+}
+function texteRecupPhotos(r) {
+  var t = '';
+  if (r.ajoutees) {
+    t = r.ajoutees + ' photo' + (r.ajoutees > 1 ? 's ajoutées' : ' ajoutée') + ' à tes citations.';
+  } else {
+    t = 'Aucune photo à ajouter.';
+  }
+  if (r.dejaLa) {
+    t += '\n' + r.dejaLa + ' citation' + (r.dejaLa > 1 ? 's avaient déjà leur photo.' : ' avait déjà sa photo.');
+  }
+  if (r.sansPhotoDansLeFichier) {
+    t += '\n' + r.sansPhotoDansLeFichier + ' photo' + (r.sansPhotoDansLeFichier > 1 ? 's manquent' : ' manque') + ' dans ce fichier : il faut l\'export complet (.zip) de Bookmory, pas seulement la base.';
+  }
+  if (r.citationsSupprimees) {
+    t += '\n' + r.citationsSupprimees + ' citation' + (r.citationsSupprimees > 1 ? 's ne sont' : ' n\'est') + ' plus dans ton grimoire : ignorée' + (r.citationsSupprimees > 1 ? 's' : '') + '.';
+  }
+  return t;
+}
+
 // Importe un export : renvoie le récapitulatif. Ne redessine rien (l'appelant décide).
 function importerBookmory(buf) {
   return lireExportBookmory(buf).then(function (lu) {
@@ -7844,7 +7901,7 @@ ACTIONS.reglages = function () {
   if (reglage('ocrPret')) {
     ocr = '<p class="small">✅ Lecture de texte prête (téléchargée le ' + fdate(reglage('ocrPret')) + ').</p>';
   }
-  h += '<div class="reglage"><h4>🔤 Photos de citations</h4>' + ocr + '</div>';
+  h += '<div class="reglage"><h4>🔤 Photos de citations</h4>' + ocr + '<button class="act doux" data-act="choisirExport" style="margin-top:10px">' + ic('image') + ' Récupérer les photos de Bookmory</button><p class="small muted">Choisis l\'export complet (.zip) de Bookmory : les photos manquantes sont ajoutées à tes citations, rien d\'autre ne change.</p></div>';
 
   var imp = reglage('dernierImport');
   if (reglage('mode', 'miroir') === 'miroir') {
@@ -8027,16 +8084,37 @@ function recevoirFichier(buf) {
     }
     if (reglage('mode', 'miroir') !== 'miroir') {
       afficherSiPossible();
-      return demander('Ton grimoire ne dépend plus de Bookmory. Réimporter cet export remplacera les livres venus de Bookmory par leur version de l\'export.', {titre: 'Réimporter un export Bookmory ?', oui: 'Réimporter', danger: true}).then(function (ok) {
-        if (ok) {
-          return importerEtAfficher(buf);
-        }
-      });
+      proposerExportBookmory(buf);
+      return;
     }
     return importerEtAfficher(buf);
   }).catch(function (e) {
     erreurEcran(e);
   });
+}
+// grimoire indépendant : un export Bookmory sert surtout à récupérer les photos des citations
+function proposerExportBookmory(buf) {
+  ouvrirFeuille('<h3>Un export Bookmory</h3><p class="small muted">Ton grimoire ne dépend plus de Bookmory. Que veux-tu faire de ce fichier ?</p>' +
+    '<button class="act" data-act="photosBookmory" style="margin-top:8px">' + ic('image') + ' Récupérer les photos des citations</button><p class="small muted">Ajoute les photos qui manquent aux citations venues de Bookmory. Rien d\'autre ne change.</p>' +
+    '<button class="act doux" data-act="reimporterBookmory" style="margin-top:12px">' + ic('rotate-ccw') + ' Tout réimporter</button><p class="small muted">Remplace les livres venus de Bookmory par leur version de l\'export : ce que tu as changé sur ces livres dans le grimoire serait perdu.</p>');
+  ACTIONS.photosBookmory = function () {
+    fermerFeuille();
+    toast('J\'ouvre l\'export…');
+    recupererPhotosBookmory(buf).then(function (r) {
+      if (r.ajoutees) {
+        apresEcriture();
+      }
+      return avertir(texteRecupPhotos(r), 'Photos des citations');
+    }).catch(erreurEcriture);
+  };
+  ACTIONS.reimporterBookmory = function () {
+    fermerFeuille();
+    demander('Les livres venus de Bookmory seront remplacés par leur version de l\'export. Ce que tu as changé sur ces livres dans le grimoire sera perdu.', {titre: 'Tout réimporter ?', oui: 'Réimporter', danger: true}).then(function (ok) {
+      if (ok) {
+        return importerEtAfficher(buf);
+      }
+    }).catch(erreurEcran);
+  };
 }
 function importerEtAfficher(buf) {
   return importerBookmory(buf).then(function (recap) {
@@ -8093,7 +8171,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-04 19:37:54';
+var VERSION_APPLI = '2026-10-04 19:47:38';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
