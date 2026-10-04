@@ -81,15 +81,17 @@ body{margin:0;color:var(--ink);font:15px/1.5 Nunito,-apple-system,"Segoe UI",Rob
     linear-gradient(165deg,var(--bg) 0%,var(--bg2) 100%);
   background-size:240px 240px,240px 240px,240px 240px,240px 240px,240px 240px,100% 100%;
   background-attachment:fixed}
-header{padding:26px 16px 4px;max-width:760px;margin:0 auto;text-align:center;position:relative}
-header .moon{font-size:26px;color:var(--gold);line-height:1}
-header h1{margin:2px 0 0;font:700 30px/1.1 "Cormorant Garamond",Georgia,serif;letter-spacing:.3px}
-header h1 span{display:block;font:700 26px/1.1 "Dancing Script",cursive;color:var(--accent);margin-top:2px}
-header .orn{color:var(--gold);letter-spacing:8px;font-size:12px;margin:6px 0 2px}
-header .src{color:var(--muted);font-size:11px}
-.theme-btn{position:absolute;right:16px;top:20px;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:18px;cursor:pointer;box-shadow:var(--shadow)}
-.themes{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:10px 0 4px}
-.themes[hidden]{display:none}
+header{padding:18px 16px 2px;max-width:760px;margin:0 auto;position:relative}
+/* bandeau coloré du thème, sur toute la largeur, qui se fond dans le fond */
+header::before{content:"";position:absolute;top:0;left:50%;width:100vw;height:190px;transform:translateX(-50%);background:var(--bandeau,radial-gradient(100% 90% at 50% 0%,var(--accent-soft),transparent 70%));-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent);z-index:-1;pointer-events:none}
+.tete-n{display:flex;align-items:center;gap:10px}
+.tete-n h1{flex:1;margin:0;font:700 27px/1.1 "Cormorant Garamond",Georgia,serif;letter-spacing:.3px}
+.tete-n h1 span{font:700 23px "Dancing Script",cursive;color:var(--accent)}
+.tete-n .rond{width:42px;height:42px;flex:none;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:18px;cursor:pointer;box-shadow:var(--shadow);color:var(--ink)}
+.puce-fete{display:flex;align-items:center;gap:8px;margin:10px 0 0;padding:7px 14px;border-radius:999px;background:linear-gradient(90deg,var(--accent-soft),var(--lav-soft));font-size:12.5px;color:var(--muted);line-height:1.35}
+.puce-fete .em{font-size:20px;flex:none}
+.puce-fete b{color:var(--ink)}
+header .src{color:var(--muted);font-size:11px;margin:6px 4px 0;min-height:15px}
 main{padding:0 16px 104px;max-width:760px;margin:0 auto}
 nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);border-radius:22px 22px 0 0;box-shadow:0 -6px 20px rgba(0,0,0,.08);display:flex;justify-content:space-around;z-index:5;padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;background:none;border:0;color:var(--muted);padding:9px 2px 11px;font:600 11px Nunito,sans-serif;cursor:pointer;position:relative}
@@ -277,14 +279,11 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .etoiles{position:fixed;inset:0;pointer-events:none;z-index:0}
 .etoiles i{position:absolute;font-style:normal;color:var(--gold);animation:scintille 3.2s ease-in-out infinite}
 header,main{position:relative;z-index:1}
-header .moon{display:inline-block;animation:flotte 4s ease-in-out infinite;text-shadow:0 0 14px var(--gold-soft)}
 .fete-banniere{display:flex;flex-direction:column;align-items:center;gap:2px;margin:14px 0 0;padding:10px 14px;border-radius:18px;background:linear-gradient(135deg,var(--accent-soft),var(--lav-soft));text-align:center;font-size:13px;color:var(--muted)}
 .fete-banniere b{font:700 19px "Cormorant Garamond",Georgia,serif;color:var(--ink)}
-.themes select{font:600 12px Nunito,sans-serif;padding:5px 10px;margin-top:4px}
 
 /* téléphones étroits (Flip 7 ouvert, ~410 px de large) */
 header{padding-top:calc(22px + env(safe-area-inset-top))}
-.theme-btn{top:calc(16px + env(safe-area-inset-top))}
 @media (max-width:440px){
   header h1{font-size:27px}
   header h1 span{font-size:23px}
@@ -306,25 +305,58 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
   header .moon,header .orn{display:none}
   header h1{font-size:22px}
   header h1 span{display:inline;font-size:20px}
-  .theme-btn{width:34px;height:34px;font-size:15px;top:calc(8px + env(safe-area-inset-top))}
-  main{padding-bottom:78px}
+    main{padding-bottom:78px}
   nav button{padding:6px 2px 7px;font-size:9.5px}
   nav button span{font-size:18px}
   .card{margin:10px 0}
 }
 @media (prefers-reduced-motion:reduce){.etoiles i,header .moon,#load::before,.story .paillettes i{animation:none}.roue{transition-duration:.01s}}
+
+/* ---------- accueil ---------- */
+.titre-section{font:700 21px/1.2 "Cormorant Garamond",Georgia,serif;margin:20px 2px 10px}
+.titre-section::before{content:"✧ ";color:var(--gold);font-size:16px}
+.carrousel{display:flex;gap:12px;overflow-x:auto;margin:0 -16px;padding:2px 16px 8px;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.carrousel::-webkit-scrollbar{display:none}
+.carte-livre{flex:none;width:76%;max-width:300px;scroll-snap-align:start;border-radius:22px;padding:14px;background:linear-gradient(160deg,var(--accent-soft),var(--card));border:1px solid var(--line);position:relative;box-shadow:var(--shadow)}
+.carrousel.seul .carte-livre{width:100%;max-width:none}
+.couv-carte{cursor:pointer}
+.couv-carte img,.couv-carte .ph{width:100%;height:170px;object-fit:cover;object-position:center 30%;border-radius:14px;box-shadow:var(--cover-shadow);display:block;background:var(--heat0)}
+.couv-carte .ph{display:flex;align-items:center;justify-content:center;font:700 16px "Cormorant Garamond",serif;color:var(--muted);text-align:center;padding:10px}
+.carte-livre .lire{position:absolute;right:24px;top:150px;width:56px;height:56px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--accent),var(--lav));color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.35),0 0 0 3px var(--card);cursor:pointer}
+.carte-livre .lire.en-cours{background:var(--gold);color:#2a1a08;animation:respire-bouton 2s ease-in-out infinite}
+@keyframes respire-bouton{50%{box-shadow:0 6px 22px var(--gold),0 0 0 3px var(--card)}}
+.carte-livre .t{font:700 19px/1.15 "Cormorant Garamond",Georgia,serif;margin-top:12px;padding-right:56px;cursor:pointer}
+.carte-livre .small{line-height:1.55}
+.carte-livre .small b{color:var(--ink)}
+.carte-actions{margin-top:10px}
+.card h2 .act-h{margin-left:auto;float:right;border:0;font:700 12px Nunito,sans-serif;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:5px 11px;cursor:pointer}
+.annee{display:flex;gap:16px;align-items:center}
+.anneau{--p:0%;width:108px;height:108px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--accent) 0 var(--p),var(--heat0) var(--p) 100%);position:relative}
+.anneau::before{content:"";position:absolute;inset:10px;border-radius:50%;background:var(--card)}
+.anneau div{position:relative;text-align:center;line-height:1.05}
+.anneau b{display:block;font:700 32px "Cormorant Garamond",Georgia,serif}
+.anneau small{font-size:11px;color:var(--muted)}
+.ligne-obj{font-size:13px;margin:4px 0 10px}
+.ligne-obj .prog{height:7px;margin:4px 0 0}
+.pastilles-annee{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.pastille-annee{font:700 12px Nunito,sans-serif;padding:5px 11px;border-radius:999px;background:var(--gold-soft);color:var(--ink)}
+.niveau-mini{display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:18px;background:linear-gradient(90deg,var(--gold-soft),var(--lav-soft));margin:16px 0;cursor:pointer}
+.niveau-mini .em{font-size:26px}
+.niveau-mini .prog{height:6px;margin:5px 0 0}
+.photo-cit{display:block;width:100%;max-height:260px;object-fit:cover;border-radius:14px;margin:10px 0 4px;box-shadow:var(--cover-shadow)}
+.couvs{display:flex;gap:12px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+.couvs::-webkit-scrollbar{display:none}
+.couvs > div{flex:none;width:80px;text-align:center;font-size:11px;color:var(--muted);cursor:pointer;line-height:1.4}
+.couvs img,.couvs .ph{width:80px;height:120px;object-fit:cover;border-radius:8px;box-shadow:var(--cover-shadow);display:block;margin-bottom:5px;background:var(--heat0)}
+.couvs .ph{display:flex;align-items:center;justify-content:center;font-size:10px;padding:4px;overflow:hidden}
 </style>
 
 </head>
 <body>
-<div class="etoiles" aria-hidden="true"><i style="left:8%;top:12%;font-size:10px">✦</i><i style="left:88%;top:8%;font-size:13px;animation-delay:.8s">✧</i><i style="left:76%;top:34%;font-size:8px;animation-delay:1.6s">✦</i><i style="left:4%;top:48%;font-size:12px;animation-delay:2.2s">✧</i><i style="left:93%;top:62%;font-size:9px;animation-delay:.4s">✦</i><i style="left:12%;top:80%;font-size:11px;animation-delay:1.2s">✧</i><i style="left:60%;top:90%;font-size:8px;animation-delay:2.6s">✦</i></div>
+<div class="etoiles" aria-hidden="true"></div>
 <header>
-<button class="theme-btn import-btn" id="reglagesBtn" data-act="reglages" aria-label="Réglages">⚙️</button>
-<button class="theme-btn" id="themeBtn" aria-label="Changer de thème">🎨</button>
-<div class="moon">☾</div>
-<h1>Mon grimoire <span>de lectures</span></h1>
-<div class="orn">✦ ❀ ✦</div>
-<div class="themes" id="themes" hidden></div>
+<div class="tete-n"><h1>Mon grimoire <span>de lectures</span></h1><button class="rond" id="reglagesBtn" data-act="reglages" aria-label="Réglages">⚙️</button></div>
+<div id="puceFete"></div>
 <div class="src" id="src"></div>
 <input type="file" id="fichierImport" accept="application/zip,application/x-zip-compressed,application/octet-stream,application/x-sqlite3,.zip,.db" hidden>
 </header>
@@ -602,37 +634,7 @@ document.addEventListener('change', function (e) {
   }
 });
 
-// ---------- thèmes ----------
-var THEMES = [['auto', '🌗', 'Auto'], ['light', '🌸', 'Rose féerique'], ['dark', '🌙', 'Nuit enchantée'], ['autumn', '🍂', 'Automne cosy']];
-function appliquerTheme(t) {
-  if (t === 'auto') {
-    document.documentElement.removeAttribute('data-theme');
-  } else {
-    document.documentElement.setAttribute('data-theme', t);
-  }
-  var motifs = ['✦', '✧'];
-  if (t === 'autumn') {
-    motifs = ['🍂', '🍁'];
-  }
-  document.querySelectorAll('.etoiles i').forEach(function (el, i) {
-    el.textContent = motifs[i % 2];
-  });
-  document.getElementById('themes').innerHTML = THEMES.map(function (th) {
-    var cls = 'chip';
-    if (th[0] === t) {
-      cls += ' on';
-    }
-    return '<button class="' + cls + '" data-act="theme" data-t="' + th[0] + '">' + th[1] + ' ' + th[2] + '</button>';
-  }).join('');
-}
-ACTIONS.theme = function (el) {
-  lsSet('bm_theme', el.dataset.t);
-  appliquerTheme(el.dataset.t);
-};
-document.getElementById('themeBtn').addEventListener('click', function () {
-  var t = document.getElementById('themes');
-  t.hidden = !t.hidden;
-});
+// ---------- thèmes : voir Fetes.html ----------
 
 // ---------- genres : tags Goodreads regroupés et traduits ----------
 // null = pas un genre (format, pays, époque, étiquette trop générale) : le tag est ignoré
@@ -920,24 +922,173 @@ function vAccueil() {
   return avec('stats', vAccueilCorps);
 }
 function vAccueilCorps() {
-  var h = '';
-  if (typeof banniereFete === 'function') {
-    h += banniereFete();
-  }
-  var enCours = M.lectures.filter(function (r) { return r.status === 'READING' || r.status === 'PAUSE'; });
-  if (enCours.length) {
-    h += card('Sur ma table de chevet', enCours.map(projection).join(''));
-  }
-  h += carteNiveau();
+  return blocEnCeMoment() + carteAnnee() + bandeauNiveau() + carteCitationDuJour() + carteCeJourLa();
+}
 
-  var sj = series_jours();
+// ---------- En ce moment : les lectures en cours (pas celles en pause), la plus récemment lue d'abord ----------
+function derniereActivite(r) {
+  var t = r.start || 0;
+  r.logs.forEach(function (l) {
+    t = Math.max(t, l.created_at || 0);
+  });
+  (M.sessions || []).forEach(function (s) {
+    if (s.lectureId === r._id) {
+      t = Math.max(t, s.fin || s.debut || 0);
+    }
+  });
+  return t;
+}
+function blocEnCeMoment() {
+  var enCours = M.lectures.filter(function (r) { return r.status === 'READING'; }).sort(function (a, b) { return derniereActivite(b) - derniereActivite(a); });
+  if (!enCours.length) {
+    return card('En ce moment', '<p class="muted" style="margin:0 0 10px">Aucune lecture en cours.</p><div class="row"><button class="act" data-act="allerALire">🎡 Choisir ma prochaine lecture</button></div>');
+  }
+  var seul = '';
+  if (enCours.length === 1) {
+    seul = ' seul';
+  }
+  return '<h2 class="titre-section">En ce moment</h2><div class="carrousel' + seul + '">' + enCours.map(carteEnCours).join('') + '</div>';
+}
+ACTIONS.allerALire = function () {
+  onglet = 'etagere';
+  sous.etagere = 'alire';
+  lsSet('bm_onglet', onglet);
+  rendre();
+  window.scrollTo(0, 0);
+};
+function carteEnCours(r) {
+  var b = r.book;
+  var total = r.total_page || b.total_page || 0;
+  var fait = r.page || 0;
+  var pct = 0;
+  if (total) {
+    pct = Math.min(100, Math.round(100 * fait / total));
+  }
+  var est = estimationLecture(r);
+  var infos = [];
+  if (total) {
+    infos.push('<b>' + pct + ' %</b>');
+  }
+  if (est.reste) {
+    infos.push(est.reste);
+  }
+  if (est.fin) {
+    infos.push(est.fin);
+  }
+  var s = typeof sessionEnCours === 'function' ? sessionEnCours() : null;
+  var bouton = '<button class="lire" data-act="lireMaintenant" data-lecture="' + r._id + '" aria-label="Lire maintenant">▶</button>';
+  if (s && s.lectureId === r._id) {
+    bouton = '<button class="lire en-cours" data-act="pageMinuteur" aria-label="Voir le minuteur">⏱️</button>';
+  }
+  var position = 'J\'en suis à…';
+  return '<div class="carte-livre"><div class="couv-carte" data-act="livre" data-id="' + b.id + '">' + cover(b) + '</div>' + bouton +
+    '<div class="t" data-act="livre" data-id="' + b.id + '">' + esc(titre(b)) + '</div><div class="prog"><div style="width:' + pct + '%"></div></div>' +
+    '<div class="small muted">' + infos.join(' · ') + '</div><div class="carte-actions"><button class="mini-btn" data-act="progression" data-lecture="' + r._id + '">📍 ' + position + '</button></div></div>';
+}
+// durée lisible : « 18 min », « 2 h 30 », « 6 h »
+function dureeCourte(sec) {
+  var m = Math.round(sec / 60);
+  if (m < 60) {
+    return Math.max(1, m) + ' min';
+  }
+  // au-delà d'une heure : arrondi au quart d'heure, c'est une estimation
+  m = Math.round(m / 15) * 15;
+  var h = Math.floor(m / 60);
+  var r = m % 60;
+  if (h >= 10 || !r) {
+    return Math.round(m / 60) + ' h';
+  }
+  return h + ' h ' + String(r).padStart(2, '0');
+}
+// vitesse (pages par heure) des sessions minutées d'au moins 5 min ; une lecture précise, ou toutes
+function vitessesLecture(filtre) {
+  var parLecture = {};
+  (M.sessions || []).forEach(function (s) {
+    if (s.position !== null && s.position !== undefined && (!filtre || filtre(s))) {
+      if (!parLecture[s.lectureId]) {
+        parLecture[s.lectureId] = [];
+      }
+      parLecture[s.lectureId].push(s);
+    }
+  });
+  var pages = {};
+  M.lectures.forEach(function (r) {
+    if (r.page_type === 'PAGE' && r.fmt !== 'audioBook') {
+      pages[r._id] = 1;
+    }
+  });
+  var v = [];
+  Object.keys(parLecture).forEach(function (k) {
+    if (!pages[k]) {
+      return;
+    }
+    var max = 0;
+    parLecture[k].sort(function (a, b) { return (a.fin || a.debut) - (b.fin || b.debut); }).forEach(function (s, i) {
+      if (i > 0 && s.dureeSec >= 300) {
+        var x = (s.position - max) / (s.dureeSec / 3600);
+        if (x > 0 && x < 200) {
+          v.push(x);
+        }
+      }
+      max = Math.max(max, s.position);
+    });
+  });
+  return v;
+}
+var cacheVitesse = {m: null, v: null};
+function vitesseGlobale() {
+  if (cacheVitesse.m !== M) {
+    var v = vitessesLecture(null);
+    cacheVitesse = {m: M, v: v.length >= 3 ? mediane(v) : null};
+  }
+  return cacheVitesse.v;
+}
+// temps de lecture restant et date de fin estimée
+function estimationLecture(r) {
+  var total = r.total_page || r.book.total_page || 0;
+  var fait = r.page || 0;
+  var res = {reste: '', fin: ''};
+  if (total > fait) {
+    var sec = 0;
+    if (r.page_type === 'TIME') {
+      sec = total - fait;
+    } else if (r.page_type === 'PAGE') {
+      var propre = vitessesLecture(function (s) { return s.lectureId === r._id; });
+      var v = propre.length >= 2 ? mediane(propre) : (vitesseGlobale() || 30);
+      sec = (total - fait) / v * 3600;
+    }
+    if (sec > 0) {
+      res.reste = '⏳ ≈ ' + dureeCourte(sec) + ' restante' + (sec >= 7200 ? 's' : '');
+    }
+  }
+  // rythme sur les 21 derniers jours, pour la date
+  var depuisTs = Date.now() - 21 * DAY;
+  var base = null;
+  r.logs.forEach(function (l) {
+    if (l.created_at <= depuisTs) {
+      base = l;
+    }
+  });
+  var t0 = depuisTs, v0 = 0;
+  if (base) {
+    v0 = base.page;
+  } else {
+    t0 = r.start || Date.now();
+  }
+  var rythme = (fait - v0) / Math.max(1, (Date.now() - t0) / DAY);
+  if (rythme > 0 && total > fait) {
+    var d = new Date(Date.now() + (total - fait) / rythme * DAY);
+    res.fin = '📅 fini vers le ' + d.getDate() + ' ' + MOIS[d.getMonth()];
+  } else if (total > fait) {
+    res.fin = 'dernière lecture il y a ' + depuis(derniereActivite(r));
+  }
+  return res;
+}
+
+// ---------- Mon année : uniquement du positif ----------
+function carteAnnee() {
   var now = new Date();
   var y = now.getFullYear();
-  var jourAn = Math.floor((now - new Date(y, 0, 1)) / DAY) + 1;
-  var nbJoursAn = 365;
-  if (y % 4 === 0) {
-    nbJoursAn = 366;
-  }
   var fin = finies();
   var cetteAnnee = fin.filter(function (r) { return annee(r.end) === y; }).length;
   var anDernier = fin.filter(function (r) {
@@ -945,62 +1096,105 @@ function vAccueilCorps() {
     return d.getFullYear() === y - 1 && d <= new Date(y - 1, now.getMonth(), now.getDate());
   }).length;
   var obj = objectifAnnee(y);
-  var objectif = obj.livres || 25;
-  var proj = Math.round(cetteAnnee / jourAn * nbJoursAn);
-  var ecart = cetteAnnee - anDernier;
-  var ecartTxt = String(ecart);
-  if (ecart > 0) {
-    ecartTxt = '+' + ecart;
+  var sj = series_jours();
+  var anneau;
+  if (obj.livres) {
+    var pct = Math.min(100, Math.round(100 * cetteAnnee / obj.livres));
+    anneau = '<div class="anneau" style="--p:' + pct + '%"><div><b>' + cetteAnnee + '</b><small>sur ' + obj.livres + ' livres</small></div></div>';
+  } else {
+    anneau = '<div class="anneau" style="--p:100%"><div><b>' + cetteAnnee + '</b><small>livres finis</small></div></div>';
   }
-  h += card('Mon année de lecture', kpis([
-    [cetteAnnee, 'livres finis en ' + y],
-    [ecartTxt, 'vs ' + (y - 1) + ' à la même date'],
-    [sj.actuelle + ' j', 'série en cours'],
-    [sj.best + ' j', 'record de série']
-  ]) +
-    barreObjectif('📚', cetteAnnee, objectif, 'livres') +
-    '<div class="small muted">À ce rythme : ~' + proj + ' livres fin ' + y + ' · ' + objectifTxt(cetteAnnee, objectif, jourAn, nbJoursAn) + '</div>' +
-    (obj.pages ? barreObjectif('📖', pagesAnnee(y), obj.pages, 'pages') : '') +
-    (obj.heures ? barreObjectif('⏱️', heuresAnnee(y), obj.heures, 'heures') : '') +
-    '<div class="row" style="margin-top:10px"><button class="act doux" data-act="objectifs">🎯 Mes objectifs ' + y + '</button></div>');
-
-  var cit = M.notes.filter(function (n) { return n.texte.length > 20; });
-  if (cit.length) {
-    var c = cit[Math.floor(Date.now() / DAY) % cit.length];
-    var src = '';
-    if (c.book) {
-      src = esc(titre(c.book));
-      if (c.page) {
-        src += ', p. ' + c.page;
-      }
+  var pages = pagesAnnee(y);
+  var heures = heuresAnnee(y);
+  var lignes = ligneObjectif('📖', pages, obj.pages, 'pages') + ligneObjectif('⏱️', heures, obj.heures, 'heures');
+  var badges = [];
+  if (sj.actuelle > 0) {
+    badges.push('🔥 série de ' + sj.actuelle + ' j');
+  }
+  if (sj.best > 0) {
+    badges.push('🏆 record ' + sj.best + ' j');
+  }
+  if (cetteAnnee > anDernier) {
+    badges.push('✨ +' + (cetteAnnee - anDernier) + ' vs ' + (y - 1));
+  }
+  if (obj.livres && cetteAnnee >= obj.livres) {
+    badges.push('🎉 objectif atteint');
+  }
+  return '<section class="card"><h2>Mon année ' + y + ' <button class="act-h" data-act="objectifs">🎯 Objectifs</button></h2><div class="annee">' + anneau + '<div style="flex:1;min-width:0">' + lignes + '</div></div>' +
+    (badges.length ? '<div class="pastilles-annee">' + badges.map(function (b) { return '<span class="pastille-annee">' + b + '</span>'; }).join('') + '</div>' : '') + '</section>';
+}
+function ligneObjectif(emoji, fait, cible, unite) {
+  var txt = Number(round(fait, 1)).toLocaleString('fr-FR', {maximumFractionDigits: 1});
+  if (!cible) {
+    return '<div class="ligne-obj">' + emoji + ' <b>' + txt + '</b> ' + unite + '</div>';
+  }
+  return '<div class="ligne-obj">' + emoji + ' <b>' + txt + '</b> / ' + Number(cible).toLocaleString('fr-FR') + ' ' + unite + '<div class="prog"><div style="width:' + Math.min(100, 100 * fait / cible) + '%"></div></div></div>';
+}
+// niveau de sorcière, en une ligne (touche → Quêtes)
+function bandeauNiveau() {
+  var n = niveau();
+  return '<div class="niveau-mini" data-act="allerQuetes"><span class="em">' + n.n[1] + '</span><div style="flex:1;min-width:0"><div class="small"><b>' + esc(n.n[2]) + '</b> · niv. ' + (n.i + 1) + '</div><div class="prog"><div style="width:' + n.pct + '%"></div></div></div><span class="small muted">' + Math.round(n.pct) + ' %</span></div>';
+}
+ACTIONS.allerQuetes = function () {
+  onglet = 'quetes';
+  lsSet('bm_onglet', onglet);
+  rendre();
+  window.scrollTo(0, 0);
+};
+// citation du jour : avec sa photo s'il y en a une
+function carteCitationDuJour() {
+  var cit = M.notes.filter(function (n) { return n.texte.length > 20 || n.photo; });
+  if (!cit.length) {
+    return '';
+  }
+  var c = cit[Math.floor(Date.now() / DAY) % cit.length];
+  var src = '';
+  if (c.book) {
+    src = esc(titre(c.book));
+    if (c.page) {
+      src += ', p. ' + c.page;
     }
-    h += card('La citation du jour', '<div class="quotebox"><div class="quote">' + esc(c.texte) + '</div><p class="qsrc">' + src + '</p></div>');
   }
-
-  var cj = fin.filter(function (r) {
+  var photo = '';
+  if (c.photo) {
+    photo = '<img class="photo-cit" src="' + esc(c.photo) + '" alt="Photo de la citation">';
+  }
+  var texte = '';
+  if (c.texte) {
+    var t = c.texte;
+    if (t.length > 320) {
+      t = t.slice(0, 300).replace(/\s+\S*$/, '') + '…';
+    }
+    texte = '<div class="quote">' + esc(t) + '</div>';
+  }
+  return card('La citation du jour', '<div class="quotebox">' + photo + texte + '<p class="qsrc">' + src + '</p></div>');
+}
+// ce jour-là, les années passées : le plus récent d'abord
+function carteCeJourLa() {
+  var now = new Date();
+  var y = now.getFullYear();
+  var cj = finies().filter(function (r) {
     var d = new Date(r.end);
     var ref = new Date(d.getFullYear(), now.getMonth(), now.getDate());
     return d.getFullYear() < y && Math.abs(d - ref) <= 3 * DAY;
-  });
-  if (cj.length) {
-    h += card('Ce jour-là', cj.map(function (r) {
-      var ans = y - annee(r.end);
-      var s = '';
-      if (ans > 1) {
-        s = 's';
-      }
-      return ligneLivre(r.book, 'fini le ' + fdate(r.end) + ' (il y a ' + ans + ' an' + s + ') · ' + etoiles(r.star), 'data-act="livre" data-id="' + r.book.id + '"');
-    }).join(''), 'à ±3 jours, les années passées');
+  }).sort(function (a, b) { return b.end - a.end; });
+  if (!cj.length) {
+    return '';
   }
-  return h;
+  return card('Ce jour-là', '<div class="couvs">' + cj.map(function (r) {
+    var ans = y - annee(r.end);
+    var s = '';
+    if (ans > 1) {
+      s = 's';
+    }
+    var note = '';
+    if (r.star) {
+      note = '<br>★ ' + nombre(r.star);
+    }
+    return '<div data-act="livre" data-id="' + r.book.id + '" title="' + esc(titre(r.book)) + ' · fini le ' + fdate(r.end) + '">' + cover(r.book) + 'il y a ' + ans + ' an' + s + note + '</div>';
+  }).join('') + '</div>', 'à ±3 jours, les années passées');
 }
-function barreObjectif(emoji, fait, cible, unite) {
-  var pct = Math.min(100, 100 * fait / cible);
-  var lisible = function (v) {
-    return Number(round(v, 1)).toLocaleString('fr-FR', {maximumFractionDigits: 1});
-  };
-  return '<div class="row small" style="justify-content:space-between;margin-top:12px"><span>' + emoji + ' <b>' + lisible(fait) + '</b> / ' + lisible(cible) + ' ' + unite + '</span><span class="muted">' + Math.round(100 * fait / cible) + ' %</span></div><div class="prog"><div style="width:' + pct + '%"></div></div>';
-}
+
 // pages lues dans l'année : relevés de page, plus les livres finis sans relevé (papier et numérique)
 function pagesAnnee(y) {
   var p = 0;
@@ -1041,64 +1235,6 @@ ACTIONS.objectifs = function () {
     toast('🎯 Objectifs enregistrés');
   };
 };
-function objectifTxt(fait, obj, jourAn, nbJoursAn) {
-  var reste = obj - fait;
-  if (reste <= 0) {
-    return 'objectif atteint 🎉';
-  }
-  return 'il en reste ' + reste + ', soit 1 tous les ' + Math.max(1, Math.floor((nbJoursAn - jourAn) / reste)) + ' jours';
-}
-
-function projection(r) {
-  var b = r.book;
-  var tps = r.page_type === 'TIME';
-  var total = r.total_page || b.total_page || 0;
-  var fait = r.page || 0;
-  var faitTxt = fait + ' / ' + total + ' p.';
-  if (tps) {
-    faitTxt = hm(fait) + ' / ' + hm(total);
-  }
-  // rythme sur les 21 derniers jours
-  var depuisTs = Date.now() - 21 * DAY;
-  var base = null;
-  r.logs.forEach(function (l) {
-    if (l.created_at <= depuisTs) {
-      base = l;
-    }
-  });
-  var t0 = depuisTs, v0;
-  if (base) {
-    v0 = base.page;
-  } else {
-    t0 = r.start;
-    v0 = 0;
-  }
-  var jrs = Math.max(1, (Date.now() - t0) / DAY);
-  var rythme = (fait - v0) / jrs;
-  var info = '';
-  if (r.status === 'PAUSE') {
-    info = 'En pause';
-  } else if (rythme > 0 && total > fait) {
-    var reste = (total - fait) / rythme;
-    var rythmeTxt = round(rythme, 0) + ' p./jour';
-    if (tps) {
-      rythmeTxt = Math.round(rythme / 60) + ' min/jour';
-    }
-    info = rythmeTxt + ' en moyenne → fini vers le <b>' + fdate(Date.now() + reste * DAY) + '</b>';
-  } else if (total > fait) {
-    info = 'Pas d\'avancée notée depuis 3 semaines';
-  }
-  var pct = 0;
-  if (total) {
-    pct = 100 * fait / total;
-  }
-  var chrono = '';
-  if (r.status === 'READING' && r._id) {
-    chrono = '<button class="mini-btn" data-act="lancerMinuteur" data-lecture="' + r._id + '" aria-label="Lancer le minuteur">⏱️</button>';
-  }
-  return '<div class="book" data-act="livre" data-id="' + b.id + '">' + cover(b) + '<div style="flex:1"><div class="t">' + esc(titre(b)) + ' ' + chrono + '</div><div class="small muted">' + pill(r.fmt) + ' ' + faitTxt + ' · commencé le ' + fdate(r.start) + '</div><div class="prog"><div style="width:' + pct + '%"></div></div><div class="small">' + info + '</div></div></div>';
-}
-
 // ---------- Stats : rythme, goûts, argent ----------
 function vStats() {
   return avec('stats', function () {
@@ -2756,47 +2892,79 @@ ACTIONS.fermerStory = function () {
 };
 </script>
 
+<style>
+/* motifs animés du thème (derrière tout le contenu) */
+.etoiles i{position:absolute;font-style:normal;color:var(--gold);opacity:.5;will-change:transform}
+.etoiles i.brille{animation:scintille 3.2s ease-in-out infinite}
+.etoiles i.tombe{top:-8vh;animation:motif-tombe 16s linear infinite}
+.etoiles i.monte{top:100vh;animation:motif-monte 18s linear infinite}
+.etoiles i.flotte{left:-10vw;animation:motif-flotte 26s linear infinite}
+@keyframes motif-tombe{from{transform:translate(0,0) rotate(0)}50%{transform:translate(18px,55vh) rotate(140deg)}to{transform:translate(-10px,112vh) rotate(280deg)}}
+@keyframes motif-monte{from{transform:translate(0,0)}50%{transform:translate(-14px,-55vh)}to{transform:translate(10px,-112vh)}}
+@keyframes motif-flotte{from{transform:translate(0,0)}50%{transform:translate(55vw,-26px)}to{transform:translate(122vw,0)}}
+@media (prefers-reduced-motion:reduce){.etoiles i{animation:none !important}}
+</style>
 <script>
 // ---------- Thèmes au fil de l'année : saisons et jours de fête ----------
 // c : couleurs de base (le reste est calculé dans Styles, thème « fete »)
+// motifs + anim (tombe, monte, flotte, brille) : ce qui bouge en fond ; bandeau : le dégradé en haut de l'écran
 var FETES = {
-  printemps: {nom: 'Printemps', emoji: '🌸', motifs: ['🌸', '🌷'], phrase: 'Les bourgeons et les pages s\'ouvrent',
-    c: {bg: '#f3f8ef', bg2: '#fdeef4', card: '#fffdfb', ink: '#3f3548', muted: '#8a7f8e', line: '#e3ead9', accent: '#e0679b', lav: '#6fae6b', gold: '#e2b23c', ebook: '#8fb8e8'}},
-  ete: {nom: 'Été', emoji: '☀️', motifs: ['☀️', '🐚'], phrase: 'Lectures au soleil et pages salées',
-    c: {bg: '#fff6ea', bg2: '#e9f7f7', card: '#fffdf8', ink: '#3b3340', muted: '#8b7e78', line: '#f1e1cc', accent: '#ef7d57', lav: '#2fa5b5', gold: '#e8a723', ebook: '#e66a9b'}},
-  automne: {nom: 'Automne', emoji: '🍂', motifs: ['🍂', '🍁'], phrase: 'Plaid, thé et grimoires',
-    c: {bg: '#f8efe3', bg2: '#f1dcc6', card: '#fffaf2', ink: '#4a2c20', muted: '#93725f', line: '#ecd6bf', accent: '#c0573a', lav: '#8e5b7c', gold: '#c48a2c', ebook: '#6f8f4e'}},
-  hiver: {nom: 'Hiver', emoji: '❄️', motifs: ['❄', '✧'], phrase: 'Flocons dehors, chapitres dedans',
-    c: {bg: '#eef3fb', bg2: '#f3eefb', card: '#fbfdff', ink: '#2f3550', muted: '#7d84a0', line: '#dde4f2', accent: '#6f86d6', lav: '#9b7fd1', gold: '#9fb3c8', ebook: '#5fb3c9'}},
-  noel: {nom: 'Noël', emoji: '🎄', motifs: ['❄', '🎄'], phrase: 'Joyeux Noël, lectrice des neiges',
-    c: {bg: '#14231c', bg2: '#2a1416', card: '#1f2f27', ink: '#fbf3e6', muted: '#c9b9a0', line: '#3c4a3f', accent: '#d64545', lav: '#3f9a6b', gold: '#e3b34c', ebook: '#e3b34c'}},
-  nouvelan: {nom: 'Nouvel An', emoji: '🥂', motifs: ['✨', '🎆'], phrase: 'Une nouvelle année de pages à tourner',
-    c: {bg: '#0f1430', bg2: '#2a1440', card: '#1c2045', ink: '#f6f1ff', muted: '#b7b0d6', line: '#33386a', accent: '#e8b84a', lav: '#9b7fe8', gold: '#f5d27a', ebook: '#f08bb8'}},
-  halloween: {nom: 'Halloween', emoji: '🎃', motifs: ['🎃', '🦇'], phrase: 'Frissons et sortilèges au fil des pages',
-    c: {bg: '#1a1020', bg2: '#2b1608', card: '#251a2e', ink: '#f8ecdf', muted: '#c2a8a0', line: '#3f2c45', accent: '#f07d1e', lav: '#8a5cc7', gold: '#e8c547', ebook: '#7bc96f'}},
-  imaginaire: {nom: 'Mois de l\'Imaginaire', emoji: '🐉', motifs: ['🐉', '✧'], phrase: 'Dragons, fées et mondes à explorer',
-    c: {bg: '#121a2b', bg2: '#241536', card: '#1d2438', ink: '#eef0ff', muted: '#a9b0cf', line: '#313a58', accent: '#9b6bf0', lav: '#3fb8a8', gold: '#d9b46a', ebook: '#f08bb8'}},
-  valentin: {nom: 'Saint-Valentin', emoji: '💌', motifs: ['💕', '♡'], phrase: 'Romances et coups de cœur',
+  printemps: {nom: 'Printemps', emoji: '🌸', motifs: ['🌸', '🌷', '🦋'], anim: 'tombe', phrase: 'Les bourgeons et les pages s\'ouvrent',
+    bandeau: 'radial-gradient(90% 80% at 15% 0%,#ee5f9840,transparent 70%),radial-gradient(90% 80% at 85% 0%,#5fb05b40,transparent 70%)',
+    c: {bg: '#f1f9ee', bg2: '#ffeef5', card: '#fffefb', ink: '#3d3446', muted: '#857b8c', line: '#e2ecd8', accent: '#ee5f98', lav: '#5fb05b', gold: '#f0b72f', ebook: '#8fb8e8'}},
+  ete: {nom: 'Été', emoji: '☀️', motifs: ['🫧', '🐚', '🫧'], anim: 'monte', phrase: 'Lectures au soleil et pages salées',
+    bandeau: 'radial-gradient(55% 90% at 88% 0%,#ffb81c90,transparent 65%),linear-gradient(180deg,transparent 40%,#17a9b830)',
+    c: {bg: '#fff4e2', bg2: '#e3f7f6', card: '#fffdf7', ink: '#3a3140', muted: '#8a7c74', line: '#f2dfc6', accent: '#ff7a4d', lav: '#17a9b8', gold: '#ffb81c', ebook: '#e66a9b'}},
+  automne: {nom: 'Automne', emoji: '🍂', motifs: ['🍂', '🍁', '🌰'], anim: 'tombe', phrase: 'Plaid, thé et grimoires',
+    bandeau: 'radial-gradient(100% 90% at 50% 0%,#d99a2b55,transparent 70%)',
+    c: {bg: '#f8ecdd', bg2: '#f3d9bf', card: '#fffaf2', ink: '#4a2c20', muted: '#93725f', line: '#ecd6bf', accent: '#c9552c', lav: '#7d8b3a', gold: '#d99a2b', ebook: '#6f8f4e'}},
+  hiver: {nom: 'Hiver', emoji: '❄️', motifs: ['❄', '❅', '❆'], anim: 'tombe', phrase: 'Flocons dehors, chapitres dedans',
+    bandeau: 'linear-gradient(180deg,#cfe0f7,transparent)',
+    c: {bg: '#eaf2fb', bg2: '#f4f1fd', card: '#ffffff', ink: '#28324f', muted: '#7680a2', line: '#d9e3f2', accent: '#5b7fe0', lav: '#8f79d8', gold: '#8fb3d9', ebook: '#5fb3c9'}},
+  noel: {nom: 'Noël', emoji: '🎄', motifs: ['❄', '🎁', '✦'], anim: 'tombe', phrase: 'Joyeux Noël, lectrice des neiges',
+    bandeau: 'repeating-linear-gradient(45deg,#e2403f26 0 14px,transparent 14px 28px),radial-gradient(100% 90% at 50% 0%,#f2c55233,transparent 70%)',
+    c: {bg: '#0f2a1c', bg2: '#3a0f16', card: '#173525', ink: '#fff8ec', muted: '#d2c3a6', line: '#2e5340', accent: '#e2403f', lav: '#41b06e', gold: '#f2c552', ebook: '#f2c552'}},
+  nouvelan: {nom: 'Nouvel An', emoji: '🥂', motifs: ['✨', '🎆', '✦'], anim: 'brille', phrase: 'Une nouvelle année de pages à tourner',
+    bandeau: 'radial-gradient(60% 90% at 50% 0%,#f0c75e60,transparent 70%)',
+    c: {bg: '#0b0b10', bg2: '#1d1a10', card: '#15141c', ink: '#fffaf0', muted: '#c8bd9c', line: '#3a3423', accent: '#f0c75e', lav: '#c9a24a', gold: '#ffe29a', ebook: '#f08bb8'}},
+  halloween: {nom: 'Halloween', emoji: '🎃', motifs: ['🦇', '🍂', '🕸️'], anim: 'flotte', phrase: 'Frissons et sortilèges au fil des pages',
+    bandeau: 'radial-gradient(100% 90% at 50% 130%,#ff7a1a70,transparent 70%),linear-gradient(#000000b0,transparent)',
+    c: {bg: '#120a06', bg2: '#2a0f1e', card: '#1f1410', ink: '#fff1e3', muted: '#d1ab8f', line: '#4a2c1c', accent: '#ff7a1a', lav: '#9b5cff', gold: '#ffcc3d', ebook: '#7bdc6f'}},
+  imaginaire: {nom: 'Mois de l\'Imaginaire', emoji: '🐉', motifs: ['✧', '🐉', '✦'], anim: 'brille', phrase: 'Dragons, fées et mondes à explorer',
+    bandeau: 'radial-gradient(120% 90% at 50% 0%,#2fd0a860,transparent 70%),radial-gradient(80% 70% at 85% 100%,#a879ff50,transparent 70%)',
+    c: {bg: '#0e1f1d', bg2: '#24133a', card: '#16292a', ink: '#eafff8', muted: '#9fc4bb', line: '#24443f', accent: '#a879ff', lav: '#2fd0a8', gold: '#e7c36b', ebook: '#f08bb8'}},
+  valentin: {nom: 'Saint-Valentin', emoji: '💌', motifs: ['💕', '♡', '💗'], anim: 'monte', phrase: 'Romances et coups de cœur',
+    bandeau: 'radial-gradient(100% 90% at 50% 0%,#e0386b40,transparent 70%)',
     c: {bg: '#fff0f3', bg2: '#fde3ec', card: '#fffafb', ink: '#4a2235', muted: '#9a6f83', line: '#f6d3de', accent: '#e0386b', lav: '#b0518f', gold: '#d9a14a', ebook: '#e88aa8'}},
-  chandeleur: {nom: 'Chandeleur', emoji: '🥞', motifs: ['🥞', '✦'], phrase: 'Une crêpe, un chapitre',
+  chandeleur: {nom: 'Chandeleur', emoji: '🥞', motifs: ['🥞', '🍯', '✦'], anim: 'tombe', phrase: 'Une crêpe, un chapitre',
+    bandeau: 'radial-gradient(100% 90% at 50% 0%,#e9b94966,transparent 70%)',
     c: {bg: '#fbf4e6', bg2: '#f6ead6', card: '#fffcf6', ink: '#4b3622', muted: '#9a826a', line: '#efe1c8', accent: '#d68b2c', lav: '#b3632f', gold: '#e9b949', ebook: '#8fa86b'}},
-  paques: {nom: 'Pâques', emoji: '🐰', motifs: ['🥚', '🐰'], phrase: 'Chasse aux œufs et aux chapitres',
+  paques: {nom: 'Pâques', emoji: '🐰', motifs: ['🥚', '🐣', '🌼'], anim: 'flotte', phrase: 'Chasse aux œufs et aux chapitres',
+    bandeau: 'radial-gradient(80% 90% at 20% 0%,#b48be040,transparent 70%),radial-gradient(80% 90% at 80% 0%,#7cc28d40,transparent 70%)',
     c: {bg: '#f7f3ff', bg2: '#f0fbf2', card: '#fffefd', ink: '#3e3550', muted: '#8b819c', line: '#e6e0f2', accent: '#b48be0', lav: '#7cc28d', gold: '#f2c14e', ebook: '#f0a0b8'}},
-  poisson: {nom: 'Poisson d\'avril', emoji: '🐟', motifs: ['🐟', '🐠'], phrase: 'Attention aux livres farceurs',
+  poisson: {nom: 'Poisson d\'avril', emoji: '🐟', motifs: ['🐟', '🐠', '🫧'], anim: 'flotte', phrase: 'Attention aux livres farceurs',
+    bandeau: 'linear-gradient(180deg,#2fa7b840,transparent)',
     c: {bg: '#eefaf9', bg2: '#eef3ff', card: '#fbffff', ink: '#23414a', muted: '#6e8f96', line: '#d3eceb', accent: '#2fa7b8', lav: '#f07fa4', gold: '#f3b93f', ebook: '#7d8ff0'}},
-  livre: {nom: 'Journée mondiale du livre', emoji: '🌹', motifs: ['🌹', '📚'], phrase: 'Un livre, une rose',
+  livre: {nom: 'Journée mondiale du livre', emoji: '🌹', motifs: ['🌹', '📖', '✦'], anim: 'tombe', phrase: 'Un livre, une rose',
+    bandeau: 'radial-gradient(100% 90% at 50% 0%,#b02e4a40,transparent 70%)',
     c: {bg: '#f6efe2', bg2: '#f3e3e3', card: '#fffaf1', ink: '#3d2a24', muted: '#8c7468', line: '#e8d9c3', accent: '#b02e4a', lav: '#6b4a8c', gold: '#c4932f', ebook: '#5f8f6b'}},
-  musique: {nom: 'Fête de la musique', emoji: '🎶', motifs: ['🎵', '🎶'], phrase: 'Lire en musique',
+  musique: {nom: 'Fête de la musique', emoji: '🎶', motifs: ['🎵', '🎶', '♪'], anim: 'monte', phrase: 'Lire en musique',
+    bandeau: 'radial-gradient(80% 90% at 20% 0%,#ff4f9a40,transparent 70%),radial-gradient(80% 90% at 80% 0%,#6a5cff40,transparent 70%)',
     c: {bg: '#f6efff', bg2: '#ffeef7', card: '#fffcff', ink: '#352a4a', muted: '#8a7ea3', line: '#e8ddf6', accent: '#ff4f9a', lav: '#6a5cff', gold: '#ffb703', ebook: '#21b8a6'}},
-  chat: {nom: 'Journée du chat', emoji: '🐈‍⬛', motifs: ['🐾', '🐈‍⬛'], phrase: 'Ronrons et pages tournées',
+  chat: {nom: 'Journée du chat', emoji: '🐈‍⬛', motifs: ['🐾', '🐈‍⬛', '🧶'], anim: 'flotte', phrase: 'Ronrons et pages tournées',
+    bandeau: 'radial-gradient(100% 90% at 50% 0%,#d9785b40,transparent 70%)',
     c: {bg: '#f8f3ee', bg2: '#f0eef6', card: '#fffdfa', ink: '#3a3030', muted: '#8c7f78', line: '#ebe1d8', accent: '#d9785b', lav: '#6e6a8f', gold: '#d6a446', ebook: '#7aa58a'}},
-  etoiles: {nom: 'Nuit des étoiles', emoji: '☄️', motifs: ['☄️', '✦'], phrase: 'Fais un vœu à chaque étoile filante',
-    c: {bg: '#0b1026', bg2: '#1b1240', card: '#151a3a', ink: '#eef2ff', muted: '#a8b0d8', line: '#2b3260', accent: '#7aa2ff', lav: '#c38bff', gold: '#ffd76a', ebook: '#6fe0c8'}},
-  rentree: {nom: 'Rentrée littéraire', emoji: '📖', motifs: ['📖', '✒️'], phrase: 'Les nouveautés de la rentrée',
+  etoiles: {nom: 'Nuit des étoiles', emoji: '☄️', motifs: ['☄️', '✦', '✧'], anim: 'brille', phrase: 'Fais un vœu à chaque étoile filante',
+    bandeau: 'radial-gradient(120% 100% at 50% 0%,#54c6ff40,transparent 70%)',
+    c: {bg: '#050b24', bg2: '#0b2a4a', card: '#0e1a3a', ink: '#eaf6ff', muted: '#9fb7d8', line: '#1e3360', accent: '#54c6ff', lav: '#8a7dff', gold: '#ffe07a', ebook: '#6fe0c8'}},
+  rentree: {nom: 'Rentrée littéraire', emoji: '📖', motifs: ['📖', '✒️', '🍎'], anim: 'tombe', phrase: 'Les nouveautés de la rentrée',
+    bandeau: 'repeating-linear-gradient(180deg,#3e6fb014 0 1px,transparent 1px 22px),radial-gradient(100% 90% at 50% 0%,#c0503f30,transparent 70%)',
     c: {bg: '#f5f3ec', bg2: '#eef2f7', card: '#fffefb', ink: '#2f3440', muted: '#7f8593', line: '#e3e1d6', accent: '#c0503f', lav: '#3e6fb0', gold: '#d2a13c', ebook: '#5f9a6b'}},
-  pleinelune: {nom: 'Pleine lune', emoji: '🌕', motifs: ['🌕', '✧'], phrase: 'Nuit de pleine lune, lecture magique',
-    c: {bg: '#10142a', bg2: '#1e1a3a', card: '#1a1f3c', ink: '#f2f2ff', muted: '#b0b4d8', line: '#2e3462', accent: '#b9a6ff', lav: '#7fc8e8', gold: '#f1e3a8', ebook: '#f0a0c8'}},
-  vendredi13: {nom: 'Vendredi 13', emoji: '🍀', motifs: ['🍀', '🐈‍⬛'], phrase: 'Porte-bonheur et pages chanceuses',
+  pleinelune: {nom: 'Pleine lune', emoji: '🌕', motifs: ['✧', '🦉', '✦'], anim: 'brille', phrase: 'Nuit de pleine lune, lecture magique',
+    bandeau: 'radial-gradient(40% 70% at 50% 25%,#f4ecc460,transparent 70%)',
+    c: {bg: '#1a1d2e', bg2: '#2c2a3e', card: '#232638', ink: '#f4f3ff', muted: '#b9b8d4', line: '#3a3d58', accent: '#d8d2ff', lav: '#9fb6d6', gold: '#f4ecc4', ebook: '#f0a0c8'}},
+  vendredi13: {nom: 'Vendredi 13', emoji: '🍀', motifs: ['🍀', '🐈‍⬛', '✦'], anim: 'flotte', phrase: 'Porte-bonheur et pages chanceuses',
+    bandeau: 'radial-gradient(100% 90% at 50% 0%,#5fbf7a40,transparent 70%)',
     c: {bg: '#0f1a14', bg2: '#1d1a12', card: '#18241d', ink: '#eef6ee', muted: '#a6b8a8', line: '#2c3d33', accent: '#5fbf7a', lav: '#c9a227', gold: '#d9c25a', ebook: '#7fb6e0'}}
 };
 
@@ -2881,13 +3049,40 @@ function feteDuJour(d) {
   return 'hiver';
 }
 
-var THEMES = [['fetes', '✨', 'Au fil de l\'année'], ['auto', '🌗', 'Auto'], ['light', '🌸', 'Rose féerique'], ['dark', '🌙', 'Nuit enchantée'], ['autumn', '🍂', 'Automne cosy']];
+var THEMES = [['fetes', '✨', 'Au fil de l\'année'], ['auto', '🌗', 'Clair ou sombre (selon le téléphone)'], ['light', '🌸', 'Rose féerique'], ['dark', '🌙', 'Nuit enchantée'], ['autumn', '🍂', 'Automne cosy']];
 var feteActive = null;
+var themeChoisi = 'fetes';
+
+// motifs qui bougent en fond : 14 petits éléments répartis au hasard (mais toujours au même endroit pour un thème)
+function semerMotifs(motifs, anim) {
+  var zone = document.querySelector('.etoiles');
+  if (!zone) {
+    return;
+  }
+  var h = '';
+  for (var i = 0; i < 14; i++) {
+    var gauche = (i * 37 + 7) % 96;
+    var haut = (i * 53 + 11) % 92;
+    var taille = 10 + (i % 4) * 4;
+    var duree = anim === 'brille' ? 2.4 + (i % 5) * 0.5 : 14 + (i % 6) * 3;
+    var style = 'font-size:' + taille + 'px;animation-duration:' + duree + 's;animation-delay:-' + ((i * 2.3) % duree).toFixed(1) + 's;';
+    if (anim === 'flotte') {
+      style += 'top:' + haut + '%;';
+    } else if (anim === 'brille') {
+      style += 'left:' + gauche + '%;top:' + haut + '%;';
+    } else {
+      style += 'left:' + gauche + '%;';
+    }
+    h += '<i class="' + anim + '" style="' + style + '">' + motifs[i % motifs.length] + '</i>';
+  }
+  zone.innerHTML = h;
+}
 
 function appliquerTheme(t) {
   var racine = document.documentElement;
   racine.removeAttribute('style');
   feteActive = null;
+  themeChoisi = t;
   var id = null;
   if (t === 'fetes') {
     id = feteDuJour(new Date());
@@ -2895,7 +3090,7 @@ function appliquerTheme(t) {
     id = t.slice(2);
   }
   var motifs = ['✦', '✧'];
-  var orn = '✦ ❀ ✦';
+  var anim = 'brille';
   if (id && FETES[id]) {
     var f = FETES[id];
     feteActive = id;
@@ -2903,8 +3098,9 @@ function appliquerTheme(t) {
     Object.keys(f.c).forEach(function (k) {
       racine.style.setProperty('--' + k, f.c[k]);
     });
+    racine.style.setProperty('--bandeau', f.bandeau);
     motifs = f.motifs;
-    orn = '✦ ' + f.emoji + ' ✦';
+    anim = f.anim;
     document.querySelectorAll('meta[name=theme-color]').forEach(function (m) { m.setAttribute('content', f.c.bg); });
   } else {
     if (t === 'auto') {
@@ -2914,54 +3110,55 @@ function appliquerTheme(t) {
     }
     if (t === 'autumn') {
       motifs = ['🍂', '🍁'];
+      anim = 'tombe';
     }
   }
-  document.querySelectorAll('.etoiles i').forEach(function (el, i) {
-    el.textContent = motifs[i % 2];
-  });
-  var o = document.querySelector('header .orn');
-  if (o) {
-    o.textContent = orn;
+  semerMotifs(motifs, anim);
+  var p = document.getElementById('puceFete');
+  if (p) {
+    p.innerHTML = puceFete();
   }
-  var essai = '<select data-chg="themeFete"><option value="">🎉 Essayer une fête…</option>' + Object.keys(FETES).map(function (k) {
-    var sel = '';
-    if (t === 'f:' + k) {
-      sel = ' selected';
-    }
-    return '<option value="' + k + '"' + sel + '>' + FETES[k].emoji + ' ' + FETES[k].nom + '</option>';
-  }).join('') + '</select>';
-  document.getElementById('themes').innerHTML = THEMES.map(function (th) {
-    var cls = 'chip';
-    if (th[0] === t) {
-      cls += ' on';
-    }
-    return '<button class="' + cls + '" data-act="theme" data-t="' + th[0] + '">' + th[1] + ' ' + th[2] + '</button>';
-  }).join('') + '<div>' + essai + '</div>';
 }
-ACTIONS.theme = function (el) {
-  lsSet('bm_theme', el.dataset.t);
-  appliquerTheme(el.dataset.t);
-  if (M) {
-    rendre();
-  }
-};
-ACTIONS.themeFete = function (el) {
-  var t = 'fetes';
-  if (el.value) {
-    t = 'f:' + el.value;
-  }
+function choisirTheme(t) {
   lsSet('bm_theme', t);
   appliquerTheme(t);
   if (M) {
     rendre();
   }
+  if (document.getElementById('choixThemes')) {
+    document.getElementById('choixThemes').innerHTML = choixThemesHtml();
+  }
+}
+ACTIONS.theme = function (el) {
+  choisirTheme(el.dataset.t);
 };
-function banniereFete() {
+ACTIONS.themeFete = function (el) {
+  choisirTheme(el.value ? 'f:' + el.value : 'fetes');
+};
+// choix du thème, dans les Réglages
+function choixThemesHtml() {
+  var essai = '<select class="champ" data-chg="themeFete"><option value="">🎉 Essayer une fête ou une saison…</option>' + Object.keys(FETES).map(function (k) {
+    var sel = '';
+    if (themeChoisi === 'f:' + k) {
+      sel = ' selected';
+    }
+    return '<option value="' + k + '"' + sel + '>' + FETES[k].emoji + ' ' + FETES[k].nom + '</option>';
+  }).join('') + '</select>';
+  return '<div>' + THEMES.map(function (th) {
+    var cls = 'chip';
+    if (th[0] === themeChoisi) {
+      cls += ' on';
+    }
+    return '<button class="' + cls + '" data-act="theme" data-t="' + th[0] + '">' + th[1] + ' ' + th[2] + '</button>';
+  }).join('') + '</div>' + essai;
+}
+// la petite étiquette sous le titre : fête ou saison du moment
+function puceFete() {
   if (!feteActive) {
     return '';
   }
   var f = FETES[feteActive];
-  return '<div class="fete-banniere"><b>' + f.emoji + ' ' + f.nom + '</b><span>' + f.phrase + '</span></div>';
+  return '<div class="puce-fete"><span class="em">' + f.emoji + '</span><span><b>' + f.nom + '</b> · ' + f.phrase + '</span></div>';
 }
 </script>
 
@@ -4655,7 +4852,7 @@ textarea.champ{min-height:90px;font-weight:400}
 .choix-ajout{display:grid;gap:10px;margin-top:12px}
 .choix-ajout .act{text-align:left;padding:14px 18px;font-size:15px;border-radius:18px}
 .resultat{cursor:pointer}
-.badge{display:inline-block;font:700 11px Nunito,sans-serif;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-left:4px}
+.etiquette-deja{display:inline-block;font:700 11px Nunito,sans-serif;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-left:4px}
 </style>
 <script>
 // ---------- Formulaires : livres, lectures, sessions, achats, séries, auteurs ----------
@@ -5962,7 +6159,7 @@ ACTIONS.lancerRecherche = function () {
         img = '<img loading="lazy" src="' + esc(inf.image) + '" alt="">';
       }
       var an = (/\d{4}/.exec(String(inf.date || '')) || [''])[0];
-      return '<div class="book resultat" data-act="choisirResultat" data-i="' + i + '">' + img + '<div><div class="t">' + esc(inf.titre) + '</div><div class="small muted">' + esc(inf.auteurs.join(', ')) + '</div><div class="small muted">' + [an, inf.pages ? inf.pages + ' p.' : ''].filter(Boolean).join(' · ') + (deja ? ' <span class="badge">déjà chez toi</span>' : '') + '</div></div></div>';
+      return '<div class="book resultat" data-act="choisirResultat" data-i="' + i + '">' + img + '<div><div class="t">' + esc(inf.titre) + '</div><div class="small muted">' + esc(inf.auteurs.join(', ')) + '</div><div class="small muted">' + [an, inf.pages ? inf.pages + ' p.' : ''].filter(Boolean).join(' · ') + (deja ? ' <span class="etiquette-deja">déjà chez toi</span>' : '') + '</div></div></div>';
     }).join('');
   });
 };
@@ -6022,16 +6219,71 @@ function ajouterDepuisInfos(infos, isbn, mode) {
 </script>
 
 <style>
-.pastille{position:fixed;left:16px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:6;max-width:calc(100% - 110px);display:flex;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;border:0;background:var(--ink);color:var(--card);font:600 13px Nunito,sans-serif;box-shadow:0 8px 22px rgba(0,0,0,.3);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:monte .3s ease}
-.pastille b{font-variant-numeric:tabular-nums}
-.pastille.pause{opacity:.8}
-.chrono{font:700 54px/1 "Cormorant Garamond",Georgia,serif;text-align:center;margin:18px 0 6px;font-variant-numeric:tabular-nums}
+/* mini-lecteur : fixé au-dessus du menu, sur tous les onglets */
+.lecteur{position:fixed;left:10px;right:10px;bottom:calc(70px + env(safe-area-inset-bottom));z-index:7;max-width:740px;margin:0 auto;display:flex;align-items:center;gap:10px;padding:8px;border-radius:20px;background:var(--ink);color:var(--card);box-shadow:0 10px 26px rgba(0,0,0,.4);animation:monte .3s ease}
+.lecteur .ouvrir{flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer}
+.lecteur img,.lecteur .ph{width:36px;height:54px;object-fit:cover;border-radius:6px;flex:none;background:var(--heat0);font-size:0}
+.lecteur .txt{flex:1;min-width:0;line-height:1.2}
+.lecteur .chrono{font:700 23px "Cormorant Garamond",Georgia,serif;font-variant-numeric:tabular-nums}
+.lecteur .tt{font-size:11px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lecteur .b{width:48px;height:48px;border-radius:50%;border:0;display:flex;align-items:center;justify-content:center;font-size:19px;flex:none;background:color-mix(in srgb,var(--card) 20%,transparent);color:var(--card);cursor:pointer}
+.lecteur .b.stop{background:linear-gradient(135deg,var(--accent),var(--lav));color:#fff}
+.lecteur.pause{background:var(--gold);color:#2a1a08}
+.lecteur.pause .chrono{animation:clignote 1.2s steps(2) infinite}
+.lecteur.pause .b{background:rgba(0,0,0,.12);color:#2a1a08}
+.lecteur.pause .b.stop{background:#2a1a08;color:var(--gold)}
+body.minuteur-actif .fab-scan{bottom:calc(150px + env(safe-area-inset-bottom))}
+body.minuteur-actif main{padding-bottom:180px}
+@keyframes clignote{50%{opacity:.35}}
+
+/* page du minuteur */
+.page-minuteur{position:fixed;inset:0;z-index:15;display:flex;flex-direction:column;align-items:center;text-align:center;padding:calc(14px + env(safe-area-inset-top)) 20px calc(26px + env(safe-area-inset-bottom));overflow-y:auto;color:var(--ink);background:linear-gradient(165deg,var(--bg) 0%,var(--bg2) 100%);animation:fondu .2s ease}
+.page-minuteur .haut{align-self:stretch;display:flex;justify-content:space-between;align-items:center;max-width:520px;width:100%;margin:0 auto}
+.page-minuteur .haut button{border:0;background:none;color:var(--muted);font:700 14px Nunito,sans-serif;cursor:pointer;padding:6px 2px}
+.page-minuteur .couv img,.page-minuteur .couv .ph{width:120px;height:180px;object-fit:cover;border-radius:10px;margin-top:10px;box-shadow:0 10px 28px rgba(0,0,0,.4);transition:filter .3s;display:block;background:var(--heat0)}
+.page-minuteur .couv .ph{display:flex;align-items:center;justify-content:center;font:700 15px "Cormorant Garamond",serif;padding:10px}
+.page-minuteur .titre{font:700 22px/1.15 "Cormorant Garamond",Georgia,serif;margin:12px 0 0}
+.page-minuteur .auteur{font-size:12px;color:var(--muted)}
+.anneau-m{position:relative;width:220px;height:220px;margin:16px 0 8px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
+.anneau-m::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,var(--accent),var(--lav),var(--gold),var(--accent));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px));mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px));animation:tourne-anneau 6s linear infinite}
+.anneau-m::after{content:"";position:absolute;inset:-14px;border-radius:50%;box-shadow:0 0 40px color-mix(in srgb,var(--accent) 45%,transparent);animation:respire-anneau 2.6s ease-in-out infinite;pointer-events:none}
+@keyframes tourne-anneau{to{transform:rotate(360deg)}}
+@keyframes respire-anneau{0%,100%{opacity:.35}50%{opacity:1}}
+.chrono-m{font:700 60px/1 "Cormorant Garamond",Georgia,serif;font-variant-numeric:tabular-nums;position:relative}
+.etat-m{position:relative;margin-top:8px;font:800 12px Nunito,sans-serif;letter-spacing:1px;text-transform:uppercase;padding:4px 12px;border-radius:999px;background:color-mix(in srgb,var(--lav) 25%,transparent)}
+.infos-m{font-size:12.5px;color:var(--muted);line-height:1.6;min-height:40px}
+.infos-m b{color:var(--ink)}
+.commandes{display:flex;align-items:center;justify-content:center;gap:24px;margin-top:auto;padding-top:18px}
+.rond-m{width:60px;height:60px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;color:var(--ink);cursor:pointer}
+.rond-m small{font:700 9px Nunito,sans-serif;color:var(--muted);margin-top:1px}
+.gros-m{width:100px;height:100px;border-radius:50%;border:0;display:flex;align-items:center;justify-content:center;font-size:40px;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--lav));box-shadow:0 10px 30px color-mix(in srgb,var(--accent) 55%,transparent),0 0 0 6px color-mix(in srgb,var(--accent) 18%,transparent);transition:transform .1s}
+.gros-m:active{transform:scale(.94)}
+.eveil{font-size:11px;color:var(--muted);margin-top:14px}
+.bandeau-pause{display:none}
+/* en pause : tout s'éteint, bandeau doré */
+.page-minuteur.pause{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--ink) 5%,transparent) 0 14px,transparent 14px 28px),linear-gradient(165deg,var(--bg) 0%,var(--bg2) 100%)}
+.page-minuteur.pause .couv img{filter:grayscale(.85) brightness(.7)}
+.page-minuteur.pause .anneau-m::before{background:var(--line);animation:none}
+.page-minuteur.pause .anneau-m::after{animation:none;opacity:0}
+.page-minuteur.pause .chrono-m{color:var(--muted);animation:clignote 1.2s steps(2) infinite}
+.page-minuteur.pause .etat-m{background:var(--gold);color:#2a1a08;font-size:15px;padding:7px 18px;box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 30%,transparent)}
+.page-minuteur.pause .gros-m{background:var(--gold);color:#2a1a08;box-shadow:0 10px 30px color-mix(in srgb,var(--gold) 50%,transparent),0 0 0 6px color-mix(in srgb,var(--gold) 25%,transparent)}
+.page-minuteur.pause .bandeau-pause{display:block;position:absolute;z-index:3;top:calc(64px + env(safe-area-inset-top));left:-40px;right:-40px;transform:rotate(-6deg);background:var(--gold);color:#2a1a08;font:800 13px Nunito,sans-serif;letter-spacing:3px;padding:6px 0;box-shadow:0 6px 16px rgba(0,0,0,.3);white-space:nowrap;overflow:hidden}
+/* fenêtre d'arrêt */
+.grand-chrono{font:700 46px/1 "Cormorant Garamond",Georgia,serif;text-align:center;margin:8px 0 4px}
+.champ-page{display:flex;align-items:center;gap:8px;margin:8px 0}
+.champ-page input{flex:1;min-width:0;width:100%;font:700 28px "Cormorant Garamond",Georgia,serif;text-align:center;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:14px;padding:8px}
+.champ-page .rond-m{width:48px;height:48px;font-size:22px;flex:none}
+.pas{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.pas button{font:800 13px Nunito,sans-serif;padding:8px 13px;border-radius:999px;border:0;background:var(--accent-soft);color:var(--accent);cursor:pointer}
+@media (prefers-reduced-motion:reduce){.anneau-m::before,.anneau-m::after,.chrono-m,.lecteur .chrono{animation:none !important}}
 </style>
 <script>
 // ---------- Minuteur de lecture ----------
 // Une seule session ouverte à la fois, enregistrée dans la base (elle survit à la fermeture de l'appli) :
 // {enCours: true, debut, accumule (secondes déjà comptées), repriseA (ms, ou null en pause)}.
 var minuteurTic = null;
+var verrouEcran = null;
 
 function sessionEnCours() {
   return valeurs(D.sessions || {}).find(function (s) { return s.enCours; }) || null;
@@ -6053,55 +6305,170 @@ function texteChrono(sec) {
   }
   return mm;
 }
-function majPastille() {
+function vibrer(motif) {
+  if (navigator.vibrate) {
+    try {
+      navigator.vibrate(motif);
+    } catch (e) {}
+  }
+}
+function titreCourt(l) {
+  return String((l && l.titre) || 'Lecture').replace(/\s*\([^)]*#\d+(\.\d+)?\)\s*$/, '');
+}
+function couvSession(s) {
+  var b = M && M.parId[s.livreId];
+  if (b) {
+    return cover(b);
+  }
+  return '<div class="ph"></div>';
+}
+
+// garder l'écran allumé tant que la page du minuteur est ouverte et que la lecture tourne
+function majVerrouEcran() {
   var s = sessionEnCours();
-  var p = document.getElementById('pastille');
+  var voulu = !!(document.getElementById('pageMinuteur') && s && s.repriseA && document.visibilityState === 'visible');
+  if (voulu && !verrouEcran && navigator.wakeLock) {
+    navigator.wakeLock.request('screen').then(function (v) {
+      verrouEcran = v;
+      v.addEventListener('release', function () {
+        verrouEcran = null;
+      });
+    }).catch(function () {});
+  } else if (!voulu && verrouEcran) {
+    verrouEcran.release().catch(function () {});
+    verrouEcran = null;
+  }
+}
+
+// rafraîchit le mini-lecteur et la page du minuteur (chaque seconde tant qu'une session est ouverte)
+function majMinuteur() {
+  var s = sessionEnCours();
+  var bar = document.getElementById('lecteur');
+  document.body.classList.toggle('minuteur-actif', !!s);
   if (!s) {
-    if (p) {
-      p.remove();
+    if (bar) {
+      bar.remove();
     }
+    fermerPageMinuteur();
     clearInterval(minuteurTic);
     minuteurTic = null;
     return;
   }
-  if (!p) {
-    p = document.createElement('button');
-    p.id = 'pastille';
-    p.className = 'pastille';
-    p.dataset.act = 'ouvrirMinuteur';
-    document.body.appendChild(p);
-  }
   var l = D.livres[s.livreId];
-  var t = '';
-  if (l) {
-    t = l.titre.replace(/\s*\([^)]*#\d+(\.\d+)?\)\s*$/, '');
+  var pause = !s.repriseA;
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'lecteur';
+    bar.className = 'lecteur';
+    document.body.appendChild(bar);
+    bar.innerHTML = '<div class="ouvrir" data-act="pageMinuteur"><span class="couv-mini"></span><div class="txt"><div class="chrono"></div><div class="tt"></div></div></div><button class="b" data-act="basculerMinuteur" aria-label="Pause ou reprise"></button><button class="b stop" data-act="arreterMinuteur" aria-label="Terminer la session">⏹</button>';
   }
-  p.classList.toggle('pause', !s.repriseA);
-  p.innerHTML = (s.repriseA ? '⏱️' : '⏸️') + ' <b>' + texteChrono(ecoule(s)) + '</b> · ' + esc(t);
-  var g = document.getElementById('chronoGrand');
-  if (g) {
-    g.textContent = texteChrono(ecoule(s));
+  if (bar.dataset.session !== s.id) {
+    bar.dataset.session = s.id;
+    bar.querySelector('.couv-mini').innerHTML = couvSession(s);
   }
+  bar.classList.toggle('pause', pause);
+  bar.querySelector('.chrono').textContent = texteChrono(ecoule(s));
+  bar.querySelector('.tt').textContent = (pause ? '⏸ EN PAUSE · ' : '') + titreCourt(l);
+  bar.querySelector('[data-act="basculerMinuteur"]').textContent = pause ? '▶' : '⏸';
+  majPageMinuteur();
   if (!minuteurTic) {
-    minuteurTic = setInterval(majPastille, 1000);
+    minuteurTic = setInterval(majMinuteur, 1000);
   }
 }
-apresEcritureHooks.push(majPastille);
+// ancien nom, appelé ailleurs
+var majPastille = majMinuteur;
+apresEcritureHooks.push(majMinuteur);
 document.addEventListener('visibilitychange', function () {
-  if (document.visibilityState === 'visible' && D.sessions) {
-    majPastille();
+  if (D.sessions) {
+    majMinuteur();
+    majVerrouEcran();
   }
 });
 
-ACTIONS.lancerMinuteur = function (el) {
+// ---------- page du minuteur ----------
+ACTIONS.pageMinuteur = function () {
+  var s = sessionEnCours();
+  if (!s) {
+    return;
+  }
+  fermerFeuille();
+  var p = document.getElementById('pageMinuteur');
+  if (!p) {
+    p = document.createElement('div');
+    p.id = 'pageMinuteur';
+    p.className = 'page-minuteur';
+    document.body.appendChild(p);
+  }
+  var l = D.livres[s.livreId] || {};
+  var b = M && M.parId[s.livreId];
+  var auteurs = '';
+  if (b) {
+    auteurs = b.authors.join(', ');
+  }
+  p.innerHTML = '<div class="bandeau-pause">⏸ EN PAUSE ⏸ EN PAUSE ⏸ EN PAUSE ⏸ EN PAUSE</div>' +
+    '<div class="haut"><button data-act="fermerPageMinuteur">‹ Retour</button><span class="small muted" id="eveilEcran"></span></div>' +
+    '<div class="couv">' + couvSession(s) + '</div><div class="titre">' + esc(titreCourt(l)) + '</div><div class="auteur">' + esc(auteurs) + '</div>' +
+    '<div class="anneau-m"><div class="chrono-m" id="chronoGrand"></div><div class="etat-m" id="etatMinuteur"></div></div>' +
+    '<div class="infos-m" id="infosMinuteur"></div>' +
+    '<div class="commandes"><button class="rond-m" data-act="annulerMinuteur">✕<small>annuler</small></button><button class="gros-m" id="boutonMinuteur" data-act="basculerMinuteur"></button><button class="rond-m" data-act="arreterMinuteur">⏹<small>terminer</small></button></div>';
+  majPageMinuteur();
+  majVerrouEcran();
+};
+function majPageMinuteur() {
+  var p = document.getElementById('pageMinuteur');
+  var s = sessionEnCours();
+  if (!p || !s) {
+    return;
+  }
+  var pause = !s.repriseA;
+  p.classList.toggle('pause', pause);
+  document.getElementById('chronoGrand').textContent = texteChrono(ecoule(s));
+  document.getElementById('etatMinuteur').textContent = pause ? '⏸ en pause' : '✨ lecture en cours';
+  document.getElementById('boutonMinuteur').textContent = pause ? '▶' : '⏸';
+  var x = D.lectures[s.lectureId] || {};
+  var info;
+  if (pause) {
+    info = 'en pause' + (s.pauseA ? ' depuis <b>' + dureeCourte((Date.now() - s.pauseA) / 1000) + '</b>' : '') + '<br>touche ▶ pour reprendre';
+  } else {
+    info = 'commencé à <b>' + heureVersChamp(s.debut).replace(':', ' h ') + '</b>';
+    if (x.position) {
+      info += ' · départ <b>' + texteLongueur(x.unite, x.position) + '</b>';
+    }
+    var r = M && M.lectures.find(function (y) { return y._id === s.lectureId; });
+    if (r) {
+      var est = estimationLecture(r);
+      if (est.reste) {
+        info += '<br>' + est.reste.replace('⏳ ', '') + ' pour finir le livre';
+      }
+    }
+  }
+  document.getElementById('infosMinuteur').innerHTML = info;
+  var eveil = document.getElementById('eveilEcran');
+  if (eveil) {
+    eveil.textContent = (verrouEcran && !pause) ? '🔆 écran allumé' : '';
+  }
+}
+function fermerPageMinuteur() {
+  var p = document.getElementById('pageMinuteur');
+  if (p) {
+    p.remove();
+  }
+  majVerrouEcran();
+}
+ACTIONS.fermerPageMinuteur = fermerPageMinuteur;
+
+// ---------- commandes ----------
+// ▶ Lire : lance le minuteur (ou rouvre celui qui tourne) et affiche sa page
+ACTIONS.lireMaintenant = function (el) {
   var lid = el.dataset.lecture;
   siIndependant(function () {
     var s = sessionEnCours();
     if (s) {
       if (s.lectureId !== lid) {
-        alert('Un minuteur tourne déjà pour « ' + ((D.livres[s.livreId] || {}).titre || '?') + ' » : arrête-le d\'abord.');
+        toast('⏱️ Un minuteur tourne déjà pour « ' + titreCourt(D.livres[s.livreId]) + ' »');
       }
-      ACTIONS.ouvrirMinuteur();
+      ACTIONS.pageMinuteur();
       return;
     }
     var x = D.lectures[lid];
@@ -6110,24 +6477,17 @@ ACTIONS.lancerMinuteur = function (el) {
     if (x.statut === 'pause') {
       ops.push({t: 'lectures', o: Object.assign({}, x, {statut: 'en_cours'})});
     }
+    vibrer(50);
     ecrire(ops).then(function () {
       fermerFeuille();
       apresEcriture();
-      toast('⏱️ C\'est parti, bonne lecture !');
+      ACTIONS.pageMinuteur();
     }).catch(erreurEcriture);
   });
 };
+ACTIONS.lancerMinuteur = ACTIONS.lireMaintenant;
 ACTIONS.ouvrirMinuteur = function () {
-  var s = sessionEnCours();
-  if (!s) {
-    return;
-  }
-  var l = D.livres[s.livreId];
-  var bouton = '<button class="act doux" data-act="pauseMinuteur">⏸️ Pause</button>';
-  if (!s.repriseA) {
-    bouton = '<button class="act doux" data-act="repriseMinuteur">▶️ Reprendre</button>';
-  }
-  ouvrirFeuille('<h3>' + esc(l ? l.titre : 'Lecture') + '</h3><p class="small muted">commencé à ' + heureVersChamp(s.debut).replace(':', ' h ') + '</p><div class="chrono" id="chronoGrand">' + texteChrono(ecoule(s)) + '</div><div class="row" style="justify-content:center;margin-top:12px">' + bouton + '<button class="act" data-act="arreterMinuteur">⏹️ Arrêter</button></div><div style="text-align:center;margin-top:10px"><button class="lien danger" data-act="annulerMinuteur">Annuler ce minuteur</button></div>');
+  ACTIONS.pageMinuteur();
 };
 function modifierSessionEnCours(champs) {
   var s = sessionEnCours();
@@ -6135,15 +6495,35 @@ function modifierSessionEnCours(champs) {
     return Promise.resolve();
   }
   return ecrire([{t: 'sessions', o: Object.assign({}, s, champs)}]).then(function () {
-    majPastille();
+    majMinuteur();
+    majVerrouEcran();
   });
 }
+// ▶ / ⏸ : un « bzz » pour reprendre, deux pour la pause
+ACTIONS.basculerMinuteur = function () {
+  var s = sessionEnCours();
+  if (!s) {
+    return;
+  }
+  if (s.repriseA) {
+    vibrer([60, 80, 60]);
+    modifierSessionEnCours({accumule: ecoule(s), repriseA: null, pauseA: Date.now()});
+  } else {
+    vibrer(50);
+    modifierSessionEnCours({repriseA: Date.now(), pauseA: null});
+  }
+};
 ACTIONS.pauseMinuteur = function () {
   var s = sessionEnCours();
-  modifierSessionEnCours({accumule: ecoule(s), repriseA: null}).then(ACTIONS.ouvrirMinuteur);
+  if (s && s.repriseA) {
+    ACTIONS.basculerMinuteur();
+  }
 };
 ACTIONS.repriseMinuteur = function () {
-  modifierSessionEnCours({repriseA: Date.now()}).then(ACTIONS.ouvrirMinuteur);
+  var s = sessionEnCours();
+  if (s && !s.repriseA) {
+    ACTIONS.basculerMinuteur();
+  }
 };
 ACTIONS.annulerMinuteur = function () {
   var s = sessionEnCours();
@@ -6151,64 +6531,131 @@ ACTIONS.annulerMinuteur = function () {
     return;
   }
   ecrire([{t: 'sessions', suppr: s.id}]).then(function () {
-    fermerFeuille();
+    fermerPageMinuteur();
     apresEcriture();
   }).catch(erreurEcriture);
 };
+
+// ⏹ : la fenêtre d'arrêt, avec la page pré-remplie et des raccourcis
+function pagesMoyennesParSession(lid) {
+  var ss = valeurs(D.sessions).filter(function (s) { return s.lectureId === lid && !s.enCours && s.position !== null && s.position !== undefined; }).sort(function (a, b) { return (a.fin || a.debut) - (b.fin || b.debut); });
+  var gains = [];
+  var max = 0;
+  ss.forEach(function (s, i) {
+    if (i > 0 && s.dureeSec && s.position > max) {
+      gains.push(s.position - max);
+    }
+    max = Math.max(max, s.position);
+  });
+  if (gains.length < 2) {
+    return null;
+  }
+  return Math.round(mediane(gains));
+}
 ACTIONS.arreterMinuteur = function () {
   var s = sessionEnCours();
   if (!s) {
     return;
   }
+  vibrer(120);
   var sec = ecoule(s);
   var x = D.lectures[s.lectureId];
+  var mn = Math.max(1, Math.round(sec / 60));
+  var depart = x.position || 0;
+  var propose = depart;
+  var pas = '';
+  if (x.unite === 'secondes') {
+    // en audio, la position avance avec le temps d'écoute
+    propose = depart + sec;
+  } else if (x.unite === 'pages') {
+    var moy = pagesMoyennesParSession(x.id);
+    var raccourcis = [10, 20];
+    if (moy && raccourcis.indexOf(moy) < 0) {
+      raccourcis.push(moy);
+    }
+    raccourcis.push(50);
+    pas = '<div class="pas">' + raccourcis.map(function (n) {
+      return '<button data-act="pasPage" data-n="' + n + '">+' + n + (n === moy ? ' (ta moyenne)' : '') + '</button>';
+    }).join('') + '</div>';
+  }
   var oubli = '';
   if (sec > 6 * 3600) {
     oubli = '<p class="small">🤔 Plus de 6 heures : tu as peut-être oublié d\'arrêter le minuteur ? Corrige la durée si besoin.</p>';
   }
-  var etiquette = 'Tu en es à la page';
+  var question = 'Tu en es à quelle page ?';
   if (x.unite === 'secondes') {
-    etiquette = 'Tu en es à (h:mm)';
+    question = 'Tu en es où dans l\'écoute ? (h:mm)';
   } else if (x.unite === 'pourcent') {
-    etiquette = 'Tu en es à (%)';
+    question = 'Tu en es à combien de % ?';
   }
-  var avant = '';
-  if (x.position) {
-    avant = ' (avant : ' + texteLongueur(x.unite, x.position) + ')';
-  }
-  ouvrirFeuille('<h3>Session terminée ✨</h3><p>Tu as lu <b>' + Math.max(1, Math.round(sec / 60)) + ' min</b>.</p>' + oubli + '<div class="form"><label>Durée (minutes)</label>' + champ('arMinutes', Math.max(1, Math.round(sec / 60)), 'type="number" min="1" inputmode="numeric"') +
-    '<label>' + etiquette + avant + '</label>' + champLongueur('arPosition', x.unite, '') +
-    '<div class="row" style="margin-top:16px"><button class="act" data-act="validerArret">💾 Enregistrer</button><button class="act doux" data-act="ouvrirMinuteur">↩️ Continuer</button></div></div>');
-  setTimeout(function () {
-    var c = document.getElementById('arPosition');
-    if (c) {
-      c.focus();
+  ouvrirFeuille('<h3>Session terminée ✨</h3><p class="small muted" style="margin:0">' + esc(titreCourt(D.livres[s.livreId])) + '</p>' +
+    '<div class="grand-chrono">' + mn + ' min</div>' + oubli +
+    '<p class="small" style="margin:6px 0 0;text-align:center">' + question + '</p>' +
+    '<div class="champ-page"><button class="rond-m" data-act="pasPage" data-n="-1">−</button>' + (x.unite === 'secondes' ? champ('arPosition', texteDuree(propose), 'inputmode="numeric"') : champ('arPosition', propose || '', 'inputmode="decimal"')) + '<button class="rond-m" data-act="pasPage" data-n="1">+</button></div>' +
+    pas + '<p class="small muted" style="text-align:center;margin:8px 0 0" id="arResume"></p>' +
+    '<div class="form" style="margin-top:6px"><label>Durée (minutes)</label>' + champ('arMinutes', mn, 'type="number" min="1" inputmode="numeric"') + '</div>' +
+    '<div class="row" style="margin-top:14px"><button class="act" data-act="validerArret">💾 Enregistrer</button><button class="act doux" data-act="reprendreApresArret">↩️ Reprendre</button></div>');
+  function resume() {
+    var pos = lireLongueur('arPosition', x.unite);
+    var el = document.getElementById('arResume');
+    if (!el) {
+      return;
     }
-  }, 300);
+    var avant = 'avant : ' + texteLongueur(x.unite, depart);
+    if (pos !== null && pos > depart && x.unite === 'pages') {
+      avant += ' · soit <b style="color:var(--ink)">' + round(pos - depart, 1) + ' pages</b> en ' + (valNombre('arMinutes') || mn) + ' min';
+    }
+    el.innerHTML = avant;
+  }
+  resume();
+  document.getElementById('arPosition').addEventListener('input', resume);
+  ACTIONS.pasPage = function (el) {
+    var n = parseFloat(el.dataset.n);
+    if (x.unite === 'secondes') {
+      var v = lireDuree(val('arPosition')) || depart;
+      document.getElementById('arPosition').value = texteDuree(Math.max(0, v + n * 60));
+    } else {
+      var base = depart;
+      if (Math.abs(n) === 1) {
+        base = valNombre('arPosition') || depart;
+      }
+      var nv = Math.max(0, base + n);
+      if (x.total && x.unite === 'pages') {
+        nv = Math.min(nv, x.total);
+      }
+      document.getElementById('arPosition').value = String(nv).replace('.', ',');
+    }
+    resume();
+  };
+  ACTIONS.reprendreApresArret = function () {
+    fermerFeuille();
+    ACTIONS.pageMinuteur();
+  };
   ACTIONS.validerArret = function () {
     var s2 = sessionEnCours();
     if (!s2) {
       fermerFeuille();
       return;
     }
-    var mn = valNombre('arMinutes') || Math.round(sec / 60);
+    var minutes = valNombre('arMinutes') || mn;
     var pos = lireLongueur('arPosition', x.unite);
-    var fin = Date.now();
-    var session = Object.assign({}, s2, {enCours: false, fin: fin, dureeSec: Math.round(mn * 60), position: pos});
+    var session = Object.assign({}, s2, {enCours: false, fin: Date.now(), dureeSec: Math.round(minutes * 60), position: pos});
     delete session.accumule;
     delete session.repriseA;
+    delete session.pauseA;
     var ops = [{t: 'sessions', o: session}];
     var lec = D.lectures[s2.lectureId];
     if (pos !== null) {
       ops.push({t: 'lectures', o: Object.assign({}, lec, {position: pos})});
     }
     ecrire(ops).then(function () {
+      fermerPageMinuteur();
       apresEcriture();
       if (lec.total && pos !== null && pos >= lec.total) {
         proposerFin(lec.id);
       } else {
         fermerFeuille();
-        toast('⏱️ ' + Math.round(mn) + ' min de lecture notées');
+        toast('⏱️ ' + Math.round(minutes) + ' min de lecture notées');
       }
     }).catch(erreurEcriture);
   };
@@ -6498,7 +6945,11 @@ function blocCitationsLivre(id) {
     if (c.photoId) {
       icone += '📷 ';
     }
-    return '<div class="ligne-ed"><div class="small" style="flex:1"><span class="muted">' + p + '</span>' + icone + '<i>' + esc(t) + '</i></div><div class="boutons"><button class="mini-btn" data-act="formCitation" data-id="' + esc(c.id) + '">✏️</button></div></div>';
+    var vignette = '';
+    if (c.photoId && urlPhoto(c.photoId)) {
+      vignette = '<img class="cit-vignette" style="width:48px;height:48px" src="' + esc(urlPhoto(c.photoId)) + '" alt="">';
+    }
+    return '<div class="ligne-ed">' + vignette + '<div class="small" style="flex:1"><span class="muted">' + p + '</span>' + icone + '<i>' + esc(t) + '</i></div><div class="boutons"><button class="mini-btn" data-act="formCitation" data-id="' + esc(c.id) + '">✏️</button></div></div>';
   }).join('') + '<button class="lien" data-act="formCitation" data-livre="' + id + '">＋ Ajouter une citation</button>';
 }
 
@@ -6820,6 +7271,8 @@ ACTIONS.ocrTout = function () {
 ACTIONS.reglages = function () {
   var h = '<h3>Réglages</h3>';
 
+  h += '<div class="reglage"><h4>🎨 Thème</h4><p class="small muted">« Au fil de l\'année » change tout seul selon la date : saisons, fêtes, Mois de l\'Imaginaire, pleine lune… Tu peux aussi choisir un thème fixe, ou essayer une fête.</p><div id="choixThemes">' + choixThemesHtml() + '</div></div>';
+
   h += '<div class="reglage"><h4>☁️ Sauvegarde dans ton Drive</h4>';
   if (liaison()) {
     h += '<p class="small">Ton grimoire est copié automatiquement dans le dossier <b>Grimoire sauvegardes</b> de ton Drive, 30 secondes après chaque modification (une copie par jour, gardée 30 jours, puis une par mois).</p>' +
@@ -6938,7 +7391,6 @@ ACTIONS.restaurerFichierDrive = function (el) {
 </script>
 
 <style>
-.import-btn{left:16px;right:auto}
 .vide{text-align:center}
 .vide .etapes{text-align:left;margin:12px auto;max-width:320px;line-height:1.8}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--card);font:700 14px Nunito,sans-serif;padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transition:all .3s;z-index:70;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
