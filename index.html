@@ -327,13 +327,13 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 <div class="orn">✦ ❀ ✦</div>
 <div class="themes" id="themes" hidden></div>
 <div class="src" id="src"></div>
-<input type="file" id="fichierImport" hidden>
+<input type="file" id="fichierImport" accept="application/zip,application/x-zip-compressed,application/octet-stream,application/x-sqlite3,.zip,.db" hidden>
 </header>
 <main id="app"><div id="load">J'ouvre ton grimoire…</div></main>
 <nav id="nav"></nav>
 <script>
 var DAY = 86400000;
-var FORMATS = {paperBook: 'Papier', audioBook: 'Audio', eBook: 'Ebook'};
+var FORMATS = {paperBook: 'Papier', audioBook: 'Audio', eBook: 'Numérique'};
 var FMT_CLASS = {paperBook: 'paper', audioBook: 'audio', eBook: 'ebook'};
 var MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 var MOIS_LONGS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
@@ -772,13 +772,75 @@ function modeFichier(dejaCharge) {
   });
 }
 
+// ---------- genres : tags Goodreads regroupés et traduits ----------
+// null = pas un genre (format, pays, époque, étiquette trop générale) : le tag est ignoré
+var GENRES_FR = {
+  'fiction': null, 'roman': null, 'romans': null, 'novels': null, 'littérature': null, 'literature': null,
+  'adult': null, 'adultfiction': null, 'bookclub': null, 'adaptations': null, 'novella': null, 'anthologies': null,
+  'audiobook': null, 'performancesaudio': null, 'ebooks': null, 'ebook': null, 'kindle': null, 'audible': null,
+  '20esiècle': null, 'xxesiècle': null, '20thcentury': null, '19thcentury': null, '21stcentury': null,
+  'produitsdérivésdefilms': null, 'séries': null, 'jeuxvidéo': null, 'rêve': null, 'theory': null,
+  'maladie': null, 'pathologiesphysiques': null, 'mentalhealth': null, 'autisticspectrumdisorder': null, 'disability': null,
+  'france': null, 'française': null, 'frenchliterature': null, 'scandinave': null, 'scandinavianliterature': null,
+  'denmark': null, 'danish': null, 'portugal': null, 'portugueseliterature': null, 'anglais': null, 'asia': null,
+  'corée': null, 'american': null, 'theunitedstatesofamerica': null, 'russia': null, 'canada': null, 'afro-américaine': null,
+  'japan': null, 'japanese': null, 'british': null, 'england': null, 'germany': null, 'italy': null, 'spain': null,
+  'fantasy': 'Fantasy', 'highfantasy': 'Fantasy', 'epicfantasy': 'Fantasy', 'urbanfantasy': 'Fantasy', 'scififantasy': 'Fantasy',
+  'darkfantasy': 'Dark fantasy', 'romantasy': 'Romantasy', 'cozyfantasy': 'Cosy', 'cozy': 'Cosy', 'cozymystery': 'Cosy',
+  'magic': 'Magie', 'magie': 'Magie', 'witches': 'Magie', 'mythology': 'Mythologie', 'mythes': 'Mythologie', 'légendes': 'Mythologie',
+  'fairytales': 'Contes', 'contesdefées': 'Contes', 'retellings': 'Contes', 'magicalrealism': 'Réalisme magique', 'réalismemagique': 'Réalisme magique',
+  'paranormal': 'Surnaturel', 'surnaturel': 'Surnaturel', 'steampunk': 'Steampunk',
+  'sciencefiction': 'Science-fiction', 'science-fiction': 'Science-fiction', 'premiercontact': 'Science-fiction',
+  'dystopia': 'Dystopie', 'dystopique': 'Dystopie', 'post-apocalyptique': 'Post-apocalyptique', 'postapocalyptic': 'Post-apocalyptique',
+  'thriller': 'Thriller', 'thrillers': 'Thriller', 'romansàsuspense': 'Thriller', 'suspense': 'Thriller', 'mysterythriller': 'Thriller', 'technothrillers': 'Thriller', 'psychologicalthriller': 'Thriller',
+  'policier': 'Policier', 'policiers': 'Policier', 'polars': 'Policier', 'crime': 'Policier', 'crimesinternationaux': 'Policier',
+  'fictioncriminelle': 'Policier', 'crimeorganisé': 'Policier', 'duràcuire': 'Policier', 'nordicnoir': 'Policier', 'detective': 'Policier',
+  'détectivesamateurs': 'Policier', 'détectivestraditionnels': 'Policier', 'détectivesprivés': 'Policier',
+  'mystery': 'Mystère', 'murdermystery': 'Mystère', 'espionnage': 'Espionnage',
+  'horror': 'Horreur', 'horreur': 'Horreur', 'gothic': 'Gothique', 'dark': 'Dark',
+  'romance': 'Romance', 'contemporaryromance': 'Romance', 'chicklit': 'Feel-good', 'sliceoflife': 'Feel-good',
+  'youngadult': 'Young adult', 'middlegrade': 'Jeunesse', 'childrens': 'Jeunesse', 'heureducoucher': 'Jeunesse',
+  'historicalfiction': 'Historique', 'historical': 'Historique', 'historique': 'Historique', 'fictionhistorique': 'Historique', 'fictionbiographique': 'Historique',
+  'war': 'Guerre', 'worldwarii': 'Guerre', 'holocaust': 'Guerre',
+  'contemporary': 'Contemporain', 'contemporain': 'Contemporain', 'realisticfiction': 'Contemporain',
+  'action': 'Aventure', 'aventure': 'Aventure', 'adventure': 'Aventure',
+  'classiques': 'Classique', 'classics': 'Classique', 'psychologie': 'Psychologique', 'psychology': 'Psychologique',
+  'lgbt': 'LGBTQ+', 'queer': 'LGBTQ+', 'lesbian': 'LGBTQ+', 'feminism': 'Féminisme', 'race': 'Société', 'politics': 'Société', 'satire': 'Satire',
+  'philosophy': 'Philosophie', 'spiritualité': 'Spiritualité',
+  'nonfiction': 'Documentaire', 'science': 'Documentaire', 'history': 'Documentaire', 'ingénierie': 'Documentaire', 'alimentation': 'Documentaire', 'vin': 'Documentaire',
+  'management': 'Développement personnel', 'réussitepersonnelle': 'Développement personnel', 'selfhelp': 'Développement personnel',
+  'animaux': 'Animaux', 'fictionsurlesanimaux': 'Animaux', 'musique': 'Musique', 'fêtes': 'Noël & fêtes', 'noël': 'Noël & fêtes',
+  'fictionsurlessports': 'Sport', 'nouvelles': 'Nouvelles'
+};
+function genresFr(tags) {
+  var vus = {};
+  var l = [];
+  tags.forEach(function (t) {
+    var k = t.toLowerCase();
+    var g;
+    if (Object.prototype.hasOwnProperty.call(GENRES_FR, k)) {
+      g = GENRES_FR[k];
+    } else {
+      // tag inconnu : on le garde, en séparant les mots collés
+      g = t.replace(/([a-zà-ÿ])([A-Z])/g, '$1 $2');
+      g = g.charAt(0).toUpperCase() + g.slice(1);
+    }
+    if (g && !vus[g]) {
+      vus[g] = 1;
+      l.push(g);
+    }
+  });
+  return l;
+}
+
 // ---------- modèle ----------
 function modele(S) {
   var series = {};
   (S.series || []).forEach(function (s) { series[s._key] = s; });
   var livres = (S.books || []).map(function (b) {
     b.id = b._key;
-    b.tagList = (b.tags || '').split(/\s+/).filter(Boolean).map(function (t) { return t.replace(/^#/, ''); });
+    b.tagsBruts = (b.tags || '').split(/\s+/).filter(Boolean).map(function (t) { return t.replace(/^#/, ''); });
+    b.tagList = genresFr(b.tagsBruts);
     b.statut = (b.status_list || [])[0] || 'NOT_STARTED';
     return b;
   });
@@ -1371,7 +1433,7 @@ function vGouts() {
     tags.map(function (t) {
       var x = aff[t];
       return '<tr><td>' + esc(t) + '</td><td class="n">' + x.n + '</td><td class="n">' + etoiles(moy(x.notes)) + '</td><td class="n">' + Math.round(100 * x.abandons / x.n) + ' %</td></tr>';
-    }).join('') + '</table>', 'tags Goodreads, au moins 3 lectures');
+    }).join('') + '</table>', 'd\'après les tags Goodreads traduits, au moins 3 lectures');
 
   // évolution des genres
   var top = tags.filter(function (t) { return t !== 'Fiction'; }).slice(0, 6);
@@ -1614,13 +1676,13 @@ var roue = {livres: null, rot: 0, fmt: '', envies: false};
 
 // couleur d'une tranche selon le genre principal
 var GENRES_COULEURS = [
-  [/fantasy|fae|magic|dragon/i, '#9b84e0', 'Fantasy'],
-  [/romance|romantasy/i, '#e46c9f', 'Romance'],
-  [/horror|gothic|horreur/i, '#5b4a78', 'Frissons'],
-  [/thriller|suspense|policier|crime|mystery|polar/i, '#4f6d9a', 'Thriller & polar'],
-  [/youngadult|jeunesse|children|middle/i, '#4fb39a', 'Jeunesse & YA'],
-  [/historical|histoire/i, '#c58b4c', 'Historique'],
-  [/science ?fiction|dystop/i, '#4aa3c2', 'SF & dystopie']
+  [/fantasy|romantasy|magie|mythologie|contes|surnaturel|steampunk|réalisme magique/i, '#9b84e0', 'Fantasy & magie'],
+  [/romance|feel-good/i, '#e46c9f', 'Romance'],
+  [/horreur|gothique/i, '#5b4a78', 'Frissons'],
+  [/thriller|policier|mystère|espionnage/i, '#4f6d9a', 'Thriller & polar'],
+  [/jeunesse|young adult/i, '#4fb39a', 'Jeunesse & YA'],
+  [/historique|guerre/i, '#c58b4c', 'Historique'],
+  [/science-fiction|dystopie|post-apocalyptique/i, '#4aa3c2', 'SF & dystopie']
 ];
 var PASTELS = ['#e8a0bf', '#b9a3e8', '#8fcdb8', '#f0b27a', '#9ab8e6', '#e39a9a', '#c9a4d9'];
 function couleurLivre(b) {
@@ -1871,8 +1933,8 @@ function vSeries() {
 <script>
 // ---------- Carnet : notes détaillées, citations ----------
 var CRITERES = [['perso', '👥', 'Personnages'], ['plume', '✒️', 'Plume'], ['intrigue', '🗝️', 'Intrigue'], ['emotions', '💧', 'Émotions'], ['univers', '🏰', 'Univers']];
-var HUMEURS = ['🥰 Doudou', '😭 Larmes', '😱 Frissons', '🔥 Passion', '🌙 Mélancolie', '😂 Rire', '🤯 Twist', '✨ Magie', '😤 Rage', '🫶 Réconfort'];
-var TROPES = ['Enemies to lovers', 'Slow burn', 'Found family', 'Élue / Chosen one', 'Proximité forcée', 'Fake dating', 'Grumpy × Sunshine', 'Seconde chance', 'Morally grey', 'Triangle amoureux', 'Académie magique', 'Fae / Faërie', 'Dragons', 'Enquête', 'Huis clos', 'Twist final'];
+var HUMEURS = ['🥰 Doudou', '😭 Larmes', '😱 Frissons', '🔥 Passion', '🌙 Mélancolie', '😂 Rire', '🤯 Coup de théâtre', '✨ Magie', '😤 Rage', '🫶 Réconfort'];
+var TROPES = ['Ennemis devenus amants', 'Romance à feu doux', 'Famille de cœur', 'L\'élu·e', 'Proximité forcée', 'Faux couple', 'Grincheux × rayon de soleil', 'Seconde chance', 'Héros ni bon ni méchant', 'Triangle amoureux', 'Académie de magie', 'Fées et Faërie', 'Dragons', 'Enquête', 'Huis clos', 'Retournement final'];
 var brouillon = null;
 var carnetTout = false;
 
@@ -2299,10 +2361,10 @@ function casesBingo(y) {
     ['🆕', 'Un nouvel auteur', lecture(function (r) { return nouveaux[r.book.id + ':' + r.nth]; })],
     ['1️⃣', 'Un tome 1', lecture(function (r) { return r.book.series_key && r.book.series_number === 1; })],
     ['🐉', 'De la fantasy', tag(/fantasy/i)],
-    ['🔪', 'Un thriller', tag(/thriller|suspense|policier|crime|mystery/i)],
+    ['🔪', 'Un thriller', tag(/thriller|policier|mystère|espionnage/i)],
     ['💌', 'Une romance', tag(/romance/i)],
-    ['👻', 'Un livre qui fait peur', tag(/horror|gothic|horreur/i)],
-    ['🧒', 'Jeunesse ou YA', tag(/youngadult|jeunesse|children|middle/i)],
+    ['👻', 'Un livre qui fait peur', tag(/horreur|gothique/i)],
+    ['🧒', 'Jeunesse ou YA', tag(/jeunesse|young adult/i)],
     ['🏛️', 'Un classique (avant 1970)', lecture(function (r) { var a = anneePub(r.book); return a > 0 && a < 1970; })],
     ['✨', 'Case magique', {}],
     ['🗞️', 'Une sortie de l\'année', lecture(function (r) { return anneePub(r.book) === y; })],
