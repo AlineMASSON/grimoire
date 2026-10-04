@@ -711,7 +711,7 @@ function nombre(v) {
 function sansBalises(t) {
   return String(t).replace(/<[^>]+>/g, '');
 }
-// barres horizontales, avec graduation en dessous ; opts : {unite, max}
+// barres horizontales, valeur à droite ; opts : {unite, max}
 function bars(items, opts) {
   opts = opts || {};
   var unite = opts.unite || '';
@@ -727,7 +727,8 @@ function bars(items, opts) {
     }
     return '<div class="bar" data-tip="' + esc(i.l + ' : ' + sansBalises(txt)) + '"><span class="lab">' + esc(i.l) + '</span><div class="trk"><div class="fil" style="width:' + (100 * i.v / max) + '%' + col + '"></div></div><span class="val">' + txt + '</span></div>';
   }).join('');
-  return lignes + '<div class="bar axe-x"><span></span><div class="graduations"><span>0</span><span>' + nombre(max / 2) + '</span><span>' + nombre(max) + unite + '</span></div><span></span></div>';
+  // pas d'échelle : la valeur de chaque barre est écrite à sa droite
+  return lignes;
 }
 // colonnes verticales avec axe gradué ; opts : {unite, noms (libellés complets pour la bulle)}
 function colonnes(vals, labels, opts) {
@@ -917,8 +918,19 @@ function genresFr(tags) {
 function compte(b) {
   return !(CAT && EXCLUS[b.id] && EXCLUS[b.id][CAT]);
 }
+// les lectures (sans les livres laissés « plus envie », qui n'ont pas vraiment été lus)
 function lect() {
-  return M.lectures.filter(function (r) { return compte(r.book); });
+  return M.lectures.filter(function (r) { return compte(r.book) && r.status !== 'DROPPED'; });
+}
+function plusEnvie() {
+  return M.lectures.filter(function (r) { return compte(r.book) && r.status === 'DROPPED'; });
+}
+// affinité d'un genre pour les recommandations : note moyenne moins les abandons ; « plus envie » compte pour moitié
+function scoreAffinite(x) {
+  if (!x || x.notes.length < 2) {
+    return null;
+  }
+  return moy(x.notes) - (x.abandons + 0.5 * x.plusEnvie) / (x.n + x.plusEnvie);
 }
 function finies() {
   return lect().filter(function (r) { return r.status === 'DONE' && r.end; });
@@ -1079,7 +1091,7 @@ function affinites() {
   lect().forEach(function (r) {
     r.book.tagList.forEach(function (tag) {
       if (!t[tag]) {
-        t[tag] = {n: 0, notes: [], abandons: 0};
+        t[tag] = {n: 0, notes: [], abandons: 0, plusEnvie: 0};
       }
       t[tag].n++;
       if (r.star) {
@@ -1088,6 +1100,14 @@ function affinites() {
       if (r.status === 'GIVE_UP') {
         t[tag].abandons++;
       }
+    });
+  });
+  plusEnvie().forEach(function (r) {
+    r.book.tagList.forEach(function (tag) {
+      if (!t[tag]) {
+        t[tag] = {n: 0, notes: [], abandons: 0, plusEnvie: 0};
+      }
+      t[tag].plusEnvie++;
     });
   });
   return t;
@@ -1776,6 +1796,7 @@ function vGouts() {
 
   // moment de l'abandon
   var tranches = [['avant 10 %', 0], ['10–25 %', 0], ['25–50 %', 0], ['50–75 %', 0], ['après 75 %', 0], ['sans info', 0]];
+  var laisses = plusEnvie().length;
   lect().filter(function (r) { return r.status === 'GIVE_UP'; }).forEach(function (r) {
     var tot = r.total_page || r.book.total_page;
     if (!tot || !r.page) {
@@ -1795,7 +1816,14 @@ function vGouts() {
     }
     tranches[i][1]++;
   });
-  h += card('Quand tu abandonnes', bars(tranches.map(function (t) { return {l: t[0], v: t[1], txt: t[1] + ' abandons'}; })), 'à quel moment du livre');
+  if (!tranches[5][1]) {
+    tranches.pop();
+  }
+  var laissesTxt = '';
+  if (laisses) {
+    laissesTxt = '<p class="small" style="margin:12px 0 0">🍃 <b>' + laisses + ' livre' + (laisses > 1 ? 's' : '') + '</b> laissé' + (laisses > 1 ? 's' : '') + ' avant de commencer (plus envie) : pas comptés comme abandons.</p>';
+  }
+  h += card('Quand tu abandonnes', bars(tranches.map(function (t) { return {l: t[0], v: t[1], txt: t[1] + ' abandon' + (t[1] > 1 ? 's' : '')}; })) + laissesTxt, 'à quel moment du livre');
   return h;
 }
 
@@ -2007,7 +2035,7 @@ vEtagere.apres = function () {
 
 // ---------- tous mes livres : recherche, filtres, tris ----------
 var tous = {q: '', etat: '', fmt: '', tri: 'ajout', etagere: ''};
-var ETATS_LIVRE = [['', 'Tous'], ['encours', '' + ic('book-open') + ' En cours'], ['lus', '' + ic('check') + ' Lus'], ['pal', '' + ic('layers') + ' Pile à lire'], ['envies', '' + ic('heart') + ' Envies'], ['abandons', '' + ic('flag') + ' Abandonnés']];
+var ETATS_LIVRE = [['', 'Tous'], ['encours', '' + ic('book-open') + ' En cours'], ['lus', '' + ic('check') + ' Lus'], ['pal', '' + ic('layers') + ' Pile à lire'], ['envies', '' + ic('heart') + ' Envies'], ['abandons', '' + ic('flag') + ' Abandonnés'], ['plusenvie', ic('leaf') + ' Plus envie']];
 var TRIS = [['ajout', 'Ajoutés récemment'], ['titre', 'Titre'], ['auteur', 'Auteur·ice'], ['note', 'Note'], ['lecture', 'Lus récemment']];
 function etatLivre(b) {
   if (b.reads.some(function (r) { return r.status === 'READING' || r.status === 'PAUSE'; })) {
@@ -2018,6 +2046,9 @@ function etatLivre(b) {
   }
   if (b.statut === 'GIVE_UP') {
     return 'abandons';
+  }
+  if (b.statut === 'DROPPED') {
+    return 'plusenvie';
   }
   if (b.wishlist) {
     return 'envies';
@@ -2064,7 +2095,7 @@ function listeTous() {
     lecture: function (a, b) { return derniereLecture(b) - derniereLecture(a); }
   }[tous.tri];
   l.sort(tri);
-  var noms = {encours: 'en cours', lus: 'lu', abandons: 'abandonné', envies: 'envie', pal: 'dans ta pile'};
+  var noms = {encours: 'en cours', lus: 'lu', abandons: 'abandonné', envies: 'envie', pal: 'dans ta pile', plusenvie: 'plus envie'};
   var lignes = l.map(function (b) {
     var e = etatLivre(b);
     var sous = noms[e];
@@ -2211,15 +2242,10 @@ function vALire() {
   h += card('La roue du destin', '<div class="row"><select data-chg="roueFmt">' + opts + '</select><label class="small"><input type="checkbox" data-chg="roueEnvies"' + coche + '> + envies</label><button class="act doux" data-act="melangerRoue">' + ic('shuffle') + ' Autres livres</button></div>' + roueHtml + '<div id="tirage"></div>', '10 livres de ta PAL tirés au hasard');
 
   var pal = M.livres.filter(function (b) { return b.statut === 'NOT_STARTED' && !b.wishlist; }).sort(function (a, b) { return a.created_at - b.created_at; });
-  var envies = M.livres.filter(function (b) { return b.wishlist; }).sort(function (a, b) { return a.created_at - b.created_at; });
+  var envies = M.livres.filter(function (b) { return b.wishlist && b.statut !== 'DROPPED'; }).sort(function (a, b) { return a.created_at - b.created_at; });
   var aff = avec('reco', affinites);
   function score(b) {
-    var s = b.tagList.map(function (t) {
-      if (aff[t] && aff[t].notes.length >= 2) {
-        return moy(aff[t].notes) - (aff[t].abandons / aff[t].n);
-      }
-      return null;
-    }).filter(function (x) { return x !== null; });
+    var s = b.tagList.map(function (t) { return scoreAffinite(aff[t]); }).filter(function (x) { return x !== null; });
     var m = moy(s);
     if (m === null) {
       return 0;
@@ -2285,6 +2311,12 @@ function vSeries() {
   if (!cles.length) {
     return card('Tes séries', '<p class="muted">Aucune série pour l\'instant : ajoute-la depuis la fiche d\'un livre (' + ic('pencil') + ' Modifier).</p>');
   }
+  // les séries abandonnées en dernier
+  cles.sort(function (a, b) {
+    var aa = (M.series[a] || {}).status === 'abandoned' ? 1 : 0;
+    var bb = (M.series[b] || {}).status === 'abandoned' ? 1 : 0;
+    return aa - bb;
+  });
   return card('Tes séries', cles.map(function (k) {
     var s = M.series[k] || {name: 'Série'};
     var l = parSerie[k].sort(function (a, b) { return a.n - b.n; });
@@ -2299,7 +2331,10 @@ function vSeries() {
     var suivant = l.find(function (x) { return x.b.statut !== 'DONE'; });
     var lus = l.filter(function (x) { return x.b.statut === 'DONE'; }).length;
     var info = lus + ' / ' + l.length + ' lus';
-    if (suivant) {
+    var abandonnee = s.status === 'abandoned';
+    if (abandonnee) {
+      info += ' · 🏳️ série abandonnée';
+    } else if (suivant) {
       info += ' · à lire : tome ' + suivant.n + ' (' + esc(titre(suivant.b)) + ')';
     } else if (s.status === 'ongoing') {
       info += ' · tout lu, série en cours de parution';
@@ -2308,10 +2343,10 @@ function vSeries() {
     } else {
       info += ' · terminée ✅';
     }
-    if (manquants.length) {
+    if (manquants.length && !abandonnee) {
       info += ' · absent(s) de ta bibliothèque : tome ' + manquants.join(', ');
     }
-    return '<div style="margin:10px 0 16px"><b style="font:700 18px Cormorant Garamond,Georgia,serif">' + esc(s.name) + '</b> <button class="mini-btn" data-act="formSerie" data-id="' + esc(k) + '">' + ic('pencil') + '</button><div class="shelf" style="min-height:0;padding-top:8px">' + l.map(function (x) { return tranche(x.b, 0); }).join('') + '</div><div class="prog"><div style="width:' + (100 * lus / l.length) + '%"></div></div><div class="small muted">' + info + '</div></div>';
+    return '<div style="margin:10px 0 16px' + (abandonnee ? ';opacity:.6' : '') + '"><b style="font:700 18px Cormorant Garamond,Georgia,serif">' + esc(s.name) + '</b> <button class="mini-btn" data-act="formSerie" data-id="' + esc(k) + '">' + ic('pencil') + '</button><div class="shelf" style="min-height:0;padding-top:8px">' + l.map(function (x) { return tranche(x.b, 0); }).join('') + '</div><div class="prog"><div style="width:' + (100 * lus / l.length) + '%"></div></div><div class="small muted">' + info + '</div></div>';
   }).join(''));
 }
 </script>
@@ -3667,12 +3702,7 @@ function genresDepuis(categories) {
 }
 function affiniteEstimee(genres) {
   var aff = avec('reco', affinites);
-  var s = genres.map(function (g) {
-    if (aff[g] && aff[g].notes.length >= 2) {
-      return moy(aff[g].notes) - aff[g].abandons / aff[g].n;
-    }
-    return null;
-  }).filter(function (x) { return x !== null; });
+  var s = genres.map(function (g) { return scoreAffinite(aff[g]); }).filter(function (x) { return x !== null; });
   return moy(s);
 }
 function blocAuteur(auteurs, sauf) {
@@ -3739,6 +3769,8 @@ function resultatScan(isbn) {
         verdict = '✅ Déjà lu !<small>le ' + fdate(r.end || r.start) + ' · ' + etoiles(r.star) + '</small>';
       } else if (b.statut === 'READING' || b.statut === 'PAUSE') {
         verdict = '📖 Tu es en train de le lire<small>il est déjà chez toi</small>';
+      } else if (b.statut === 'DROPPED') {
+        verdict = '🍃 Tu n\'en avais plus envie<small>tu l\'avais mis de côté avant de le commencer</small>';
       } else if (b.statut === 'GIVE_UP') {
         verdict = '🏳️ Tu l\'as abandonné<small>pas la peine de le racheter</small>';
       } else if (b.wishlist) {
@@ -3827,7 +3859,7 @@ var PHOTOS = {};
 var baseOuverte = null;
 
 var FORMAT_BM = {papier: 'paperBook', numerique: 'eBook', audio: 'audioBook'};
-var STATUT_BM = {en_cours: 'READING', pause: 'PAUSE', terminee: 'DONE', abandonnee: 'GIVE_UP'};
+var STATUT_BM = {en_cours: 'READING', pause: 'PAUSE', terminee: 'DONE', abandonnee: 'GIVE_UP', plusenvie: 'DROPPED'};
 var UNITE_BM = {pages: 'PAGE', secondes: 'TIME', pourcent: 'PERCENT', episodes: 'EPISODE'};
 var ROLES = [['auteur', 'Auteur·ice'], ['preface', 'Préface'], ['traduction', 'Traduction'], ['illustration', 'Illustration'], ['narration', 'Narration'], ['autre', 'Autre']];
 
@@ -4034,13 +4066,33 @@ function opsListesDeDepart() {
 // au démarrage : base chargée, listes de départ créées si besoin, migrations faites une seule fois
 function preparerBase() {
   return chargerBase().then(function () {
-    var migration = opsFusionSessions();
+    var migration = opsFusionSessions().concat(opsPlusEnvie());
     if (migration.length > 1) {
       // la base a changé : une sauvegarde partira au démarrage
       lsSet('bm_sauv_attente', '1');
     }
     return ecrire(opsListesDeDepart().concat(migration));
   });
+}
+
+// Un abandon sans aucune page notée, c'est un livre qu'on avait décidé de lire puis plus du tout envie :
+// il passe une fois pour toutes dans l'état « plus envie » (ni lu, ni vraiment abandonné).
+function opsPlusEnvie() {
+  if (reglage('migrationPlusEnvie')) {
+    return [];
+  }
+  var ops = [];
+  valeurs(D.lectures).forEach(function (x) {
+    var l = D.livres[x.livreId] || {};
+    var total = x.total || l.total || 0;
+    if (x.statut === 'abandonnee' && (!total || !x.position)) {
+      ops.push({t: 'lectures', o: Object.assign({}, x, {statut: 'plusenvie'}), garderDate: true});
+    }
+  });
+  if (valeurs(D.lectures).length) {
+    ops.push({t: 'reglages', o: {id: 'migrationPlusEnvie', v: Date.now()}});
+  }
+  return ops;
 }
 
 // Bookmory enregistre une session en deux : le minuteur (durée) et le relevé de page, avec le même
@@ -4102,6 +4154,8 @@ function modeleDepuisBase() {
       st = 'ongoing';
     } else if (s.statut === 'terminee') {
       st = 'completed';
+    } else if (s.statut === 'abandonnee') {
+      st = 'abandoned';
     }
     series[s.id] = {_key: s.id, name: s.nom, status: st, nbTomes: s.nbTomes};
   });
@@ -5077,7 +5131,7 @@ textarea.champ{min-height:90px;font-weight:400}
 var FORMATS_FR = [['papier', '📖 Papier'], ['numerique', '📱 Numérique'], ['audio', '🎧 Audio']];
 var UNITES = [['pages', 'Pages'], ['secondes', 'Durée (audio)'], ['pourcent', 'Pourcentage'], ['episodes', 'Épisodes']];
 var POSSESSIONS = [['possede', '📚 Dans ma bibliothèque'], ['envie', '💫 Dans mes envies'], ['emprunte', '🤝 Emprunté'], ['', 'Non précisé']];
-var STATUTS = [['en_cours', '📖 En cours'], ['pause', '⏸️ En pause'], ['terminee', '✅ Terminée'], ['abandonnee', '🏳️ Abandonnée']];
+var STATUTS = [['en_cours', '📖 En cours'], ['pause', '⏸️ En pause'], ['terminee', '✅ Terminée'], ['abandonnee', '🏳️ Abandonnée'], ['plusenvie', '🍃 Plus envie']];
 var DEVISES = [['EUR', '€'], ['USD', '$'], ['GBP', '£'], ['CHF', 'CHF'], ['CAD', 'CA$']];
 
 // ---------- petits outils de formulaire ----------
@@ -5972,7 +6026,7 @@ function ouvrirFormLecture(lid, livreId) {
     var position = lireLongueur('lePosition', u) || 0;
     var debut = champVersDate(val('leDebut'), x && x.debut);
     var fin = champVersDate(val('leFin'), x && x.fin);
-    if ((statut === 'terminee' || statut === 'abandonnee') && !fin) {
+    if ((statut === 'terminee' || statut === 'abandonnee' || statut === 'plusenvie') && !fin) {
       fin = Date.now();
     }
     if (statut === 'terminee' && total && position < total) {
@@ -6278,7 +6332,7 @@ function ouvrirFormAchat(aid, livreId) {
 }
 
 // ---------- séries ----------
-var STATUTS_SERIE = [['en_cours', 'En cours de parution'], ['terminee', 'Terminée'], ['', 'Je ne sais pas']];
+var STATUTS_SERIE = [['en_cours', 'En cours de parution'], ['terminee', 'Terminée'], ['abandonnee', '🏳️ Je l\'abandonne'], ['', 'Je ne sais pas']];
 ACTIONS.formSerie = function (el) {
   var sid = el.dataset.id;
   siIndependant(function () {
@@ -6295,7 +6349,41 @@ ACTIONS.formSerie = function (el) {
         avertir('Il manque le nom.');
         return;
       }
-      enregistrer('series', Object.assign({}, s, {nom: nom, statut: val('srStatut'), nbTomes: parseInt(val('srTomes'), 10) || null})).then(fermerFeuille).catch(erreurEcriture);
+      var statut = val('srStatut');
+      var ops = [{t: 'series', o: Object.assign({}, s, {nom: nom, statut: statut, nbTomes: parseInt(val('srTomes'), 10) || null})}];
+      function valider(message) {
+        ecrire(ops).then(function () {
+          fermerFeuille();
+          apresEcriture();
+          if (message) {
+            toast(message);
+          }
+        }).catch(erreurEcriture);
+      }
+      // abandonner la série : ses tomes pas encore commencés passent en « plus envie »
+      var nonLus = [];
+      if (statut === 'abandonnee' && s.statut !== 'abandonnee') {
+        nonLus = valeurs(D.livres).filter(function (l) { return l.serieId === sid && M.parId[l.id] && M.parId[l.id].statut === 'NOT_STARTED'; });
+      }
+      if (!nonLus.length) {
+        valider(statut === 'abandonnee' && s.statut !== 'abandonnee' ? '🏳️ Série abandonnée' : '');
+        return;
+      }
+      var titres = nonLus.map(function (l) { return '• ' + l.titre; }).join('\n');
+      demander('Ses ' + nonLus.length + ' tome' + (nonLus.length > 1 ? 's' : '') + ' pas encore lu' + (nonLus.length > 1 ? 's' : '') + ' passer' + (nonLus.length > 1 ? 'ont' : 'a') + ' en « 🍃 Plus envie » et quitter' + (nonLus.length > 1 ? 'ont' : 'a') + ' ta pile à lire et tes envies :\n' + titres, {titre: 'Abandonner « ' + nom + ' » ?', oui: 'Abandonner la série'}).then(function (ok) {
+        if (!ok) {
+          return;
+        }
+        nonLus.forEach(function (l) {
+          var ls = lecturesDe(l.id);
+          var nth = 1;
+          if (ls.length) {
+            nth = Math.max.apply(null, ls.map(function (y) { return y.nth || 0; })) + 1;
+          }
+          ops.push({t: 'lectures', o: {id: nouvelId(), livreId: l.id, nth: nth, format: l.format || 'papier', debut: null, fin: Date.now(), statut: 'plusenvie', unite: l.unite || 'pages', total: l.total || 0, position: 0, etoiles: null, commentaire: '', origine: 'appli'}});
+        });
+        valider('🏳️ Série abandonnée · ' + nonLus.length + ' tome' + (nonLus.length > 1 ? 's' : '') + ' en « plus envie »');
+      });
     };
     ACTIONS.srSupprimer = function () {
       demander('Supprimer la série « ' + s.nom + ' » ? Ses ' + tomes + ' livre(s) restent dans ton grimoire, sans série.', {oui: 'Supprimer', danger: true}).then(function (ok) {
