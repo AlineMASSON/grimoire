@@ -281,11 +281,6 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .legende{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted)}
 .legende i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 
-/* roue */
-.roue-wrap{position:relative;width:min(300px,82vw);aspect-ratio:1;margin:14px auto 6px}
-.roue{width:100%;height:100%;transition:transform 4.6s cubic-bezier(.15,.75,.2,1);filter:drop-shadow(0 6px 14px rgba(0,0,0,.18))}
-.roue-ptr{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:28px;color:var(--gold);z-index:2;text-shadow:0 2px 4px rgba(0,0,0,.25)}
-.roue-centre{position:absolute;left:50%;top:50%;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--accent),var(--lav));color:#fff;font:700 13px Nunito,sans-serif;box-shadow:0 0 0 4px var(--card),0 4px 14px rgba(0,0,0,.25);cursor:pointer;z-index:2}
 .tirage{animation:monte .4s ease}
 
 /* stories façon Wrapped */
@@ -346,7 +341,7 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
   nav button span{font-size:18px}
   .card{margin:10px 0}
 }
-@media (prefers-reduced-motion:reduce){.etoiles i,header .moon,#load::before,.story .paillettes i{animation:none}.roue{transition-duration:.01s}}
+@media (prefers-reduced-motion:reduce){.etoiles i,header .moon,#load::before,.story .paillettes i{animation:none}}
 
 /* ---------- accueil ---------- */
 .titre-section{font:700 21px/1.2 "Cormorant Garamond",Georgia,serif;margin:20px 2px 10px}
@@ -2001,9 +1996,8 @@ function premierDe(o) {
 </script>
 
 <script>
-// ---------- Étagère magique, roue de la PAL, séries ----------
+// ---------- Étagère magique, courrier du hibou, séries ----------
 var filtreEtagere = 'lus';
-var roue = {livres: null, rot: 0, fmt: '', envies: false};
 
 // couleur d'une tranche selon le genre principal
 var GENRES_COULEURS = [
@@ -2319,61 +2313,9 @@ ACTIONS.filtreEtagere = function (el) {
   rendre();
 };
 
-// ---------- À lire : roue, élus, PAL, envies ----------
-function candidatsRoue() {
-  return M.livres.filter(function (b) {
-    return b.statut === 'NOT_STARTED' && (roue.envies || !b.wishlist) && (!roue.fmt || b.book_type === roue.fmt);
-  });
-}
-function svgRoue(livres) {
-  var n = livres.length;
-  var R = 150, cx = 150, cy = 150;
-  var parts = '';
-  var couleurs = ['var(--accent)', 'var(--lav)', 'var(--gold)', 'color-mix(in srgb,var(--accent) 60%,#fff)', 'color-mix(in srgb,var(--lav) 60%,#fff)', 'color-mix(in srgb,var(--gold) 55%,#fff)'];
-  livres.forEach(function (b, i) {
-    var a0 = (i / n) * 2 * Math.PI - Math.PI / 2;
-    var a1 = ((i + 1) / n) * 2 * Math.PI - Math.PI / 2;
-    var x0 = cx + R * Math.cos(a0), y0 = cy + R * Math.sin(a0);
-    var x1 = cx + R * Math.cos(a1), y1 = cy + R * Math.sin(a1);
-    var grand = 0;
-    if (a1 - a0 > Math.PI) {
-      grand = 1;
-    }
-    var coul = couleurs[i % couleurs.length];
-    if (n % couleurs.length === 1 && i === n - 1) {
-      coul = couleurs[1];
-    }
-    parts += '<path d="M' + cx + ',' + cy + ' L' + x0.toFixed(1) + ',' + y0.toFixed(1) + ' A' + R + ',' + R + ' 0 ' + grand + ' 1 ' + x1.toFixed(1) + ',' + y1.toFixed(1) + ' Z" fill="' + coul + '" stroke="var(--card)" stroke-width="2"/>';
-    var am = ((i + 0.5) / n) * 360 - 90;
-    var t = titre(b);
-    if (t.length > 16) {
-      t = t.slice(0, 15) + '…';
-    }
-    parts += '<text x="' + (cx + 44) + '" y="' + (cy + 4) + '" transform="rotate(' + am.toFixed(2) + ' ' + cx + ' ' + cy + ')" fill="#fff" font-size="11" font-weight="700" font-family="Nunito,sans-serif">' + esc(t) + '</text>';
-  });
-  return '<svg class="roue" id="roue" viewBox="0 0 300 300" style="transform:rotate(' + roue.rot + 'deg)"><circle cx="150" cy="150" r="149" fill="var(--card)"/>' + parts + '<circle cx="150" cy="150" r="148" fill="none" stroke="var(--gold)" stroke-width="3"/></svg>';
-}
+// ---------- À lire : courrier du hibou (Hibou.html), élus, PAL, envies ----------
 function vALire() {
-  var h = '';
-  if (!roue.livres) {
-    roue.livres = melanger(candidatsRoue()).slice(0, 10);
-  }
-  var opts = [['', 'Tous formats'], ['paperBook', 'Papier'], ['audioBook', 'Audio'], ['eBook', 'Ebook']].map(function (o) {
-    var sel = '';
-    if (o[0] === roue.fmt) {
-      sel = ' selected';
-    }
-    return '<option value="' + o[0] + '"' + sel + '>' + o[1] + '</option>';
-  }).join('');
-  var coche = '';
-  if (roue.envies) {
-    coche = ' checked';
-  }
-  var roueHtml = '<p class="muted">Rien à faire tourner avec ces filtres.</p>';
-  if (roue.livres.length >= 2) {
-    roueHtml = '<div class="roue-wrap"><div class="roue-ptr">▼</div>' + svgRoue(roue.livres) + '<button class="roue-centre" data-act="tourner">Tourner</button></div>';
-  }
-  h += card('La roue du destin', '<div class="row"><select data-chg="roueFmt">' + opts + '</select><label class="small"><input type="checkbox" data-chg="roueEnvies"' + coche + '> + envies</label><button class="act doux" data-act="melangerRoue">' + ic('shuffle') + ' Autres livres</button></div>' + roueHtml + '<div id="tirage"></div>', '10 livres de ta PAL tirés au hasard');
+  var h = carteHibou();
 
   var pal = M.livres.filter(function (b) { return b.statut === 'NOT_STARTED' && !b.wishlist; }).sort(function (a, b) { return a.created_at - b.created_at; });
   var envies = M.livres.filter(function (b) { return b.wishlist && b.statut !== 'DROPPED'; }).sort(function (a, b) { return a.created_at - b.created_at; });
@@ -2398,38 +2340,6 @@ function vALire() {
   h += card('Envies (' + envies.length + ')', envies.slice(0, 15).map(function (b) { return ligneLivre(b, 'depuis ' + depuis(b.created_at), 'data-act="livre" data-id="' + b.id + '"'); }).join(''), 'les 15 plus anciennes');
   return h;
 }
-ACTIONS.roueFmt = function (el) {
-  roue.fmt = el.value;
-  roue.livres = null;
-  rendre();
-};
-ACTIONS.roueEnvies = function (el) {
-  roue.envies = el.checked;
-  roue.livres = null;
-  rendre();
-};
-ACTIONS.melangerRoue = function () {
-  roue.livres = null;
-  rendre();
-};
-ACTIONS.tourner = function () {
-  var n = roue.livres.length;
-  var k = Math.floor(Math.random() * n);
-  var a = 360 / n;
-  var base = Math.ceil(roue.rot / 360) * 360;
-  roue.rot = base + 360 * 5 + (360 - (k + 0.5) * a);
-  var el = document.getElementById('roue');
-  el.style.transform = 'rotate(' + roue.rot + 'deg)';
-  document.getElementById('tirage').innerHTML = '';
-  setTimeout(function () {
-    var b = roue.livres[k];
-    var zone = document.getElementById('tirage');
-    if (zone) {
-      zone.innerHTML = '<div class="tirage"><p class="qsrc" style="font-size:14px">La roue a parlé…</p>' + ligneLivre(b, esc(b.tagList.slice(0, 3).join(' · ')), 'data-act="livre" data-id="' + b.id + '"') + '<div class="pari-tirage">' + boutonPari(b) + '</div></div>';
-    }
-  }, 4700);
-};
-
 // ---------- séries ----------
 function vSeries() {
   var parSerie = {};
@@ -4160,7 +4070,7 @@ function carteSceauxSaison() {
   return card('Sceaux de saison', h, gagnees + ' gagné' + (gagnees > 1 ? 's' : '') + ' en tout · calculés aussi sur tes lectures passées');
 }
 
-// ---------- Pari du destin : finir le livre tiré par la roue en 30 jours ----------
+// ---------- Pari du destin : finir en 30 jours le livre apporté par le hibou ----------
 var XP_PARI = 150;
 function pariEnCours() {
   return reglage('pari', null);
@@ -4200,7 +4110,7 @@ ACTIONS.renoncerPari = function (el, e) {
   if (e) {
     e.preventDefault();
   }
-  demander('Le livre reste dans ta PAL, et tu pourras relever un autre pari à la roue.', {titre: 'Renoncer au pari du destin ?', oui: 'Renoncer'}).then(function (ok) {
+  demander('Le livre reste dans ta PAL, et tu pourras relever un autre pari avec le hibou.', {titre: 'Renoncer au pari du destin ?', oui: 'Renoncer'}).then(function (ok) {
     if (!ok) {
       return;
     }
@@ -4224,6 +4134,200 @@ function lignePari() {
   var reste = Math.max(0, Math.ceil((p.echeance - Date.now()) / DAY));
   return '<div class="defi"><div class="ico">🎲</div><div class="txt"><b>Pari du destin : ' + esc(titre(b)) + '</b><div class="prog"><div style="width:' + pct + '%"></div></div><div class="small muted">' + pct + ' % lu · à finir avant le ' + fdate(p.echeance) + ' (encore ' + reste + ' jour' + (reste > 1 ? 's' : '') + ') · <a href="#" data-act="renoncerPari">renoncer</a></div></div><div class="xp">+' + p.xp + ' XP</div></div>';
 }
+</script>
+
+<style>
+/* À lire : le courrier du hibou */
+.filtres-hibou{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 6px}
+.compte-hibou{font-size:12px;color:var(--muted);margin:2px 0 4px}
+.hibou-scene{position:relative;height:250px;border-radius:16px;overflow:hidden;margin:8px 0 4px;background:radial-gradient(120% 80% at 50% 0%,color-mix(in srgb,var(--lav) 28%,var(--card)),var(--card) 75%);border:1px solid var(--line)}
+.hibou-scene::before{content:"";position:absolute;right:26px;top:20px;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#fff7d6,#e7c36b);box-shadow:0 0 18px color-mix(in srgb,var(--gold) 60%,transparent);opacity:.85}
+.hibou-attente{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px;padding:16px;color:var(--muted);font-size:13px;text-align:center}
+.hibou-attente .branche{width:160px;height:8px;border-radius:4px;background:linear-gradient(90deg,#6a3f22,#a87346,#6a3f22);margin-top:-6px}
+.hibou-vol{position:absolute;left:-130px;top:60px;width:120px;z-index:2;animation:hibou-traverse 2.1s ease-in-out forwards}
+.hibou-vol .aile{transform-box:fill-box;animation:hibou-bat .22s ease-in-out infinite alternate}
+.hibou-vol .aile.g{transform-origin:right center}
+.hibou-vol .aile.d{transform-origin:left center;animation-delay:-.11s}
+.enveloppe-h{position:absolute;left:50%;top:40px;width:150px;margin-left:-75px;padding:0;border:0;background:none;cursor:pointer;opacity:0;animation:hibou-tombe .9s cubic-bezier(.3,1.3,.5,1) forwards .85s}
+.enveloppe-h.posee{opacity:1;animation:none;transform:translateY(60px) rotate(-4deg)}
+.enveloppe-h svg{display:block;width:150px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
+.indice-sceau{position:absolute;left:0;right:0;bottom:14px;text-align:center;font:700 12.5px Nunito,sans-serif;color:var(--gold);opacity:0;animation:jeu-fondu .4s ease forwards 1.8s,hibou-pulse 1.6s ease-in-out infinite 2.2s}
+.indice-sceau.vite{animation:hibou-pulse 1.6s ease-in-out infinite;opacity:1}
+.lettre-h{position:absolute;left:50%;top:18px;width:260px;max-width:88%;transform:translateX(-50%);padding:14px 14px 12px;border-radius:8px;background:linear-gradient(#fbf3e1,#f0e2c2);color:#3a2618;box-shadow:0 10px 24px rgba(0,0,0,.45);text-align:center;animation:hibou-deplie .6s cubic-bezier(.3,1.3,.5,1) both}
+.lettre-h .ecrit{font:700 20px "Dancing Script",cursive}
+.lettre-h .contenu{display:flex;gap:12px;align-items:center;text-align:left;margin-top:8px}
+.lettre-h .contenu img,.lettre-h .contenu .ph{width:60px;height:90px;flex:none;object-fit:cover;border-radius:4px;box-shadow:0 4px 10px rgba(0,0,0,.35);font-size:10px}
+.lettre-h .titre-l{font:700 19px/1.15 "Cormorant Garamond",Georgia,serif}
+.lettre-h .info-l{font-size:12px;color:#7a5a3a}
+.lettre-h .sceau-l{position:absolute;top:-14px;left:50%;margin-left:-14px;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffb3c4,#c2385d 60%,#701a33);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}
+.bas-hibou .pari-tirage{margin-top:8px}
+.bas-hibou .row{justify-content:center}
+@keyframes hibou-traverse{0%{left:-130px;top:70px}45%{left:calc(50% - 60px);top:14px}100%{left:calc(100% + 30px);top:-20px}}
+@keyframes hibou-bat{from{transform:rotate(-22deg)}to{transform:rotate(18deg)}}
+@keyframes hibou-tombe{0%{opacity:1;transform:translateY(-10px) rotate(-25deg) scale(.55)}100%{opacity:1;transform:translateY(60px) rotate(-4deg) scale(1)}}
+@keyframes hibou-deplie{0%{opacity:0;transform:translateX(-50%) translateY(50px) scaleY(.2)}100%{opacity:1;transform:translateX(-50%)}}
+@keyframes hibou-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){.hibou-vol{display:none}.enveloppe-h{animation:none;opacity:1;transform:translateY(60px) rotate(-4deg)}.indice-sceau{animation:none;opacity:1}.lettre-h{animation:none}}
+@media (max-height:620px){.hibou-scene{height:210px}.enveloppe-h{top:24px}.lettre-h{top:12px;padding:10px}.lettre-h .contenu img,.lettre-h .contenu .ph{width:46px;height:69px}}
+</style>
+<script>
+// ---------- À lire : le courrier du hibou (il apporte un livre de ta PAL) ----------
+var hibou = {lettre: null, ouverte: false, dernier: null};
+var FILTRES_FORMAT = [['paperBook', '📖 papier'], ['eBook', '📱 ebook'], ['audioBook', '🎧 audio']];
+var FILTRES_TAILLE = [['court', '🍬 court · < 250 p.'], ['moyen', '📗 moyen'], ['pave', '📚 pavé · > 450 p.']];
+var HIBOU_VOL = '<svg viewBox="0 0 120 90" aria-hidden="true"><path class="aile g" d="M56 44 C 40 18, 18 16, 2 30 C 18 34, 32 44, 50 56 Z" fill="#7a5a3a"/><path class="aile d" d="M64 44 C 80 18, 102 16, 118 30 C 102 34, 88 44, 70 56 Z" fill="#7a5a3a"/><ellipse cx="60" cy="54" rx="15" ry="19" fill="#8a6a4a"/><path d="M50 30 l3 -8 l5 7 M70 30 l-3 -8 l-5 7" fill="#8a6a4a"/><circle cx="60" cy="40" r="13" fill="#9c7a56"/><circle cx="55" cy="39" r="5" fill="#f4e6cf"/><circle cx="65" cy="39" r="5" fill="#f4e6cf"/><circle cx="55" cy="39" r="2.4" fill="#1d1430"/><circle cx="65" cy="39" r="2.4" fill="#1d1430"/><path d="M58 45 l2 3 l2 -3z" fill="#e7a03b"/><path d="M52 60 q8 5 16 0" stroke="#c9a77a" stroke-width="2" fill="none"/></svg>';
+var ENVELOPPE = '<svg viewBox="0 0 150 100" aria-hidden="true"><rect x="2" y="2" width="146" height="96" rx="6" fill="#f4e6cf" stroke="#c9a77a" stroke-width="2"/><path d="M2 8 L75 60 L148 8" fill="#ead6a8" stroke="#c9a77a" stroke-width="2"/><path d="M2 96 L58 50 M148 96 L92 50" stroke="#e0caa0" stroke-width="2"/><circle cx="75" cy="58" r="15" fill="#c2385d"/><circle cx="75" cy="58" r="11" fill="none" stroke="#ffb3c4" stroke-width="1.5"/><text x="75" y="63" text-anchor="middle" font-size="13" fill="#fff">✦</text></svg>';
+
+function choixHibou() {
+  try {
+    return JSON.parse(lsGet('bm_hibou') || '{}');
+  } catch (e) {
+    return {};
+  }
+}
+// court / moyen / pavé : en pages, ou en heures d'écoute pour un livre audio minuté
+function tailleLivre(b) {
+  if (b.page_type === 'TIME') {
+    var h = (b.total_page || 0) / 3600;
+    if (!h) {
+      return '';
+    }
+    if (h < 6) {
+      return 'court';
+    }
+    return h <= 12 ? 'moyen' : 'pave';
+  }
+  var p = b.total_page || 0;
+  if (!p) {
+    return '';
+  }
+  if (p < 250) {
+    return 'court';
+  }
+  return p <= 450 ? 'moyen' : 'pave';
+}
+function candidatsHibou() {
+  var c = choixHibou();
+  var f = c.fmts || [];
+  var t = c.tailles || [];
+  return M.livres.filter(function (b) {
+    return b.statut === 'NOT_STARTED' && !b.wishlist && (!f.length || f.indexOf(b.book_type) >= 0) && (!t.length || t.indexOf(tailleLivre(b)) >= 0);
+  });
+}
+ACTIONS.filtreHibou = function (el) {
+  var c = choixHibou();
+  var l = c[el.dataset.g] || [];
+  var i = l.indexOf(el.dataset.v);
+  if (i >= 0) {
+    l.splice(i, 1);
+  } else {
+    l.push(el.dataset.v);
+  }
+  c[el.dataset.g] = l;
+  lsSet('bm_hibou', JSON.stringify(c));
+  hibou.lettre = null;
+  rendre();
+};
+function attenteHibou() {
+  return '<div class="hibou-attente"><div style="transform:scale(1.5);transform-origin:center bottom">' + svgDeco('chouette') + '</div><div class="branche"></div><div>Le hibou attend sur sa branche.<br>Appelle-le : il t\'apportera un livre de ta PAL.</div></div>';
+}
+function enveloppeHibou(vole) {
+  var vol = '';
+  var cls = 'enveloppe-h';
+  var indice = 'indice-sceau';
+  if (vole) {
+    vol = '<div class="hibou-vol">' + HIBOU_VOL + '</div>';
+  } else {
+    cls += ' posee';
+    indice += ' vite';
+  }
+  return vol + '<button class="' + cls + '" data-act="ouvrirLettre" aria-label="Ouvrir la lettre">' + ENVELOPPE + '</button><div class="' + indice + '">touche le sceau pour ouvrir la lettre</div>';
+}
+function lettreHibou(b) {
+  var info = [];
+  var fmt = FILTRES_FORMAT.filter(function (f) { return f[0] === b.book_type; })[0];
+  if (fmt) {
+    info.push(fmt[1].split(' ')[1]);
+  }
+  if (b.page_type === 'TIME' && b.total_page) {
+    info.push(Math.round(b.total_page / 3600) + ' h');
+  } else if (b.total_page) {
+    info.push(b.total_page + ' p.');
+  }
+  info.push('dans ta PAL depuis ' + depuis(b.created_at));
+  return '<div class="lettre-h"><span class="sceau-l">✦</span><div class="ecrit">Chère lectrice,</div><div class="contenu">' + cover(b) + '<div><div class="info-l">le destin te propose</div><div class="titre-l">' + esc(titreTranche(b)) + '</div><div class="info-l">' + esc((b.authors || []).join(', ')) + '</div><div class="info-l">' + esc(info.join(' · ')) + '</div></div></div></div>';
+}
+function basHibou(n) {
+  if (hibou.lettre && hibou.ouverte && M.parId[hibou.lettre]) {
+    var b = M.parId[hibou.lettre];
+    return '<div class="pari-tirage">' + boutonPari(b) + '</div><div class="row" style="margin-top:8px"><button class="act doux" data-act="livre" data-id="' + b.id + '">' + ic('book-open') + ' Voir le livre</button><button class="act doux" data-act="appelerHibou">' + ic('refresh-cw') + ' Autre lettre</button></div>';
+  }
+  if (hibou.lettre) {
+    return '';
+  }
+  return '<div class="row" style="margin-top:8px"><button class="act" data-act="appelerHibou"' + (n ? '' : ' disabled') + '>🦉 Appeler le hibou</button></div>';
+}
+function sceneHibou(vole) {
+  if (!hibou.lettre || !M.parId[hibou.lettre]) {
+    return attenteHibou();
+  }
+  if (!hibou.ouverte) {
+    return enveloppeHibou(vole);
+  }
+  return lettreHibou(M.parId[hibou.lettre]);
+}
+function carteHibou() {
+  var c = choixHibou();
+  function groupe(g, liste) {
+    return liste.map(function (x) {
+      var cls = 'chip';
+      if ((c[g] || []).indexOf(x[0]) >= 0) {
+        cls += ' on';
+      }
+      return '<button class="' + cls + '" data-act="filtreHibou" data-g="' + g + '" data-v="' + x[0] + '">' + x[1] + '</button>';
+    }).join('');
+  }
+  var n = candidatsHibou().length;
+  var compte = '✨ ' + n + ' livre' + (n > 1 ? 's' : '') + ' de ta PAL correspond' + (n > 1 ? 'ent' : '') + ' · aucun filtre coché = tous';
+  if (!n) {
+    compte = 'Aucun livre de ta PAL ne correspond : enlève un filtre.';
+  }
+  var corps = '<div class="filtres-hibou">' + groupe('fmts', FILTRES_FORMAT) + groupe('tailles', FILTRES_TAILLE) + '</div><div class="compte-hibou">' + compte + '</div>' +
+    '<div class="hibou-scene" id="hibouScene">' + sceneHibou(false) + '</div><div class="bas-hibou" id="hibouBas">' + basHibou(n) + '</div>';
+  return card('Le courrier du hibou', corps, 'il t\'apporte un livre de ta PAL');
+}
+function majHibou(vole) {
+  var s = document.getElementById('hibouScene');
+  var bas = document.getElementById('hibouBas');
+  if (s) {
+    s.innerHTML = sceneHibou(vole);
+  }
+  if (bas) {
+    bas.innerHTML = basHibou(candidatsHibou().length);
+  }
+}
+ACTIONS.appelerHibou = function () {
+  var l = candidatsHibou();
+  if (!l.length) {
+    return;
+  }
+  // pas deux fois de suite le même livre, si on peut l'éviter
+  var choix = l.filter(function (b) { return b.id !== hibou.dernier; });
+  if (!choix.length) {
+    choix = l;
+  }
+  var b = choix[Math.floor(Math.random() * choix.length)];
+  hibou.lettre = b.id;
+  hibou.dernier = b.id;
+  hibou.ouverte = false;
+  majHibou(true);
+  setTimeout(function () { vibrerFete([30]); }, 1700);
+};
+ACTIONS.ouvrirLettre = function () {
+  hibou.ouverte = true;
+  majHibou(false);
+  vibrerFete([40, 30, 40]);
+};
 </script>
 
 <script>
@@ -9233,7 +9337,7 @@ function verifierJeu() {
     return suite.then(function () {
       fetes.forEach(function (f) { fileFetes.push(f); });
       if (res.pariPasse) {
-        toast('🎲 Le pari du destin est passé. Pas grave, la roue t\'attend !');
+        toast('🎲 Le pari du destin est passé. Pas grave, le hibou repassera !');
       }
       if (res.ecrit) {
         rendre();
@@ -9768,7 +9872,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-04 21:42:36';
+var VERSION_APPLI = '2026-10-04 21:58:10';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
