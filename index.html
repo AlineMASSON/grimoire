@@ -989,7 +989,8 @@ function vAccueilCorps() {
     var d = new Date(r.end);
     return d.getFullYear() === y - 1 && d <= new Date(y - 1, now.getMonth(), now.getDate());
   }).length;
-  var objectif = objectifAnnee(y).livres || 25;
+  var obj = objectifAnnee(y);
+  var objectif = obj.livres || 25;
   var proj = Math.round(cetteAnnee / jourAn * nbJoursAn);
   var ecart = cetteAnnee - anDernier;
   var ecartTxt = String(ecart);
@@ -1002,9 +1003,11 @@ function vAccueilCorps() {
     [sj.actuelle + ' j', 'série en cours'],
     [sj.best + ' j', 'record de série']
   ]) +
-    '<div style="margin-top:12px" class="row small"><span>Objectif</span><input type="number" id="obj" min="1" value="' + objectif + '" style="width:80px"><span class="muted">livres</span></div>' +
-    '<div class="prog"><div style="width:' + Math.min(100, 100 * cetteAnnee / objectif) + '%"></div></div>' +
-    '<div class="small muted">À ce rythme : ~' + proj + ' livres fin ' + y + ' · ' + objectifTxt(cetteAnnee, objectif, jourAn, nbJoursAn) + '</div>');
+    barreObjectif('📚', cetteAnnee, objectif, 'livres') +
+    '<div class="small muted">À ce rythme : ~' + proj + ' livres fin ' + y + ' · ' + objectifTxt(cetteAnnee, objectif, jourAn, nbJoursAn) + '</div>' +
+    (obj.pages ? barreObjectif('📖', pagesAnnee(y), obj.pages, 'pages') : '') +
+    (obj.heures ? barreObjectif('⏱️', heuresAnnee(y), obj.heures, 'heures') : '') +
+    '<div class="row" style="margin-top:10px"><button class="act doux" data-act="objectifs">🎯 Mes objectifs ' + y + '</button></div>');
 
   var cit = M.notes.filter(function (n) { return n.texte.length > 20; });
   if (cit.length) {
@@ -1036,16 +1039,52 @@ function vAccueilCorps() {
   }
   return h;
 }
-vAccueil.apres = function () {
-  var i = document.getElementById('obj');
-  if (i) {
-    i.addEventListener('change', function () {
-      var n = parseInt(i.value, 10);
-      if (n > 0) {
-        sauverObjectif(new Date().getFullYear(), {livres: n});
-      }
-    });
-  }
+function barreObjectif(emoji, fait, cible, unite) {
+  var pct = Math.min(100, 100 * fait / cible);
+  var lisible = function (v) {
+    return Number(round(v, 1)).toLocaleString('fr-FR', {maximumFractionDigits: 1});
+  };
+  return '<div class="row small" style="justify-content:space-between;margin-top:12px"><span>' + emoji + ' <b>' + lisible(fait) + '</b> / ' + lisible(cible) + ' ' + unite + '</span><span class="muted">' + Math.round(100 * fait / cible) + ' %</span></div><div class="prog"><div style="width:' + pct + '%"></div></div>';
+}
+// pages lues dans l'année : relevés de page, plus les livres finis sans relevé (papier et numérique)
+function pagesAnnee(y) {
+  var p = 0;
+  var ppj = pagesParJour();
+  Object.keys(ppj).forEach(function (k) {
+    if (k.slice(0, 4) === String(y)) {
+      p += ppj[k];
+    }
+  });
+  finies().forEach(function (r) {
+    if (annee(r.end) === y && !r.logs.length && r.fmt !== 'audioBook' && r.page_type === 'PAGE') {
+      p += r.total_page || r.book.total_page || 0;
+    }
+  });
+  return Math.round(p);
+}
+// heures de lecture minutées dans l'année
+function heuresAnnee(y) {
+  var s = 0;
+  (M.sessions || []).forEach(function (x) {
+    if (compte(x.book) && x.dureeSec && annee(x.debut) === y) {
+      s += x.dureeSec;
+    }
+  });
+  return round(s / 3600, 1);
+}
+ACTIONS.objectifs = function () {
+  var y = new Date().getFullYear();
+  var o = objectifAnnee(y);
+  ouvrirFeuille('<h3>Mes objectifs ' + y + '</h3><p class="small muted">Laisse vide ce que tu ne veux pas suivre.</p><div class="form">' +
+    '<label>📚 Livres finis</label>' + champ('objLivres', o.livres || '', 'inputmode="numeric" placeholder="25"') +
+    '<label>📖 Pages lues</label>' + champ('objPages', o.pages || '', 'inputmode="numeric" placeholder="par ex. 10000"') +
+    '<label>⏱️ Heures de lecture (minutées)</label>' + champ('objHeures', o.heures || '', 'inputmode="numeric" placeholder="par ex. 150"') +
+    '<div class="row" style="margin-top:16px"><button class="act" data-act="objEnregistrer">💾 Enregistrer</button><button class="act doux" data-act="fermer">Annuler</button></div></div>');
+  ACTIONS.objEnregistrer = function () {
+    sauverObjectif(y, {livres: parseInt(val('objLivres'), 10) || null, pages: parseInt(val('objPages'), 10) || null, heures: parseInt(val('objHeures'), 10) || null});
+    fermerFeuille();
+    toast('🎯 Objectifs enregistrés');
+  };
 };
 function objectifTxt(fait, obj, jourAn, nbJoursAn) {
   var reste = obj - fait;
@@ -1221,6 +1260,11 @@ function vRythme() {
     ]) + '<p class="small muted" style="margin:12px 0 4px">Pages par semaine, 12 dernières semaines</p>' + colonnes(sem, ls, {noms: noms, unite: ' pages'}), 'livres papier et ebook suivis page par page');
   }
 
+  var tps = statsTemps();
+  if (tps) {
+    h += tps;
+  }
+
   // durée pour finir un livre (lectures saisies en direct uniquement)
   var direct = finies().filter(function (r) { return r.start && r.created_at < r.end; });
   var parFmt = {};
@@ -1260,6 +1304,76 @@ function vRythme() {
       return '<tr><td>' + a + '</td><td class="n">' + x.paperBook + '</td><td class="n">' + x.audioBook + '</td><td class="n">' + x.eBook + '</td><td class="n"><b>' + (x.paperBook + x.audioBook + x.eBook) + '</b></td><td class="n">' + x.ab + '</td></tr>';
     }).join('') + '</table>');
   return h;
+}
+
+// temps de lecture d'après les sessions minutées : heures, minutes par jour, vitesse, heure préférée
+function statsTemps() {
+  var ss = (M.sessions || []).filter(function (s) { return compte(s.book) && s.dureeSec > 0; });
+  if (!ss.length) {
+    return '';
+  }
+  var now = new Date();
+  var y = now.getFullYear();
+  var parJour = {};
+  var heures = new Array(24).fill(0);
+  ss.forEach(function (s) {
+    var k = dkey(new Date(s.debut));
+    parJour[k] = (parJour[k] || 0) + s.dureeSec;
+    heures[new Date(s.debut).getHours()] += s.dureeSec;
+  });
+  var jours = Object.keys(parJour);
+  var moyJour = moy(jours.map(function (k) { return parJour[k]; })) / 60;
+  var hPref = heures.indexOf(Math.max.apply(null, heures));
+  // vitesse : pages gagnées pendant une session minutée d'au moins 5 min (livres suivis en pages)
+  var lecturesPages = {};
+  M.lectures.forEach(function (r) {
+    if (r.page_type === 'PAGE' && r.fmt !== 'audioBook') {
+      lecturesPages[r._id] = 1;
+    }
+  });
+  var parLecture = {};
+  (M.sessions || []).forEach(function (s) {
+    if (lecturesPages[s.lectureId] && s.position !== null && s.position !== undefined) {
+      if (!parLecture[s.lectureId]) {
+        parLecture[s.lectureId] = [];
+      }
+      parLecture[s.lectureId].push(s);
+    }
+  });
+  var vitesses = [];
+  Object.keys(parLecture).forEach(function (k) {
+    var l = parLecture[k].sort(function (a, b) { return (a.fin || a.debut) - (b.fin || b.debut); });
+    var max = 0;
+    l.forEach(function (s, i) {
+      if (i > 0 && s.dureeSec >= 300 && compte(s.book)) {
+        var v = (s.position - max) / (s.dureeSec / 3600);
+        if (v > 0 && v < 200) {
+          vitesses.push(v);
+        }
+      }
+      max = Math.max(max, s.position);
+    });
+  });
+  var tuiles = [[nombre(heuresAnnee(y)) + ' h', 'lues en ' + y], [Math.round(moyJour) + ' min', 'par jour de lecture minutée']];
+  if (vitesses.length >= 3) {
+    tuiles.push([Math.round(mediane(vitesses)) + ' p./h', 'ta vitesse (papier, numérique)']);
+  }
+  tuiles.push([hPref + ' h', 'ton heure préférée']);
+  var mois = [], noms = [], libs = [];
+  for (var i = 11; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    var cle = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    var tot = 0;
+    jours.forEach(function (k) {
+      if (k.slice(0, 7) === cle) {
+        tot += parJour[k];
+      }
+    });
+    mois.push(round(tot / 3600, 1));
+    noms.push(MOIS_LONGS[d.getMonth()] + ' ' + d.getFullYear());
+    libs.push(MOIS[d.getMonth()].slice(0, 1).toUpperCase());
+  }
+  return card('Temps de lecture', kpis(tuiles) + '<p class="small muted" style="margin:12px 0 4px">Heures de lecture, 12 derniers mois</p>' + colonnes(mois, libs, {noms: noms, unite: ' h'}), 'd\'après tes sessions minutées');
 }
 
 function vGouts() {
@@ -1522,6 +1636,13 @@ var GENRES_COULEURS = [
 ];
 var PASTELS = ['#e8a0bf', '#b9a3e8', '#8fcdb8', '#f0b27a', '#9ab8e6', '#e39a9a', '#c9a4d9'];
 function couleurLivre(b) {
+  // couleur choisie dans « Mes listes » pour un de ses genres
+  for (var g = 0; g < (b.genreIds || []).length; g++) {
+    var genre = D.genres && D.genres[b.genreIds[g]];
+    if (genre && genre.couleur) {
+      return genre.couleur;
+    }
+  }
   var t = b.tagList.join(' ');
   for (var i = 0; i < GENRES_COULEURS.length; i++) {
     if (GENRES_COULEURS[i][0].test(t)) {
@@ -1578,7 +1699,7 @@ vEtagere.apres = function () {
 };
 
 // ---------- tous mes livres : recherche, filtres, tris ----------
-var tous = {q: '', etat: '', fmt: '', tri: 'ajout'};
+var tous = {q: '', etat: '', fmt: '', tri: 'ajout', etagere: ''};
 var ETATS_LIVRE = [['', 'Tous'], ['encours', '📖 En cours'], ['lus', '✅ Lus'], ['pal', '🕯️ Pile à lire'], ['envies', '💫 Envies'], ['abandons', '🏳️ Abandonnés']];
 var TRIS = [['ajout', 'Ajoutés récemment'], ['titre', 'Titre'], ['auteur', 'Auteur·ice'], ['note', 'Note'], ['lecture', 'Lus récemment']];
 function etatLivre(b) {
@@ -1612,6 +1733,9 @@ function listeTous() {
       return false;
     }
     if (tous.fmt && b.book_type !== tous.fmt) {
+      return false;
+    }
+    if (tous.etagere && (b.etagereIds || []).indexOf(tous.etagere) < 0) {
       return false;
     }
     if (!q) {
@@ -1658,7 +1782,13 @@ function vTous() {
   var tris = TRIS.map(function (o) {
     return '<option value="' + o[0] + '"' + (o[0] === tous.tri ? ' selected' : '') + '>' + o[1] + '</option>';
   }).join('');
-  return card('Tous mes livres', '<input class="champ" id="rechercheLivres" type="search" placeholder="Titre, auteur·ice, série, ISBN…" value="' + esc(tous.q) + '" autocomplete="off"><div>' + etats + '</div><div class="row" style="margin-top:8px"><select data-chg="tousFmt">' + fmts + '</select><select data-chg="tousTri">' + tris + '</select></div><div id="listeTous" style="margin-top:6px">' + listeTous() + '</div>');
+  var etageres = '';
+  if (valeurs(D.etageres).length) {
+    etageres = '<select data-chg="tousEtagere"><option value="">Toutes les étagères</option>' + listeTriee('etageres').map(function (e) {
+      return '<option value="' + esc(e.id) + '"' + (e.id === tous.etagere ? ' selected' : '') + '>' + esc((e.emoji ? e.emoji + ' ' : '') + e.nom) + '</option>';
+    }).join('') + '</select>';
+  }
+  return card('Tous mes livres', '<input class="champ" id="rechercheLivres" type="search" placeholder="Titre, auteur·ice, série, ISBN…" value="' + esc(tous.q) + '" autocomplete="off"><div>' + etats + '</div><div class="row" style="margin-top:8px"><select data-chg="tousFmt">' + fmts + '</select><select data-chg="tousTri">' + tris + '</select>' + etageres + '</div><div id="listeTous" style="margin-top:6px">' + listeTous() + '</div>');
 }
 ACTIONS.tousEtat = function (el) {
   tous.etat = el.dataset.e;
@@ -1666,6 +1796,10 @@ ACTIONS.tousEtat = function (el) {
 };
 ACTIONS.tousFmt = function (el) {
   tous.fmt = el.value;
+  rendre();
+};
+ACTIONS.tousEtagere = function (el) {
+  tous.etagere = el.value;
   rendre();
 };
 ACTIONS.tousTri = function (el) {
@@ -1883,11 +2017,19 @@ var TROPES = ['Ennemis devenus amants', 'Romance à feu doux', 'Famille de cœur
 var brouillon = null;
 var carnetTout = false;
 
+// listes du carnet, lues dans la base (les constantes ci-dessus ne servent qu'à les créer la première fois)
+function listeCarnet(t, garder) {
+  return listeTriee(t).filter(function (x) { return !x.archive || (garder && garder(x)); });
+}
+function libelle(x) {
+  return (x.emoji ? x.emoji + ' ' : '') + x.nom;
+}
+
 function resumeNote(n) {
-  var parts = CRITERES.filter(function (c) { return n[c[0]]; }).map(function (c) { return c[1] + ' <b>' + n[c[0]] + '</b>'; });
+  var parts = listeTriee('criteres').filter(function (c) { return n[c.id]; }).map(function (c) { return (c.emoji || '•') + ' <b>' + n[c.id] + '</b>'; });
   var h = '<div class="mini">' + parts.join('') + '</div>';
   if ((n.humeurs || []).length) {
-    h += '<div class="small" style="margin-top:3px">' + n.humeurs.join(' · ') + '</div>';
+    h += '<div class="small" style="margin-top:3px">' + esc(n.humeurs.join(' · ')) + '</div>';
   }
   if ((n.tropes || []).length) {
     h += '<div class="small muted">' + esc(n.tropes.join(' · ')) + '</div>';
@@ -1925,7 +2067,7 @@ function vCarnet() {
   }
   h += card('À glisser dans mon carnet', liste.map(function (r) {
     return ligneLivre(r.book, 'fini le ' + fdate(r.end) + ' · ' + etoiles(r.star), 'data-act="noter" data-id="' + r.book.id + '"');
-  }).join('') + plus, 'touche un livre pour noter personnages, plume, émotions…');
+  }).join('') + plus, 'touche un livre pour noter tes critères, humeurs, tropes…');
 
   if (notes.length) {
     h += statsCarnet(notes);
@@ -1937,24 +2079,10 @@ function vCarnet() {
 
   var sansEtoiles = fin.filter(function (r) { return !r.star; });
   if (sansEtoiles.length) {
-    h += card('Sans étoiles dans Bookmory (' + sansEtoiles.length + ')', sansEtoiles.slice(0, 12).map(function (r) { return ligneLivre(r.book, 'fini le ' + fdate(r.end), 'data-act="livre" data-id="' + r.book.id + '"'); }).join(''), 'à noter dans Bookmory · les 12 plus récentes');
+    h += card('Sans étoiles (' + sansEtoiles.length + ')', sansEtoiles.slice(0, 12).map(function (r) { return ligneLivre(r.book, 'fini le ' + fdate(r.end), 'data-act="formLecture" data-id="' + r._id + '"'); }).join(''), 'touche un livre pour lui donner sa note · les 12 plus récents');
   }
 
-  var cit = M.notes.filter(function (n) { return n.texte; }).sort(function (a, b) { return b.created_at - a.created_at; });
-  h += card('Mon carnet de citations (' + cit.length + ')', cit.map(function (n) {
-    var src = '';
-    if (n.book) {
-      src = esc(titre(n.book));
-      if (n.page) {
-        src += ', p. ' + n.page;
-      }
-    }
-    var type = '';
-    if (n.type === 'THOUGHT') {
-      type = '💭 ';
-    }
-    return '<div style="margin:14px 0 18px"><div class="quotebox"><div class="quote">' + type + esc(n.texte) + '</div><p class="qsrc">' + src + ' · ' + fdate(n.created_at) + '</p></div><div class="row" style="justify-content:center;margin-top:8px"><button class="act doux" data-act="imageCitation" data-k="' + n._key + '">🖼️ En faire une image</button></div></div>';
-  }).join(''));
+  h += carteCitations();
   return h;
 }
 ACTIONS.carnetTout = function () {
@@ -1964,9 +2092,9 @@ ACTIONS.carnetTout = function () {
 
 function statsCarnet(ids) {
   var h = '';
-  var moyennes = CRITERES.map(function (c) {
-    var v = ids.map(function (id) { return NOTES[id][c[0]]; }).filter(Boolean);
-    return {l: c[1] + ' ' + c[2], v: moy(v) || 0, txt: round(moy(v) || 0, 1) + '/5'};
+  var moyennes = listeCarnet('criteres').map(function (c) {
+    var v = ids.map(function (id) { return NOTES[id][c.id]; }).filter(Boolean);
+    return {l: libelle(c), v: moy(v) || 0, txt: round(moy(v) || 0, 1) + '/5'};
   });
   h += bars(moyennes, {max: 5});
   var hum = {};
@@ -1987,11 +2115,11 @@ function statsCarnet(ids) {
   });
   var hk = Object.keys(hum).sort(function (a, b) { return hum[b] - hum[a]; });
   if (hk.length) {
-    h += '<p class="small muted" style="margin:14px 0 4px">Les émotions que tu cherches</p><div>' + hk.map(function (x) { return '<span class="chip on">' + x + ' · ' + hum[x] + '</span>'; }).join('') + '</div>';
+    h += '<p class="small muted" style="margin:14px 0 4px">Les émotions que tu cherches</p><div>' + hk.map(function (x) { return '<span class="chip on">' + esc(x) + ' · ' + hum[x] + '</span>'; }).join('') + '</div>';
   }
   var tk = Object.keys(tro).sort(function (a, b) { return tro[b].length - tro[a].length; });
   if (tk.length) {
-    h += '<p class="small muted" style="margin:14px 0 4px">Tes tropes (nombre de livres · note Bookmory moyenne)</p>' + bars(tk.map(function (x) {
+    h += '<p class="small muted" style="margin:14px 0 4px">Tes tropes (nombre de livres · note moyenne)</p>' + bars(tk.map(function (x) {
       var et = tro[x].filter(Boolean);
       return {l: x, v: tro[x].length, txt: tro[x].length + ' · ' + etoiles(moy(et))};
     }));
@@ -1999,14 +2127,17 @@ function statsCarnet(ids) {
   return card('Ce que tu aimes vraiment', h, 'd\'après ton carnet');
 }
 
-// ---------- éditeur d'une note ----------
+// ---------- éditeur d'une note de carnet (enregistrée dans la table « avis ») ----------
 ACTIONS.noter = function (el) {
   var id = el.dataset.id;
   var b = M.parId[id];
-  var n = NOTES[id] || {};
-  brouillon = {id: id, perso: n.perso || 0, plume: n.plume || 0, intrigue: n.intrigue || 0, emotions: n.emotions || 0, univers: n.univers || 0, humeurs: (n.humeurs || []).slice(), tropes: (n.tropes || []).slice(), mot: n.mot || ''};
-  var feuille = ouvrirFeuille('<div class="tete">' + cover(b) + '<div><h3>' + esc(titre(b)) + '</h3><div class="small muted">' + esc((b.authors || []).join(', ')) + '</div></div></div><div id="editeur"></div>');
-  rendreEditeur(feuille);
+  if (!b) {
+    return;
+  }
+  var a = D.avis[id] || {};
+  brouillon = {id: id, notes: Object.assign({}, a.notes || {}), humeurIds: (a.humeurIds || []).slice(), tropeIds: (a.tropeIds || []).slice(), mot: a.mot || '', nouveau: ''};
+  ouvrirFeuille('<div class="tete">' + cover(b) + '<div><h3>' + esc(titre(b)) + '</h3><div class="small muted">' + esc((b.authors || []).join(', ')) + '</div></div></div><div id="editeur"></div>');
+  rendreEditeur();
 };
 function pips(champ, val, symbole, max) {
   var h = '<span class="pips">';
@@ -2015,36 +2146,58 @@ function pips(champ, val, symbole, max) {
     if (i <= val) {
       cls = ' class="on"';
     }
-    h += '<button' + cls + ' data-act="pip" data-c="' + champ + '" data-v="' + i + '">' + symbole + '</button>';
+    h += '<button' + cls + ' data-act="pip" data-c="' + esc(champ) + '" data-v="' + i + '">' + symbole + '</button>';
   }
   return h + '</span>';
 }
+// petit formulaire en ligne pour créer un critère, une humeur ou un trope sans quitter la note
+function zoneNouveau(t) {
+  if (brouillon.nouveau !== t) {
+    var quoi = {criteres: 'critère', humeurs: 'humeur', tropes: 'trope'}[t];
+    return '<button class="chip" data-act="ouvrirNouveau" data-t="' + t + '">＋ ' + quoi + '</button>';
+  }
+  var emoji = '';
+  if (t !== 'tropes') {
+    emoji = '<input class="champ" id="neEmoji" maxlength="4" placeholder="✨" style="width:64px;text-align:center">';
+  }
+  return '<div class="avec-bouton" style="margin-top:6px">' + emoji + '<input class="champ" id="neNom" placeholder="Nom" autocomplete="off"><button class="act" data-act="creerElement" data-t="' + t + '">OK</button></div>';
+}
 function rendreEditeur() {
   var b = brouillon;
-  var h = '<h4>Mes critères</h4>' + CRITERES.map(function (c) {
-    return '<div class="crit"><span>' + c[1] + ' ' + c[2] + '</span>' + pips(c[0], b[c[0]], '💗', 5) + '</div>';
-  }).join('');
-  h += '<h4>Humeur du livre</h4><div>' + HUMEURS.map(function (x) {
+  var h = '<h4>Mes critères</h4>' + listeCarnet('criteres', function (c) { return b.notes[c.id]; }).map(function (c) {
+    return '<div class="crit"><span>' + esc(libelle(c)) + '</span>' + pips(c.id, b.notes[c.id] || 0, '💗', 5) + '</div>';
+  }).join('') + zoneNouveau('criteres');
+  h += '<h4>Humeur du livre</h4><div>' + listeCarnet('humeurs', function (x) { return b.humeurIds.indexOf(x.id) >= 0; }).map(function (x) {
     var cls = 'chip';
-    if (b.humeurs.indexOf(x) >= 0) {
+    if (b.humeurIds.indexOf(x.id) >= 0) {
       cls += ' on';
     }
-    return '<button class="' + cls + '" data-act="puce" data-l="humeurs" data-v="' + esc(x) + '">' + x + '</button>';
-  }).join('') + '</div>';
-  h += '<h4>Tropes</h4><div>' + TROPES.map(function (x) {
+    return '<button class="' + cls + '" data-act="puce" data-l="humeurIds" data-v="' + esc(x.id) + '">' + esc(libelle(x)) + '</button>';
+  }).join('') + zoneNouveau('humeurs') + '</div>';
+  h += '<h4>Tropes</h4><div>' + listeCarnet('tropes', function (x) { return b.tropeIds.indexOf(x.id) >= 0; }).map(function (x) {
     var cls = 'chip';
-    if (b.tropes.indexOf(x) >= 0) {
+    if (b.tropeIds.indexOf(x.id) >= 0) {
       cls += ' on';
     }
-    return '<button class="' + cls + '" data-act="puce" data-l="tropes" data-v="' + esc(x) + '">' + esc(x) + '</button>';
-  }).join('') + '</div>';
+    return '<button class="' + cls + '" data-act="puce" data-l="tropeIds" data-v="' + esc(x.id) + '">' + esc(libelle(x)) + '</button>';
+  }).join('') + zoneNouveau('tropes') + '</div>';
   h += '<h4>Mon petit mot</h4><textarea id="mot" placeholder="Ce que je veux me rappeler de ce livre…">' + esc(b.mot) + '</textarea>';
   h += '<div class="row" style="margin-top:16px"><button class="act" data-act="enregistrerNote">💾 Enregistrer</button>';
-  if (NOTES[b.id]) {
+  if (D.avis[b.id]) {
     h += '<button class="act doux" data-act="effacerNote">Effacer</button>';
   }
   h += '</div>';
   document.getElementById('editeur').innerHTML = h;
+  var nom = document.getElementById('neNom');
+  if (nom) {
+    nom.focus();
+    nom.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        ACTIONS.creerElement({dataset: {t: brouillon.nouveau}});
+      }
+    });
+  }
 }
 function garderMot() {
   var t = document.getElementById('mot');
@@ -2055,10 +2208,11 @@ function garderMot() {
 ACTIONS.pip = function (el) {
   garderMot();
   var v = parseInt(el.dataset.v, 10);
-  if (brouillon[el.dataset.c] === v) {
-    v = 0;
+  if (brouillon.notes[el.dataset.c] === v) {
+    delete brouillon.notes[el.dataset.c];
+  } else {
+    brouillon.notes[el.dataset.c] = v;
   }
-  brouillon[el.dataset.c] = v;
   rendreEditeur();
 };
 ACTIONS.puce = function (el) {
@@ -2072,19 +2226,54 @@ ACTIONS.puce = function (el) {
   }
   rendreEditeur();
 };
+ACTIONS.ouvrirNouveau = function (el) {
+  garderMot();
+  brouillon.nouveau = el.dataset.t;
+  rendreEditeur();
+};
+ACTIONS.creerElement = function (el) {
+  garderMot();
+  var t = el.dataset.t;
+  var nom = val('neNom');
+  if (!nom) {
+    brouillon.nouveau = '';
+    rendreEditeur();
+    return;
+  }
+  var emoji = val('neEmoji');
+  creerElementListe(t, nom, emoji).then(function (x) {
+    if (t === 'humeurs' && brouillon.humeurIds.indexOf(x.id) < 0) {
+      brouillon.humeurIds.push(x.id);
+    } else if (t === 'tropes' && brouillon.tropeIds.indexOf(x.id) < 0) {
+      brouillon.tropeIds.push(x.id);
+    }
+    brouillon.nouveau = '';
+    rendreEditeur();
+  }).catch(erreurEcriture);
+};
 ACTIONS.enregistrerNote = function () {
   garderMot();
   var b = brouillon;
-  NOTES[b.id] = {perso: b.perso, plume: b.plume, intrigue: b.intrigue, emotions: b.emotions, univers: b.univers, humeurs: b.humeurs, tropes: b.tropes, mot: b.mot, maj: Date.now()};
-  sauverNotes();
-  fermerFeuille();
-  rendre();
+  var notes = {};
+  Object.keys(b.notes).forEach(function (k) {
+    if (b.notes[k]) {
+      notes[k] = b.notes[k];
+    }
+  });
+  var ancien = D.avis[b.id] || {};
+  enregistrer('avis', {id: b.id, notes: notes, humeurIds: b.humeurIds, tropeIds: b.tropeIds, mot: b.mot, maj: Date.now(), creeLe: ancien.creeLe}).then(function () {
+    fermerFeuille();
+    toast('✒️ Carnet enregistré');
+  }).catch(erreurEcriture);
 };
 ACTIONS.effacerNote = function () {
-  delete NOTES[brouillon.id];
-  sauverNotes();
-  fermerFeuille();
-  rendre();
+  if (!confirm('Effacer ta note de carnet pour ce livre ?')) {
+    return;
+  }
+  ecrire([{t: 'avis', suppr: brouillon.id}]).then(function () {
+    fermerFeuille();
+    apresEcriture();
+  }).catch(erreurEcriture);
 };
 
 // ---------- carte-citation en image ----------
@@ -3472,11 +3661,48 @@ function opsListesDeDepart() {
   }
   return ops;
 }
-// au démarrage : base chargée, listes de départ créées si besoin
+// au démarrage : base chargée, listes de départ créées si besoin, migrations faites une seule fois
 function preparerBase() {
   return chargerBase().then(function () {
-    return ecrire(opsListesDeDepart());
+    var migration = opsFusionSessions();
+    if (migration.length > 1) {
+      // la base a changé : une sauvegarde partira au démarrage
+      lsSet('bm_sauv_attente', '1');
+    }
+    return ecrire(opsListesDeDepart().concat(migration));
   });
+}
+
+// Bookmory enregistre une session en deux : le minuteur (durée) et le relevé de page, avec le même
+// horodatage d'enregistrement. On les réunit en une seule session : début et durée du minuteur, page du
+// relevé ; « fin » garde l'heure du relevé (les stats de pages par jour et par heure ne bougent pas).
+function opsFusionSessions() {
+  if (reglage('migrationSessions')) {
+    return [];
+  }
+  var ops = [];
+  var releves = {};
+  valeurs(D.sessions).forEach(function (s) {
+    if (s.origine === 'bookmory' && s.position !== null && s.position !== undefined && !s.dureeSec) {
+      releves[s.lectureId + '|' + s.creeLe] = s;
+    }
+  });
+  valeurs(D.sessions).forEach(function (s) {
+    if (s.origine !== 'bookmory' || !s.dureeSec || (s.position !== null && s.position !== undefined)) {
+      return;
+    }
+    var r = releves[s.lectureId + '|' + s.creeLe];
+    if (!r) {
+      return;
+    }
+    delete releves[s.lectureId + '|' + s.creeLe];
+    ops.push({t: 'sessions', o: Object.assign({}, s, {position: r.position, fin: r.fin}), garderDate: true});
+    ops.push({t: 'sessions', suppr: r.id});
+  });
+  if (valeurs(D.sessions).length || valeurs(D.livres).length) {
+    ops.push({t: 'reglages', o: {id: 'migrationSessions', v: Date.now()}});
+  }
+  return ops;
 }
 function listeTriee(t) {
   return valeurs(D[t]).sort(function (a, b) { return (a.ordre || 0) - (b.ordre || 0); });
@@ -3561,6 +3787,8 @@ function modeleDepuisBase() {
       description: l.resume || '',
       tagsBruts: [],
       tagList: (l.genreIds || []).filter(function (g) { return D.genres[g]; }).map(function (g) { return D.genres[g].nom; }),
+      genreIds: (l.genreIds || []).filter(function (g) { return D.genres[g]; }),
+      etagereIds: (l.etagereIds || []).filter(function (e) { return D.etageres[e]; }),
       series_memberships: membres,
       series_key: l.serieId || '',
       series_number: l.tome,
@@ -3635,6 +3863,7 @@ function modeleDepuisBase() {
   });
   valeurs(D.sessions).forEach(function (s) {
     marquer(s.debut, s.livreId);
+    marquer(s.fin, s.livreId);
   });
   var jours = {};
   Object.keys(jl).forEach(function (k) { jours[k] = jl[k].length; });
@@ -3706,22 +3935,6 @@ function avisDepuisNote(id, n) {
   ops.push({t: 'avis', o: {id: id, notes: notes, humeurIds: humeurIds, tropeIds: tropeIds, mot: n.mot || '', maj: n.maj || Date.now(), creeLe: ancien.creeLe}});
   return ops;
 }
-function sauverNotes() {
-  var ops = [];
-  Object.keys(NOTES).forEach(function (id) {
-    var a = D.avis[id];
-    if (!a || (NOTES[id].maj || 0) !== (a.maj || 0)) {
-      ops = ops.concat(avisDepuisNote(id, NOTES[id]));
-    }
-  });
-  Object.keys(D.avis).forEach(function (id) {
-    if (!NOTES[id]) {
-      ops.push({t: 'avis', suppr: id});
-    }
-  });
-  ecrire(ops).then(apresEcriture).catch(erreurEcriture);
-}
-function chargerNotes() {}
 function sauverExclusion(id) {
   var l = D.livres[id];
   if (!l) {
@@ -4019,12 +4232,29 @@ function convertirBookmory(S, images, ancien) {
         vus[k] = 1;
         return k;
       }
+      // un minuteur et son relevé de page (même horodatage) forment une seule session
+      var relevesPar = {};
       (r.page_log_list || []).forEach(function (l) {
-        mettre('sessions', {id: idUnique(lid + ':L:' + l.created_at), lectureId: lid, livreId: id, debut: l.created_at, fin: l.created_at, dureeSec: null, position: l.page, creeLe: l.created_at, modifieLe: l.updated_at});
+        if (!relevesPar[l.created_at]) {
+          relevesPar[l.created_at] = [];
+        }
+        relevesPar[l.created_at].push(l);
       });
       (r.read_timer_list || []).forEach(function (t) {
         var debut = t.read_started_at || t.created_at;
-        mettre('sessions', {id: idUnique(lid + ':T:' + debut), lectureId: lid, livreId: id, debut: debut, fin: debut + (t.elapsed_sec || 0) * 1000, dureeSec: t.elapsed_sec || 0, position: null, creeLe: t.created_at, modifieLe: t.updated_at});
+        var rel = (relevesPar[t.created_at] || []).shift();
+        var fin = debut + (t.elapsed_sec || 0) * 1000;
+        var position = null;
+        if (rel) {
+          fin = rel.created_at;
+          position = rel.page;
+        }
+        mettre('sessions', {id: idUnique(lid + ':T:' + debut), lectureId: lid, livreId: id, debut: debut, fin: fin, dureeSec: t.elapsed_sec || 0, position: position, creeLe: t.created_at, modifieLe: t.updated_at});
+      });
+      Object.keys(relevesPar).forEach(function (k) {
+        relevesPar[k].forEach(function (l) {
+          mettre('sessions', {id: idUnique(lid + ':L:' + l.created_at), lectureId: lid, livreId: id, debut: l.created_at, fin: l.created_at, dureeSec: null, position: l.page, creeLe: l.created_at, modifieLe: l.updated_at});
+        });
       });
     });
   });
@@ -4781,6 +5011,7 @@ function ouvrirFiche(id) {
     return '<div class="ligne-ed"><div class="small"><b>' + prix(a.prix, a.devise) + '</b> · ' + details.join(' · ') + '</div><div class="boutons"><button class="mini-btn" data-act="formAchat" data-id="' + a.id + '">✏️</button></div></div>';
   }).join('') + '<button class="lien" data-act="formAchat" data-livre="' + id + '">＋ Ajouter un achat</button>';
 
+  h += blocCitationsLivre(id);
   if (b.tagList.length) {
     h += '<h4>Genres</h4><div>' + b.tagList.map(function (g) { return '<span class="chip">' + esc(g) + '</span>'; }).join('') + '</div>';
   }
@@ -6030,6 +6261,600 @@ ACTIONS.arreterMinuteur = function () {
 </script>
 
 <style>
+.liste-perso .ligne-ed .nom{flex:1;min-width:0}
+.liste-perso .archive{opacity:.5}
+.liste-perso .mini-btn[disabled]{opacity:.3}
+input[type=color].champ{height:44px;padding:4px 6px}
+</style>
+<script>
+// ---------- Mes listes : genres, critères, humeurs, tropes, étagères ----------
+var LISTES = [
+  ['genres', '🏷️ Genres', 'genre', 'g:'],
+  ['criteres', '💗 Critères', 'critère', 'c:'],
+  ['humeurs', '🥰 Humeurs', 'humeur', 'h:'],
+  ['tropes', '💞 Tropes', 'trope', 't:'],
+  ['etageres', '📚 Étagères', 'étagère', 'e:']
+];
+var listeOuverte = 'humeurs';
+
+function infoListe(t) {
+  return LISTES.find(function (l) { return l[0] === t; });
+}
+// combien de livres utilisent cet élément
+function usages(t, id) {
+  if (t === 'genres' || t === 'etageres') {
+    var champ = 'genreIds';
+    if (t === 'etageres') {
+      champ = 'etagereIds';
+    }
+    return valeurs(D.livres).filter(function (l) { return (l[champ] || []).indexOf(id) >= 0; }).length;
+  }
+  return valeurs(D.avis).filter(function (a) {
+    if (t === 'criteres') {
+      return !!(a.notes || {})[id];
+    }
+    var champ2 = 'humeurIds';
+    if (t === 'tropes') {
+      champ2 = 'tropeIds';
+    }
+    return (a[champ2] || []).indexOf(id) >= 0;
+  }).length;
+}
+// crée un élément (ou renvoie celui qui porte déjà ce nom) → Promise<élément>
+function creerElementListe(t, nom, emoji) {
+  var existe = valeurs(D[t]).find(function (x) { return slug(x.nom) === slug(nom); });
+  if (existe) {
+    if (existe.archive) {
+      return enregistrer(t, Object.assign({}, existe, {archive: false})).then(function () { return D[t][existe.id]; });
+    }
+    return Promise.resolve(existe);
+  }
+  var id = infoListe(t)[3] + slug(nom);
+  if (t === 'humeurs') {
+    id = idHumeur('x ' + nom);
+  } else if (t === 'tropes') {
+    id = idTrope(nom);
+  } else if (t === 'genres') {
+    id = idGenre(nom);
+  }
+  if (D[t][id]) {
+    id = nouvelId();
+  }
+  var ordre = valeurs(D[t]).reduce(function (m, x) { return Math.max(m, x.ordre || 0); }, -1) + 1;
+  var o = {id: id, nom: nom, emoji: emoji || '', ordre: ordre};
+  if (t === 'genres') {
+    o.couleur = '';
+  }
+  return enregistrer(t, o).then(function () { return D[t][id]; });
+}
+
+ACTIONS.mesListes = function (el) {
+  if (el && el.dataset && el.dataset.t) {
+    listeOuverte = el.dataset.t;
+  }
+  var t = listeOuverte;
+  var info = infoListe(t);
+  var elements = listeTriee(t);
+  var actifs = elements.filter(function (x) { return !x.archive; });
+  var h = '<h3>Mes listes</h3><div>' + LISTES.map(function (l) {
+    var cls = 'chip';
+    if (l[0] === t) {
+      cls += ' on';
+    }
+    return '<button class="' + cls + '" data-act="mesListes" data-t="' + l[0] + '">' + l[1] + '</button>';
+  }).join('') + '</div>';
+  h += '<div class="liste-perso" style="margin-top:10px">' + elements.map(function (x) {
+    var i = actifs.indexOf(x);
+    var n = usages(t, x.id);
+    var unite = ' livre';
+    if (n > 1) {
+      unite = ' livres';
+    }
+    var haut = '<button class="mini-btn" data-act="deplacerElement" data-id="' + esc(x.id) + '" data-sens="-1"' + (i <= 0 ? ' disabled' : '') + '>↑</button>';
+    var bas = '<button class="mini-btn" data-act="deplacerElement" data-id="' + esc(x.id) + '" data-sens="1"' + (i < 0 || i >= actifs.length - 1 ? ' disabled' : '') + '>↓</button>';
+    if (x.archive) {
+      haut = '';
+      bas = '';
+    }
+    var pastille = '';
+    if (t === 'genres' && x.couleur) {
+      pastille = '<i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:' + esc(x.couleur) + ';margin-right:6px"></i>';
+    }
+    return '<div class="ligne-ed' + (x.archive ? ' archive' : '') + '"><div class="nom small">' + pastille + '<b>' + esc(libelle(x)) + '</b> <span class="muted">· ' + n + unite + (x.archive ? ' · archivé' : '') + '</span></div><div class="boutons">' + haut + bas + '<button class="mini-btn" data-act="formElement" data-t="' + t + '" data-id="' + esc(x.id) + '">✏️</button></div></div>';
+  }).join('') + '</div>';
+  h += '<button class="lien" data-act="formElement" data-t="' + t + '">＋ Ajouter un·e ' + info[2] + '</button>';
+  ouvrirFeuille(h);
+};
+ACTIONS.deplacerElement = function (el) {
+  var t = listeOuverte;
+  var actifs = listeTriee(t).filter(function (x) { return !x.archive; });
+  var i = actifs.findIndex(function (x) { return x.id === el.dataset.id; });
+  var j = i + parseInt(el.dataset.sens, 10);
+  if (i < 0 || j < 0 || j >= actifs.length) {
+    return;
+  }
+  var tmp = actifs[i];
+  actifs[i] = actifs[j];
+  actifs[j] = tmp;
+  // on renumérote toute la liste pour garder un ordre propre
+  var ops = actifs.map(function (x, k) { return {t: t, o: Object.assign({}, x, {ordre: k})}; });
+  ecrire(ops).then(function () {
+    apresEcriture();
+    ACTIONS.mesListes();
+  }).catch(erreurEcriture);
+};
+ACTIONS.formElement = function (el) {
+  var t = el.dataset.t;
+  var x = (el.dataset.id && D[t][el.dataset.id]) || null;
+  var info = infoListe(t);
+  var n = x ? usages(t, x.id) : 0;
+  var h = '<h3>' + (x ? 'Modifier' : 'Ajouter') + ' : ' + info[2] + '</h3><div class="form">' +
+    '<div class="avec-bouton">' + champ('elEmoji', x ? x.emoji : '', 'maxlength="4" placeholder="✨" style="width:64px;text-align:center"') + champ('elNom', x ? x.nom : '', 'placeholder="Nom" autocomplete="off"') + '</div>';
+  if (t === 'genres') {
+    h += '<label>Couleur sur l\'étagère</label>' + champ('elCouleur', (x && x.couleur) || '#b9a3e8', 'type="color"') + '<label class="small" style="text-transform:none;letter-spacing:0"><input type="checkbox" id="elSansCouleur"' + (x && !x.couleur ? ' checked' : '') + (x ? '' : ' checked') + '> couleur automatique</label>';
+  }
+  if (x) {
+    h += '<label class="small" style="text-transform:none;letter-spacing:0;margin-top:14px"><input type="checkbox" id="elArchive"' + (x.archive ? ' checked' : '') + '> archivé (caché des choix, gardé sur les livres déjà notés)</label>';
+  }
+  h += '<div class="row" style="margin-top:16px"><button class="act" data-act="elEnregistrer">💾 Enregistrer</button><button class="act doux" data-act="mesListes">↩️ Retour</button></div>';
+  if (x) {
+    var avec = '';
+    if (n) {
+      avec = ' (il sera retiré de ' + n + ' livre' + (n > 1 ? 's' : '') + ')';
+    }
+    h += '<button class="lien danger" data-act="elSupprimer" style="margin-top:14px">🗑️ Supprimer' + avec + '</button>';
+  }
+  ouvrirFeuille(h + '</div>');
+  ACTIONS.elEnregistrer = function () {
+    var nom = val('elNom');
+    if (!nom) {
+      alert('Il manque le nom.');
+      return;
+    }
+    var p;
+    if (x) {
+      var o = Object.assign({}, x, {nom: nom, emoji: val('elEmoji')});
+      var arch = document.getElementById('elArchive');
+      o.archive = !!(arch && arch.checked);
+      if (t === 'genres') {
+        o.couleur = document.getElementById('elSansCouleur').checked ? '' : val('elCouleur');
+      }
+      p = enregistrer(t, o);
+    } else {
+      p = creerElementListe(t, nom, val('elEmoji')).then(function (nv) {
+        if (t === 'genres' && !document.getElementById('elSansCouleur').checked) {
+          return enregistrer(t, Object.assign({}, nv, {couleur: val('elCouleur')}));
+        }
+      });
+    }
+    p.then(function () {
+      ACTIONS.mesListes();
+    }).catch(erreurEcriture);
+  };
+  ACTIONS.elSupprimer = function () {
+    if (!confirm('Supprimer « ' + x.nom + ' » ?' + (n ? ' Il sera retiré de ' + n + ' livre(s).' : ''))) {
+      return;
+    }
+    var ops = [{t: t, suppr: x.id}];
+    if (t === 'genres' || t === 'etageres') {
+      var champ1 = 'genreIds';
+      if (t === 'etageres') {
+        champ1 = 'etagereIds';
+      }
+      valeurs(D.livres).forEach(function (l) {
+        if ((l[champ1] || []).indexOf(x.id) >= 0) {
+          var m = {};
+          m[champ1] = l[champ1].filter(function (g) { return g !== x.id; });
+          ops.push({t: 'livres', o: Object.assign({}, l, m)});
+        }
+      });
+    } else {
+      valeurs(D.avis).forEach(function (a) {
+        var m = {};
+        if (t === 'criteres' && (a.notes || {})[x.id]) {
+          m.notes = Object.assign({}, a.notes);
+          delete m.notes[x.id];
+        } else if (t === 'humeurs' && (a.humeurIds || []).indexOf(x.id) >= 0) {
+          m.humeurIds = a.humeurIds.filter(function (y) { return y !== x.id; });
+        } else if (t === 'tropes' && (a.tropeIds || []).indexOf(x.id) >= 0) {
+          m.tropeIds = a.tropeIds.filter(function (y) { return y !== x.id; });
+        }
+        if (Object.keys(m).length) {
+          ops.push({t: 'avis', o: Object.assign({}, a, m)});
+        }
+      });
+    }
+    ecrire(ops).then(function () {
+      apresEcriture();
+      ACTIONS.mesListes();
+    }).catch(erreurEcriture);
+  };
+};
+</script>
+
+<style>
+.cit-photo{display:block;max-width:100%;max-height:260px;margin:8px auto 0;border-radius:12px;box-shadow:var(--cover-shadow)}
+.cit-vignette{width:64px;height:64px;object-fit:cover;border-radius:10px;flex:none;box-shadow:var(--cover-shadow)}
+.recadrage{position:fixed;inset:0;z-index:50;background:#0d0814;display:flex;flex-direction:column;color:#fff}
+.recadrage .zone{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;touch-action:none}
+.recadrage img{max-width:100%;max-height:100%;user-select:none;-webkit-user-drag:none}
+.recadrage .cadre{position:absolute;border:2px solid var(--gold);box-shadow:0 0 0 9999px rgba(10,5,20,.55);border-radius:6px;pointer-events:none}
+.recadrage .consigne{text-align:center;padding:calc(14px + env(safe-area-inset-top)) 16px 8px;font:700 15px Nunito,sans-serif}
+.recadrage .bas{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:12px 16px calc(18px + env(safe-area-inset-bottom))}
+.recadrage .etat{text-align:center;font:600 13px Nunito,sans-serif;opacity:.85;min-height:18px}
+</style>
+<script>
+// ---------- Citations et pensées : texte, page, photo de la page, lecture du texte (OCR) ----------
+var TESSERACT = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/';
+var TESSERACT_CORE = 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1';
+var TESSERACT_FRA = 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/fra@1.0.0/4.0.0_best_int';
+var fc = null;
+
+function carteCitations() {
+  var cit = M.notes.filter(function (n) { return n.texte || n.photo; }).sort(function (a, b) { return b.created_at - a.created_at; });
+  return card('Mon carnet de citations (' + cit.length + ')', '<div class="row"><button class="act" data-act="formCitation">＋ Ajouter une citation</button></div>' + cit.map(function (n) {
+    var src = '';
+    if (n.book) {
+      src = esc(titre(n.book));
+      if (n.page) {
+        src += ', p. ' + n.page;
+      }
+    }
+    var type = '';
+    if (n.type === 'THOUGHT') {
+      type = '💭 ';
+    }
+    var fav = '';
+    if (n.favori) {
+      fav = '⭐ ';
+    }
+    var photo = '';
+    if (n.photo) {
+      photo = '<img class="cit-photo" loading="lazy" src="' + esc(n.photo) + '" alt="Photo de la page">';
+    }
+    var texte = '';
+    if (n.texte) {
+      texte = '<div class="quote">' + fav + type + esc(n.texte) + '</div>';
+    }
+    var image = '';
+    if (n.texte) {
+      image = '<button class="act doux" data-act="imageCitation" data-k="' + esc(n._key) + '">🖼️ En faire une image</button>';
+    }
+    return '<div style="margin:14px 0 18px"><div class="quotebox">' + texte + photo + '<p class="qsrc">' + src + ' · ' + fdate(n.created_at) + '</p></div><div class="row" style="justify-content:center;margin-top:8px"><button class="act doux" data-act="formCitation" data-id="' + esc(n._key) + '">✏️</button>' + image + '</div></div>';
+  }).join(''));
+}
+
+// citations d'un livre, pour sa fiche
+function blocCitationsLivre(id) {
+  var l = valeurs(D.citations).filter(function (c) { return c.livreId === id; }).sort(function (a, b) { return (a.page || 0) - (b.page || 0); });
+  return '<h4>Citations (' + l.length + ')</h4>' + l.map(function (c) {
+    var t = c.texte || '(photo)';
+    if (t.length > 120) {
+      t = t.slice(0, 120) + '…';
+    }
+    var p = '';
+    if (c.page) {
+      p = 'p. ' + c.page + ' · ';
+    }
+    var icone = '';
+    if (c.type === 'pensee') {
+      icone = '💭 ';
+    }
+    if (c.photoId) {
+      icone += '📷 ';
+    }
+    return '<div class="ligne-ed"><div class="small" style="flex:1"><span class="muted">' + p + '</span>' + icone + '<i>' + esc(t) + '</i></div><div class="boutons"><button class="mini-btn" data-act="formCitation" data-id="' + esc(c.id) + '">✏️</button></div></div>';
+  }).join('') + '<button class="lien" data-act="formCitation" data-livre="' + id + '">＋ Ajouter une citation</button>';
+}
+
+ACTIONS.formCitation = function (el) {
+  var id = el.dataset.id;
+  var c = (id && D.citations[id]) || null;
+  var livreId = (c && c.livreId) || el.dataset.livre || '';
+  fc = {id: c ? c.id : null, livreId: livreId, photo: null, photoId: c ? c.photoId : null, retour: el.dataset.livre ? livreId : ''};
+  var v = c || {type: 'citation', texte: '', page: null, pageFin: null, favori: false};
+  var livre = D.livres[livreId];
+  var choixLivre = '';
+  if (!livre || !el.dataset.livre) {
+    // livre à choisir parmi les titres du grimoire (les plus récents d'abord)
+    var titres = M.livres.slice().sort(function (a, b) { return (b.created_at || 0) - (a.created_at || 0); }).map(function (b) { return titre(b); });
+    var actuel = '';
+    if (livre) {
+      actuel = titre(M.parId[livreId]);
+    }
+    choixLivre = '<label>Livre</label>' + champ('ciLivre', actuel, 'list="dlLivres" placeholder="Titre du livre" autocomplete="off"') + listeDeChoix('dlLivres', titres);
+  }
+  var h = '<h3>' + (c ? 'Modifier la citation' : 'Nouvelle citation') + '</h3>' + (livre && el.dataset.livre ? '<p class="small muted">' + esc(livre.titre) + '</p>' : '') + '<div class="form">' + choixLivre +
+    '<label>Type</label>' + choix('ciType', [['citation', '❝ Citation'], ['pensee', '💭 Pensée']], v.type) +
+    '<label>Photo de la page</label><div id="zPhotoCit"></div>' +
+    '<label>Texte</label><textarea class="champ" id="ciTexte" placeholder="La phrase qui t\'a marquée…">' + esc(v.texte) + '</textarea>' +
+    '<div class="deux"><div><label>Page</label>' + champ('ciPage', v.page, 'inputmode="numeric"') + '</div><div><label>Jusqu\'à la page</label>' + champ('ciPageFin', v.pageFin, 'inputmode="numeric"') + '</div></div>' +
+    '<label class="small" style="text-transform:none;letter-spacing:0;margin-top:12px"><input type="checkbox" id="ciFavori"' + (v.favori ? ' checked' : '') + '> ⭐ favorite</label>' +
+    '<div class="row" style="margin-top:16px"><button class="act" data-act="ciEnregistrer">💾 Enregistrer</button><button class="act doux" data-act="ciAnnuler">Annuler</button></div>';
+  if (c) {
+    h += '<button class="lien danger" data-act="ciSupprimer" style="margin-top:14px">🗑️ Supprimer</button>';
+  }
+  var f = ouvrirFeuille(h + '</div><input type="file" id="ciFichier" accept="image/*" hidden>');
+  rendrePhotoCitation();
+  f.querySelector('#ciFichier').addEventListener('change', function (e) {
+    var fic = e.target.files[0];
+    if (!fic) {
+      return;
+    }
+    toast('📷 Je prépare la photo…');
+    redimensionnerImage(fic, 2000).then(function (blob) {
+      fc.photo = blob;
+      rendrePhotoCitation();
+    }).catch(function () {
+      alert('Je n\'arrive pas à lire cette image.');
+    });
+    e.target.value = '';
+  });
+};
+function srcPhotoCitation() {
+  if (fc.photo) {
+    return URL.createObjectURL(fc.photo);
+  }
+  if (fc.photoId) {
+    return urlPhoto(fc.photoId);
+  }
+  return '';
+}
+function rendrePhotoCitation() {
+  var z = document.getElementById('zPhotoCit');
+  if (!z) {
+    return;
+  }
+  var src = srcPhotoCitation();
+  if (!src) {
+    z.innerHTML = '<div class="row"><button type="button" class="mini-btn" data-act="ciPhoto">📷 Prendre ou choisir une photo</button></div>';
+    return;
+  }
+  z.innerHTML = '<div style="display:flex;gap:12px;align-items:center"><img class="cit-vignette" src="' + esc(src) + '" alt=""><div class="row"><button type="button" class="mini-btn" data-act="ciLireTexte">🔤 Lire le texte</button><button type="button" class="mini-btn" data-act="ciPhoto">🔄</button><button type="button" class="mini-btn" data-act="ciSansPhoto">✕</button></div></div>';
+}
+ACTIONS.ciPhoto = function () {
+  document.getElementById('ciFichier').click();
+};
+ACTIONS.ciSansPhoto = function () {
+  fc.photo = null;
+  fc.photoId = null;
+  rendrePhotoCitation();
+};
+ACTIONS.ciAnnuler = function () {
+  var retour = fc && fc.retour;
+  fc = null;
+  if (retour) {
+    ouvrirFiche(retour);
+  } else {
+    fermerFeuille();
+  }
+};
+function livreDepuisTitre(t) {
+  var s = slug(t);
+  if (!s) {
+    return null;
+  }
+  return M.livres.find(function (b) { return slug(titre(b)) === s; }) || M.livres.find(function (b) { return slug(b.title) === s; }) || null;
+}
+ACTIONS.ciEnregistrer = function () {
+  var livreId = fc.livreId;
+  if (document.getElementById('ciLivre')) {
+    var b = livreDepuisTitre(val('ciLivre'));
+    if (!b) {
+      alert('Choisis le livre dans la liste (commence à taper son titre).');
+      return;
+    }
+    livreId = b.id;
+  }
+  var texte = val('ciTexte');
+  if (!texte && !fc.photo && !fc.photoId) {
+    alert('Écris le texte ou ajoute une photo.');
+    return;
+  }
+  var ancienne = (fc.id && D.citations[fc.id]) || null;
+  var ops = [];
+  var photoId = fc.photoId;
+  if (fc.photo) {
+    photoId = 'p:' + nouvelId();
+    ops.push({t: 'photos', o: {id: photoId, blob: fc.photo, type: 'image/jpeg', origine: 'appli'}});
+  }
+  if (ancienne && ancienne.photoId && ancienne.photoId !== photoId) {
+    ops.push({t: 'photos', suppr: ancienne.photoId});
+  }
+  var cit = Object.assign({}, ancienne || {id: nouvelId(), origine: 'appli', commentaires: []}, {
+    livreId: livreId,
+    type: val('ciType'),
+    texte: texte,
+    page: parseInt(val('ciPage'), 10) || null,
+    pageFin: parseInt(val('ciPageFin'), 10) || null,
+    favori: document.getElementById('ciFavori').checked,
+    photoId: photoId || null
+  });
+  ops.push({t: 'citations', o: cit});
+  var retour = fc.retour;
+  ecrire(ops).then(function () {
+    fc = null;
+    apresEcriture();
+    if (retour) {
+      ouvrirFiche(retour);
+    } else {
+      fermerFeuille();
+    }
+    toast('❝ Citation enregistrée');
+  }).catch(erreurEcriture);
+};
+ACTIONS.ciSupprimer = function () {
+  var c = D.citations[fc.id];
+  if (!confirm('Supprimer cette citation ?')) {
+    return;
+  }
+  var ops = [{t: 'citations', suppr: c.id}];
+  if (c.photoId) {
+    ops.push({t: 'photos', suppr: c.photoId});
+  }
+  var retour = fc.retour;
+  ecrire(ops).then(function () {
+    fc = null;
+    apresEcriture();
+    if (retour) {
+      ouvrirFiche(retour);
+    } else {
+      fermerFeuille();
+    }
+  }).catch(erreurEcriture);
+};
+
+// ---------- lecture du texte d'une photo (Tesseract, en français, chargé au premier usage) ----------
+var ocrTravailleur = null;
+function travailleurOcr(suivi) {
+  if (!ocrTravailleur) {
+    ocrTravailleur = chargerScript(TESSERACT + 'tesseract.min.js').then(function () {
+      return Tesseract.createWorker('fra', 1, {
+        workerPath: TESSERACT + 'worker.min.js',
+        corePath: TESSERACT_CORE,
+        langPath: TESSERACT_FRA,
+        logger: function (m) {
+          if (suivi.f) {
+            suivi.f(m);
+          }
+        }
+      });
+    }).catch(function (e) {
+      ocrTravailleur = null;
+      throw e;
+    });
+  }
+  return ocrTravailleur;
+}
+var suiviOcr = {f: null};
+// recolle les lignes coupées : « mot-\nsuite » → « motsuite », retours simples → espaces
+function nettoyerOcr(t) {
+  return String(t || '').replace(/-\n(?=[a-zà-ÿ])/g, '').replace(/([^\n])\n(?!\n)/g, '$1 ').replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '\n\n').trim();
+}
+function lireTexteImage(source) {
+  return travailleurOcr(suiviOcr).then(function (w) {
+    return w.recognize(source);
+  }).then(function (r) {
+    return nettoyerOcr(r.data.text);
+  });
+}
+ACTIONS.preparerOcr = function () {
+  toast('🔤 Téléchargement de la lecture de texte (≈ 5 Mo)…');
+  travailleurOcr(suiviOcr).then(function () {
+    regler('ocrPret', Date.now());
+    toast('✨ Lecture de texte prête, même hors connexion');
+  }).catch(function (e) {
+    alert('Téléchargement impossible : ' + ((e && e.message) || e));
+  });
+};
+
+// recadrage : on trace au doigt la zone à lire, ou on lit toute la page
+ACTIONS.ciLireTexte = function () {
+  var src = srcPhotoCitation();
+  if (!src) {
+    return;
+  }
+  var d = document.createElement('div');
+  d.className = 'recadrage';
+  d.id = 'recadrage';
+  d.innerHTML = '<div class="consigne">Trace au doigt un cadre autour du passage à lire</div><div class="zone"><img src="' + esc(src) + '" alt=""><div class="cadre" hidden></div></div><div class="etat" id="etatOcr"></div><div class="bas"><button class="act" data-act="ocrZone">🔤 Lire la zone</button><button class="act doux" data-act="ocrTout">Toute la page</button><button class="act doux" data-act="fermerRecadrage">Annuler</button></div>';
+  document.body.appendChild(d);
+  var img = d.querySelector('img');
+  var cadre = d.querySelector('.cadre');
+  var zone = d.querySelector('.zone');
+  var depart = null;
+  recadre = null;
+  zone.addEventListener('pointerdown', function (e) {
+    var r = img.getBoundingClientRect();
+    depart = {x: Math.min(Math.max(e.clientX, r.left), r.right), y: Math.min(Math.max(e.clientY, r.top), r.bottom)};
+    zone.setPointerCapture(e.pointerId);
+  });
+  zone.addEventListener('pointermove', function (e) {
+    if (!depart) {
+      return;
+    }
+    var r = img.getBoundingClientRect();
+    var zr = zone.getBoundingClientRect();
+    var x = Math.min(Math.max(e.clientX, r.left), r.right);
+    var y = Math.min(Math.max(e.clientY, r.top), r.bottom);
+    var g = Math.min(depart.x, x), h = Math.min(depart.y, y);
+    var w = Math.abs(x - depart.x), t = Math.abs(y - depart.y);
+    cadre.hidden = false;
+    cadre.style.left = (g - zr.left) + 'px';
+    cadre.style.top = (h - zr.top) + 'px';
+    cadre.style.width = w + 'px';
+    cadre.style.height = t + 'px';
+    // en proportion de l'image réelle
+    recadre = {x: (g - r.left) / r.width, y: (h - r.top) / r.height, w: w / r.width, h: t / r.height};
+  });
+  zone.addEventListener('pointerup', function () {
+    depart = null;
+  });
+};
+var recadre = null;
+ACTIONS.fermerRecadrage = function () {
+  var d = document.getElementById('recadrage');
+  if (d) {
+    d.remove();
+  }
+};
+function lancerOcr(zoneSeule) {
+  var d = document.getElementById('recadrage');
+  var img = d.querySelector('img');
+  var etat = document.getElementById('etatOcr');
+  var source = img;
+  if (zoneSeule) {
+    if (!recadre || recadre.w < 0.03 || recadre.h < 0.02) {
+      alert('Trace d\'abord un cadre autour du passage (ou choisis « Toute la page »).');
+      return;
+    }
+    var c = document.createElement('canvas');
+    var nw = img.naturalWidth, nh = img.naturalHeight;
+    c.width = Math.round(recadre.w * nw);
+    c.height = Math.round(recadre.h * nh);
+    c.getContext('2d').drawImage(img, recadre.x * nw, recadre.y * nh, c.width, c.height, 0, 0, c.width, c.height);
+    source = c;
+  }
+  d.querySelectorAll('.bas button').forEach(function (b) { b.disabled = true; });
+  etat.textContent = 'Je prépare la lecture…';
+  suiviOcr.f = function (m) {
+    if (m.status === 'recognizing text') {
+      etat.textContent = 'Lecture du texte… ' + Math.round((m.progress || 0) * 100) + ' %';
+    } else if (/load|initializ/.test(m.status || '')) {
+      etat.textContent = 'Chargement (la première fois seulement)… ' + Math.round((m.progress || 0) * 100) + ' %';
+    }
+  };
+  lireTexteImage(source).then(function (texte) {
+    suiviOcr.f = null;
+    ACTIONS.fermerRecadrage();
+    var t = document.getElementById('ciTexte');
+    if (!texte) {
+      toast('Je n\'ai pas trouvé de texte lisible');
+      return;
+    }
+    if (t) {
+      if (t.value.trim() && !confirm('Remplacer le texte déjà écrit par celui de la photo ?')) {
+        t.value = t.value.trim() + '\n' + texte;
+      } else {
+        t.value = texte;
+      }
+    }
+    toast('✨ Texte lu : relis-le et corrige si besoin');
+  }).catch(function (e) {
+    suiviOcr.f = null;
+    d.querySelectorAll('.bas button').forEach(function (b) { b.disabled = false; });
+    etat.textContent = 'La lecture n\'a pas marché : ' + ((e && e.message) || e) + ' (hors connexion ?)';
+  });
+}
+ACTIONS.ocrZone = function () {
+  lancerOcr(true);
+};
+ACTIONS.ocrTout = function () {
+  lancerOcr(false);
+};
+</script>
+
+<style>
 .reglage{border-top:1px dashed var(--line);padding-top:6px;margin-top:6px}
 .reglage:first-of-type{border-top:0}
 .reglage p{margin:4px 0}
@@ -6054,7 +6879,12 @@ ACTIONS.reglages = function () {
 
   h += '<div class="reglage"><h4>💾 Fichier</h4><p class="small muted">Une copie complète (livres, carnet, citations et photos) à garder où tu veux, ou à restaurer.</p><div class="row"><button class="act doux" data-act="exporterSauvegarde">💾 Exporter</button><button class="act doux" data-act="choisirExport">📥 Importer un fichier</button></div></div>';
 
-  h += '<div class="reglage"><h4>✍️ Ma bibliothèque</h4><div class="row"><button class="act doux" data-act="auteurs">✍️ Auteur·ices</button></div></div>';
+  h += '<div class="reglage"><h4>✍️ Ma bibliothèque</h4><div class="row"><button class="act doux" data-act="mesListes">📋 Mes listes</button><button class="act doux" data-act="auteurs">✍️ Auteur·ices</button><button class="act doux" data-act="objectifs">🎯 Objectifs</button></div><p class="small muted">Mes listes : genres, critères, humeurs, tropes et étagères, à ta façon.</p></div>';
+  var ocr = '<button class="act doux" data-act="preparerOcr">🔤 Préparer la lecture de texte</button><p class="small muted">Pour lire le texte des photos de citations, même hors connexion (≈ 5 Mo, une seule fois).</p>';
+  if (reglage('ocrPret')) {
+    ocr = '<p class="small">✅ Lecture de texte prête (téléchargée le ' + fdate(reglage('ocrPret')) + ').</p>';
+  }
+  h += '<div class="reglage"><h4>🔤 Photos de citations</h4>' + ocr + '</div>';
 
   var imp = reglage('dernierImport');
   h += '<div class="reglage"><h4>📚 Bookmory</h4>';
