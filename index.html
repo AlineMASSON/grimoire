@@ -352,6 +352,47 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 .couvs img,.couvs .ph{width:80px;height:120px;object-fit:cover;border-radius:8px;box-shadow:var(--cover-shadow);display:block;margin-bottom:5px;background:var(--heat0)}
 .couvs .ph{display:flex;align-items:center;justify-content:center;font-size:10px;padding:4px;overflow:hidden}
 @media (max-width:440px){.carrousel{margin:0 -12px;padding-left:12px;padding-right:12px;scroll-padding-inline:12px}}
+.tete-n .ajout-haut{display:none}
+/* écran externe du Flip 7 : accueil compact */
+@media (max-height:620px){
+  .fab-scan{display:none !important}
+  .tete-n .ajout-haut{display:inline-block}
+  header .src{display:none}
+  .tete-n h1{font-size:21px}
+  .tete-n h1 span{font-size:18px}
+  .tete-n .rond{width:36px;height:36px}
+  .puce-fete{margin-top:6px;padding:5px 12px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+  .puce-fete .em{font-size:15px;margin-right:4px}
+  header::before{height:120px}
+  .titre-section{font-size:18px;margin:12px 2px 8px}
+  .carte-livre{width:86%;max-width:340px;padding:10px;display:grid;grid-template-columns:62px 1fr;column-gap:12px;align-content:start}
+  .couv-carte{grid-row:1 / span 4}
+  .couv-carte img,.couv-carte .ph{height:93px;width:62px;border-radius:8px}
+  .carte-livre .t{margin:0;padding-right:0;font-size:16px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .carte-livre .prog{margin:6px 0 4px;height:7px}
+  .carte-livre .small{font-size:11px;line-height:1.45;padding-right:48px}
+  .carte-livre .lire{top:auto;bottom:10px;right:10px;width:44px;height:44px}
+  .carte-livre .lire .ic{width:20px;height:20px}
+  .carte-actions{margin-top:6px}
+  .carte-actions .mini-btn{padding:3px 8px;font-size:11px}
+  .annee{gap:12px}
+  .anneau{width:82px;height:82px}
+  .anneau::before{inset:8px}
+  .anneau b{font-size:24px}
+  .anneau small{font-size:10px}
+  .ligne-obj{font-size:12px;margin:2px 0 7px}
+  .pastilles-annee{margin-top:8px}
+  .pastille-annee{font-size:11px;padding:4px 9px}
+  .niveau-mini{margin:10px 0;padding:8px 12px}
+  .niveau-mini .em{font-size:20px}
+  .photo-cit{max-height:150px}
+  .quote{font-size:16px}
+  .couvs > div{width:62px}
+  .couvs img,.couvs .ph{width:62px;height:93px}
+  .fab-scan{width:48px;height:48px;bottom:calc(66px + env(safe-area-inset-bottom))}
+  .fab-scan .ic{width:24px;height:24px}
+  nav button span .ic{width:19px;height:19px}
+}
 </style>
 
 </head>
@@ -449,9 +490,88 @@ function ic(nom) {
 }
 </script>
 
+<style>
+/* fenêtres de l'appli (à la place des alertes du navigateur « alinemasson.github.io indique… ») */
+.boite-fond{position:fixed;inset:0;z-index:80;background:var(--voile);display:flex;align-items:center;justify-content:center;padding:20px;animation:fondu .15s ease}
+.boite{width:100%;max-width:360px;background:var(--card);color:var(--ink);border-radius:24px;padding:20px 18px 16px;box-shadow:0 18px 40px rgba(0,0,0,.4);border:1.5px solid transparent;background:linear-gradient(var(--card),var(--card)) padding-box,var(--frame) border-box;animation:apparait .18s ease}
+.boite h3{font:700 21px/1.2 "Cormorant Garamond",Georgia,serif;margin:0 0 6px}
+.boite p{margin:0;font-size:14px;line-height:1.5;white-space:pre-line;color:var(--ink)}
+.boite .champ{margin-top:10px}
+.boite .boutons-boite{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}
+.boite .act.danger-plein{background:linear-gradient(135deg,#d9486a,#b8417f);color:#fff}
+</style>
+<script>
+// ---------- fenêtres de l'appli : avertir, demander, saisir (toutes renvoient une promesse) ----------
+function boite(contenu, boutons) {
+  return new Promise(function (ok) {
+    var d = document.createElement('div');
+    d.className = 'boite-fond';
+    d.innerHTML = '<div class="boite" role="dialog" aria-modal="true">' + contenu + '<div class="boutons-boite">' + boutons.map(function (b, i) {
+      return '<button class="act ' + (b.cls || '') + '" data-boite="' + i + '">' + b.texte + '</button>';
+    }).join('') + '</div></div>';
+    function fermer(v) {
+      d.remove();
+      document.removeEventListener('keydown', clavier);
+      ok(v);
+    }
+    function clavier(e) {
+      if (e.key === 'Escape') {
+        fermer(boutons[0].valeur(d));
+      }
+    }
+    d.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-boite]');
+      if (b) {
+        e.stopPropagation();
+        fermer(boutons[parseInt(b.dataset.boite, 10)].valeur(d));
+      } else if (e.target === d) {
+        fermer(boutons[0].valeur(d));
+      }
+    });
+    document.addEventListener('keydown', clavier);
+    document.body.appendChild(d);
+    var champBoite = d.querySelector('input');
+    var focus = champBoite || d.querySelector('[data-boite="' + (boutons.length - 1) + '"]');
+    if (focus) {
+      setTimeout(function () { focus.focus(); }, 50);
+    }
+  });
+}
+function titreBoite(titreB) {
+  if (!titreB) {
+    return '';
+  }
+  return '<h3>' + titreB + '</h3>';
+}
+// une information, un seul bouton
+function avertir(message, titreB) {
+  return boite(titreBoite(titreB) + '<p>' + esc(message) + '</p>', [{texte: 'D\'accord', valeur: function () { return true; }}]);
+}
+// une question oui / non ; options : {titre, oui, non, danger}
+function demander(message, options) {
+  options = options || {};
+  var clsOui = '';
+  if (options.danger) {
+    clsOui = 'danger-plein';
+  }
+  return boite(titreBoite(options.titre) + '<p>' + esc(message) + '</p>', [
+    {texte: options.non || 'Annuler', cls: 'doux', valeur: function () { return false; }},
+    {texte: options.oui || 'Oui', cls: clsOui, valeur: function () { return true; }}
+  ]);
+}
+// une saisie de texte → la valeur, ou null si on annule
+function saisir(message, valeur, options) {
+  options = options || {};
+  return boite(titreBoite(options.titre) + '<p>' + esc(message) + '</p><input class="champ" id="saisieBoite" value="' + esc(valeur || '') + '" placeholder="' + esc(options.placeholder || '') + '" autocomplete="off">', [
+    {texte: 'Annuler', cls: 'doux', valeur: function () { return null; }},
+    {texte: options.oui || 'Valider', valeur: function (d) { return d.querySelector('#saisieBoite').value; }}
+  ]);
+}
+</script>
+
 <div class="etoiles" aria-hidden="true"></div>
 <header>
-<div class="tete-n"><h1>Mon grimoire <span>de lectures</span></h1><button class="rond" id="reglagesBtn" data-act="reglages" aria-label="Réglages"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg></button></div>
+<div class="tete-n"><h1>Mon grimoire <span>de lectures</span></h1><button class="rond ajout-haut" data-act="ajouter" aria-label="Ajouter un livre"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button><button class="rond" id="reglagesBtn" data-act="reglages" aria-label="Réglages"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg></button></div>
 <div id="puceFete"></div>
 <div class="src" id="src"></div>
 <input type="file" id="fichierImport" accept="application/zip,application/x-zip-compressed,application/octet-stream,application/x-sqlite3,.zip,.db" hidden>
@@ -2454,13 +2574,15 @@ ACTIONS.enregistrerNote = function () {
   }).catch(erreurEcriture);
 };
 ACTIONS.effacerNote = function () {
-  if (!confirm('Effacer ta note de carnet pour ce livre ?')) {
-    return;
-  }
-  ecrire([{t: 'avis', suppr: brouillon.id}]).then(function () {
-    fermerFeuille();
-    apresEcriture();
-  }).catch(erreurEcriture);
+  demander('Effacer ta note de carnet pour ce livre ?', {oui: 'Effacer', danger: true}).then(function (ok) {
+    if (!ok) {
+      return;
+    }
+    ecrire([{t: 'avis', suppr: brouillon.id}]).then(function () {
+      fermerFeuille();
+      apresEcriture();
+    }).catch(erreurEcriture);
+  });
 };
 
 // ---------- carte-citation en image ----------
@@ -3427,7 +3549,7 @@ ACTIONS.isbnManuel = function () {
   var c = chiffres(document.getElementById('isbnManuel').value);
   var i = isbn13(c);
   if (!i) {
-    alert('Un ISBN fait 10 ou 13 chiffres.');
+    avertir('Un ISBN fait 10 ou 13 chiffres.');
     return;
   }
   codeLu(i);
@@ -4199,7 +4321,7 @@ function sauverObjectif(y, champs) {
   ecrire([{t: 'objectifs', o: o}]).then(apresEcriture).catch(erreurEcriture);
 }
 function erreurEcriture(e) {
-  alert('Oups, la modification n\'a pas pu être enregistrée : ' + ((e && e.message) || e));
+  avertir('Oups, la modification n\'a pas pu être enregistrée : ' + ((e && e.message) || e));
 }
 </script>
 
@@ -5391,7 +5513,7 @@ function ouvrirFormLivre(id, prerempli) {
       fl.couverture = '';
       rendreCouv();
     }).catch(function () {
-      alert('Je n\'arrive pas à lire cette image.');
+      avertir('Je n\'arrive pas à lire cette image.');
     });
   });
 }
@@ -5494,18 +5616,23 @@ ACTIONS.flPhotoCouv = function () {
   document.getElementById('flFichierCouv').click();
 };
 ACTIONS.flLienCouv = function () {
-  var u = prompt('Adresse de l\'image de couverture (https://…)', /^https?:/.test(fl.couverture) ? fl.couverture : '');
-  if (u === null) {
-    return;
+  var actuelle = '';
+  if (/^https?:/.test(fl.couverture)) {
+    actuelle = fl.couverture;
   }
-  u = u.trim();
-  if (u && !/^https?:\/\//.test(u)) {
-    alert('L\'adresse doit commencer par https://');
-    return;
-  }
-  fl.couverture = u;
-  fl.photo = null;
-  rendreCouv();
+  saisir('Adresse de l\'image de couverture', actuelle, {titre: 'Couverture', placeholder: 'https://…'}).then(function (u) {
+    if (u === null) {
+      return;
+    }
+    u = u.trim();
+    if (u && !/^https?:\/\//.test(u)) {
+      avertir('L\'adresse doit commencer par https://');
+      return;
+    }
+    fl.couverture = u;
+    fl.photo = null;
+    rendreCouv();
+  });
 };
 ACTIONS.flSansCouv = function () {
   fl.couverture = '';
@@ -5547,7 +5674,7 @@ ACTIONS.flCompleter = function () {
   } else if (fl.titre) {
     recherche = chercherLivres(fl.titre + (fl.contributeurs[0] ? ' ' + fl.contributeurs[0].nom : '')).then(function (l) { return l[0] || null; });
   } else {
-    alert('Indique d\'abord un ISBN ou un titre.');
+    avertir('Indique d\'abord un ISBN ou un titre.');
     return;
   }
   toast('🔎 Je cherche…');
@@ -5693,7 +5820,7 @@ function opsLivre(f) {
 ACTIONS.flEnregistrer = function () {
   garderChampsLivre();
   if (!fl.titre) {
-    alert('Il manque le titre.');
+    avertir('Il manque le titre.');
     return;
   }
   var r = opsLivre(fl);
@@ -5773,15 +5900,17 @@ ACTIONS.supprimerLivre = function (el) {
   if (details.length) {
     avec = '\n\nAvec : ' + details.join(', ') + '.';
   }
-  if (!confirm('Supprimer « ' + l.titre + ' » de ton grimoire ?' + avec)) {
-    return;
-  }
-  ecrire(ops).then(function () {
-    fl = null;
-    fermerFeuille();
-    apresEcriture();
-    toast('🗑️ Livre supprimé');
-  }).catch(erreurEcriture);
+  demander('Supprimer « ' + l.titre + ' » de ton grimoire ?' + avec, {titre: 'Supprimer ce livre ?', oui: 'Supprimer', danger: true}).then(function (ok) {
+    if (!ok) {
+      return;
+    }
+    ecrire(ops).then(function () {
+      fl = null;
+      fermerFeuille();
+      apresEcriture();
+      toast('🗑️ Livre supprimé');
+    }).catch(erreurEcriture);
+  });
 };
 
 // ---------- lectures ----------
@@ -5850,7 +5979,7 @@ function ouvrirFormLecture(lid, livreId) {
       position = total;
     }
     if (debut && fin && fin < debut) {
-      alert('La fin est avant le début.');
+      avertir('La fin est avant le début.');
       return;
     }
     var ls = lecturesDe(l.id);
@@ -5876,14 +6005,16 @@ function ouvrirFormLecture(lid, livreId) {
     if (sess.length) {
       avec = ' (et ses ' + sess.length + ' session(s))';
     }
-    if (!confirm('Supprimer cette lecture' + avec + ' ?')) {
-      return;
-    }
-    var ops = [{t: 'lectures', suppr: x.id}].concat(sess.map(function (s) { return {t: 'sessions', suppr: s.id}; }));
-    ecrire(ops).then(function () {
-      apresEcriture();
-      ouvrirFiche(l.id);
-    }).catch(erreurEcriture);
+    demander('Supprimer cette lecture' + avec + ' ?', {oui: 'Supprimer', danger: true}).then(function (ok) {
+      if (!ok) {
+        return;
+      }
+      var ops = [{t: 'lectures', suppr: x.id}].concat(sess.map(function (s) { return {t: 'sessions', suppr: s.id}; }));
+      ecrire(ops).then(function () {
+        apresEcriture();
+        ouvrirFiche(l.id);
+      }).catch(erreurEcriture);
+    });
   };
 }
 ACTIONS.retourFiche = function (el) {
@@ -5918,7 +6049,7 @@ ACTIONS.progression = function (el) {
     ACTIONS.prEnregistrer = function () {
       var pos = lireLongueur('prPosition', x.unite);
       if (pos === null) {
-        alert('Indique où tu en es.');
+        avertir('Indique où tu en es.');
         return;
       }
       var mn = valNombre('prMinutes');
@@ -6039,7 +6170,7 @@ ACTIONS.formSession = function (el) {
     ACTIONS.seEnregistrer = function () {
       var jour = val('seDate');
       if (!jour) {
-        alert('Indique la date.');
+        avertir('Indique la date.');
         return;
       }
       var debut = new Date(jour + 'T' + (val('seHeure') || '12:00') + ':00').getTime();
@@ -6058,7 +6189,7 @@ ACTIONS.formSession = function (el) {
         finSession = debut + (mn || 0) * 60000;
       }
       if (mn && finSession > debut && mn * 60000 > finSession - debut + 59000) {
-        alert('Le temps de lecture (' + mn + ' min) dépasse le temps entre le début et la fin (' + Math.round((finSession - debut) / 60000) + ' min).');
+        avertir('Le temps de lecture (' + mn + ' min) dépasse le temps entre le début et la fin (' + Math.round((finSession - debut) / 60000) + ' min).');
         return;
       }
       var pos = lireLongueur('sePosition', x.unite);
@@ -6080,13 +6211,15 @@ ACTIONS.formSession = function (el) {
       }).catch(erreurEcriture);
     };
     ACTIONS.seSupprimer = function () {
-      if (!confirm('Supprimer cette session ?')) {
-        return;
-      }
-      ecrire([{t: 'sessions', suppr: s.id}]).then(function () {
-        apresEcriture();
-        afficherSessions(x.id);
-      }).catch(erreurEcriture);
+      demander('Supprimer cette session ?', {oui: 'Supprimer', danger: true}).then(function (ok) {
+        if (!ok) {
+          return;
+        }
+        ecrire([{t: 'sessions', suppr: s.id}]).then(function () {
+          apresEcriture();
+          afficherSessions(x.id);
+        }).catch(erreurEcriture);
+      });
     };
   });
 };
@@ -6132,13 +6265,15 @@ function ouvrirFormAchat(aid, livreId) {
     }).catch(erreurEcriture);
   };
   ACTIONS.acSupprimer = function () {
-    if (!confirm('Supprimer cet achat ?')) {
-      return;
-    }
-    ecrire([{t: 'achats', suppr: a.id}]).then(function () {
-      apresEcriture();
-      ouvrirFiche(l.id);
-    }).catch(erreurEcriture);
+    demander('Supprimer cet achat ?', {oui: 'Supprimer', danger: true}).then(function (ok) {
+      if (!ok) {
+        return;
+      }
+      ecrire([{t: 'achats', suppr: a.id}]).then(function () {
+        apresEcriture();
+        ouvrirFiche(l.id);
+      }).catch(erreurEcriture);
+    });
   };
 }
 
@@ -6157,25 +6292,27 @@ ACTIONS.formSerie = function (el) {
     ACTIONS.srEnregistrer = function () {
       var nom = val('srNom');
       if (!nom) {
-        alert('Il manque le nom.');
+        avertir('Il manque le nom.');
         return;
       }
       enregistrer('series', Object.assign({}, s, {nom: nom, statut: val('srStatut'), nbTomes: parseInt(val('srTomes'), 10) || null})).then(fermerFeuille).catch(erreurEcriture);
     };
     ACTIONS.srSupprimer = function () {
-      if (!confirm('Supprimer la série « ' + s.nom + ' » ? Ses ' + tomes + ' livre(s) restent dans ton grimoire, sans série.')) {
-        return;
-      }
-      var ops = [{t: 'series', suppr: sid}];
-      valeurs(D.livres).forEach(function (l) {
-        if (l.serieId === sid) {
-          ops.push({t: 'livres', o: Object.assign({}, l, {serieId: '', tome: null})});
+      demander('Supprimer la série « ' + s.nom + ' » ? Ses ' + tomes + ' livre(s) restent dans ton grimoire, sans série.', {oui: 'Supprimer', danger: true}).then(function (ok) {
+        if (!ok) {
+          return;
         }
+        var ops = [{t: 'series', suppr: sid}];
+        valeurs(D.livres).forEach(function (l) {
+          if (l.serieId === sid) {
+            ops.push({t: 'livres', o: Object.assign({}, l, {serieId: '', tome: null})});
+          }
+        });
+        ecrire(ops).then(function () {
+          fermerFeuille();
+          apresEcriture();
+        }).catch(erreurEcriture);
       });
-      ecrire(ops).then(function () {
-        fermerFeuille();
-        apresEcriture();
-      }).catch(erreurEcriture);
     };
   });
 };
@@ -6212,28 +6349,31 @@ ACTIONS.formAuteur = function (el) {
       if (cibleNom) {
         var cible = auteurParNom(cibleNom);
         if (!cible || cible.id === aid) {
-          alert('Je ne trouve pas « ' + cibleNom + ' » parmi tes auteur·ices.');
+          avertir('Je ne trouve pas « ' + cibleNom + ' » parmi tes auteur·ices.');
           return;
         }
-        if (!confirm('Fusionner « ' + a.nom + ' » dans « ' + cible.nom + ' » ?')) {
-          return;
-        }
-        var ops = [{t: 'auteurs', suppr: aid}];
-        livres.forEach(function (l) {
-          var cs = [];
-          (l.contributeurs || []).forEach(function (c) {
-            var n = {auteurId: c.auteurId === aid ? cible.id : c.auteurId, role: c.role};
-            if (!cs.some(function (y) { return y.auteurId === n.auteurId && y.role === n.role; })) {
-              cs.push(n);
-            }
+        demander('Fusionner « ' + a.nom + ' » dans « ' + cible.nom + ' » ?', {oui: 'Fusionner'}).then(function (ok) {
+          if (!ok) {
+            return;
+          }
+          var ops = [{t: 'auteurs', suppr: aid}];
+          livres.forEach(function (l) {
+            var cs = [];
+            (l.contributeurs || []).forEach(function (c) {
+              var n = {auteurId: c.auteurId === aid ? cible.id : c.auteurId, role: c.role};
+              if (!cs.some(function (y) { return y.auteurId === n.auteurId && y.role === n.role; })) {
+                cs.push(n);
+              }
+            });
+            ops.push({t: 'livres', o: Object.assign({}, l, {contributeurs: cs})});
           });
-          ops.push({t: 'livres', o: Object.assign({}, l, {contributeurs: cs})});
+          ecrire(ops).then(function () {
+            apresEcriture();
+            ACTIONS.auteurs();
+            toast('✨ Fusionné');
+          }).catch(erreurEcriture);
+          return;
         });
-        ecrire(ops).then(function () {
-          apresEcriture();
-          ACTIONS.auteurs();
-          toast('✨ Fusionné');
-        }).catch(erreurEcriture);
         return;
       }
       var nom = val('auNom');
@@ -6402,7 +6542,7 @@ body.minuteur-actif main{padding-bottom:180px}
 .gros-m{width:100px;height:100px;border-radius:50%;border:0;display:flex;align-items:center;justify-content:center;font-size:40px;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--lav));box-shadow:0 10px 30px color-mix(in srgb,var(--accent) 55%,transparent),0 0 0 6px color-mix(in srgb,var(--accent) 18%,transparent);transition:transform .1s}
 .gros-m:active{transform:scale(.94)}
 .eveil{font-size:11px;color:var(--muted);margin-top:14px}
-.bandeau-pause{display:none}
+.bandeau-pause{display:none;pointer-events:none}
 /* en pause : tout s'éteint, bandeau doré */
 .page-minuteur.pause{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--ink) 5%,transparent) 0 14px,transparent 14px 28px),linear-gradient(165deg,var(--bg) 0%,var(--bg2) 100%)}
 .page-minuteur.pause .couv img{filter:grayscale(.85) brightness(.7)}
@@ -6420,6 +6560,32 @@ body.minuteur-actif main{padding-bottom:180px}
 .pas{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 .pas button{font:800 13px Nunito,sans-serif;padding:8px 13px;border-radius:999px;border:0;background:var(--accent-soft);color:var(--accent);cursor:pointer}
 @media (prefers-reduced-motion:reduce){.anneau-m::before,.anneau-m::after,.chrono-m,.lecteur .chrono{animation:none !important}}
+.page-minuteur .annuler-haut{display:none}
+/* écran externe du Flip 7 (petit, presque carré) : tout tient sans défiler, rien d'important en bas à gauche (caméras) */
+@media (max-height:620px){
+  .page-minuteur{padding:calc(8px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom))}
+  .page-minuteur .couv,.page-minuteur .auteur,#eveilEcran{display:none}
+  .page-minuteur .annuler-haut{display:inline-flex;align-items:center;gap:4px}
+  .page-minuteur .titre{font-size:17px;margin:4px 0 0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .anneau-m{width:min(178px,42vh);height:min(178px,42vh);margin:10px 0 6px}
+  .chrono-m{font-size:min(46px,11vh)}
+  .etat-m{font-size:10.5px;margin-top:4px;padding:3px 10px}
+  .page-minuteur.pause .etat-m{font-size:12.5px;padding:5px 14px}
+  .infos-m{font-size:11.5px;min-height:0;line-height:1.45}
+  .commandes{gap:18px;padding-top:8px}
+  .commandes .annuler{visibility:hidden;width:50px}
+  .rond-m{width:50px;height:50px}
+  .rond-m small{display:none}
+  .gros-m{width:80px;height:80px}
+  .gros-m .ic{width:34px;height:34px}
+  .page-minuteur.pause .bandeau-pause{display:none}
+  .lecteur{bottom:calc(58px + env(safe-area-inset-bottom));padding:6px;gap:8px;border-radius:16px}
+  .lecteur img,.lecteur .ph{width:28px;height:42px}
+  .lecteur .chrono{font-size:19px}
+  .lecteur .b{width:42px;height:42px}
+  body.minuteur-actif .fab-scan{bottom:calc(122px + env(safe-area-inset-bottom))}
+  .grand-chrono{font-size:34px}
+}
 </style>
 <script>
 // ---------- Minuteur de lecture ----------
@@ -6554,11 +6720,11 @@ ACTIONS.pageMinuteur = function () {
     auteurs = b.authors.join(', ');
   }
   p.innerHTML = '<div class="bandeau-pause">⏸ EN PAUSE ⏸ EN PAUSE ⏸ EN PAUSE ⏸ EN PAUSE</div>' +
-    '<div class="haut"><button data-act="fermerPageMinuteur">' + ic('chevron-left') + ' Retour</button><span class="small muted" id="eveilEcran"></span></div>' +
+    '<div class="haut"><button data-act="fermerPageMinuteur">' + ic('chevron-left') + ' Retour</button><span class="small muted" id="eveilEcran"></span><button class="annuler-haut" data-act="annulerMinuteur">' + ic('x') + ' Annuler</button></div>' +
     '<div class="couv">' + couvSession(s) + '</div><div class="titre">' + esc(titreCourt(l)) + '</div><div class="auteur">' + esc(auteurs) + '</div>' +
     '<div class="anneau-m"><div class="chrono-m" id="chronoGrand"></div><div class="etat-m" id="etatMinuteur"></div></div>' +
     '<div class="infos-m" id="infosMinuteur"></div>' +
-    '<div class="commandes"><button class="rond-m" data-act="annulerMinuteur">' + ic('x') + '<small>annuler</small></button><button class="gros-m" id="boutonMinuteur" data-act="basculerMinuteur"></button><button class="rond-m" data-act="arreterMinuteur">' + ic('square') + '<small>terminer</small></button></div>';
+    '<div class="commandes"><button class="rond-m annuler" data-act="annulerMinuteur">' + ic('x') + '<small>annuler</small></button><button class="gros-m" id="boutonMinuteur" data-act="basculerMinuteur"></button><button class="rond-m" data-act="arreterMinuteur">' + ic('square') + '<small>terminer</small></button></div>';
   majPageMinuteur();
   majVerrouEcran();
 };
@@ -6678,13 +6844,18 @@ ACTIONS.repriseMinuteur = function () {
 };
 ACTIONS.annulerMinuteur = function () {
   var s = sessionEnCours();
-  if (!s || !confirm('Annuler ce minuteur ? Cette session ne sera pas comptée.')) {
+  if (!s) {
     return;
   }
-  ecrire([{t: 'sessions', suppr: s.id}]).then(function () {
-    fermerPageMinuteur();
-    apresEcriture();
-  }).catch(erreurEcriture);
+  demander('Cette session ne sera pas comptée.', {titre: 'Annuler ce minuteur ?', oui: 'Annuler le minuteur', non: 'Continuer', danger: true}).then(function (ok) {
+    if (!ok) {
+      return;
+    }
+    ecrire([{t: 'sessions', suppr: s.id}]).then(function () {
+      fermerPageMinuteur();
+      apresEcriture();
+    }).catch(erreurEcriture);
+  });
 };
 
 // ⏹ : la fenêtre d'arrêt, avec la page pré-remplie et des raccourcis
@@ -6967,7 +7138,7 @@ ACTIONS.formElement = function (el) {
   ACTIONS.elEnregistrer = function () {
     var nom = val('elNom');
     if (!nom) {
-      alert('Il manque le nom.');
+      avertir('Il manque le nom.');
       return;
     }
     var p;
@@ -6991,42 +7162,44 @@ ACTIONS.formElement = function (el) {
     }).catch(erreurEcriture);
   };
   ACTIONS.elSupprimer = function () {
-    if (!confirm('Supprimer « ' + x.nom + ' » ?' + (n ? ' Il sera retiré de ' + n + ' livre(s).' : ''))) {
-      return;
-    }
-    var ops = [{t: t, suppr: x.id}];
-    if (t === 'genres' || t === 'etageres') {
-      var champ1 = 'genreIds';
-      if (t === 'etageres') {
-        champ1 = 'etagereIds';
+    demander('Supprimer « ' + x.nom + ' » ?' + (n ? ' Il sera retiré de ' + n + ' livre(s).' : ''), {oui: 'Supprimer', danger: true}).then(function (ok) {
+      if (!ok) {
+        return;
       }
-      valeurs(D.livres).forEach(function (l) {
-        if ((l[champ1] || []).indexOf(x.id) >= 0) {
+      var ops = [{t: t, suppr: x.id}];
+      if (t === 'genres' || t === 'etageres') {
+        var champ1 = 'genreIds';
+        if (t === 'etageres') {
+          champ1 = 'etagereIds';
+        }
+        valeurs(D.livres).forEach(function (l) {
+          if ((l[champ1] || []).indexOf(x.id) >= 0) {
+            var m = {};
+            m[champ1] = l[champ1].filter(function (g) { return g !== x.id; });
+            ops.push({t: 'livres', o: Object.assign({}, l, m)});
+          }
+        });
+      } else {
+        valeurs(D.avis).forEach(function (a) {
           var m = {};
-          m[champ1] = l[champ1].filter(function (g) { return g !== x.id; });
-          ops.push({t: 'livres', o: Object.assign({}, l, m)});
-        }
-      });
-    } else {
-      valeurs(D.avis).forEach(function (a) {
-        var m = {};
-        if (t === 'criteres' && (a.notes || {})[x.id]) {
-          m.notes = Object.assign({}, a.notes);
-          delete m.notes[x.id];
-        } else if (t === 'humeurs' && (a.humeurIds || []).indexOf(x.id) >= 0) {
-          m.humeurIds = a.humeurIds.filter(function (y) { return y !== x.id; });
-        } else if (t === 'tropes' && (a.tropeIds || []).indexOf(x.id) >= 0) {
-          m.tropeIds = a.tropeIds.filter(function (y) { return y !== x.id; });
-        }
-        if (Object.keys(m).length) {
-          ops.push({t: 'avis', o: Object.assign({}, a, m)});
-        }
-      });
-    }
-    ecrire(ops).then(function () {
-      apresEcriture();
-      ACTIONS.mesListes();
-    }).catch(erreurEcriture);
+          if (t === 'criteres' && (a.notes || {})[x.id]) {
+            m.notes = Object.assign({}, a.notes);
+            delete m.notes[x.id];
+          } else if (t === 'humeurs' && (a.humeurIds || []).indexOf(x.id) >= 0) {
+            m.humeurIds = a.humeurIds.filter(function (y) { return y !== x.id; });
+          } else if (t === 'tropes' && (a.tropeIds || []).indexOf(x.id) >= 0) {
+            m.tropeIds = a.tropeIds.filter(function (y) { return y !== x.id; });
+          }
+          if (Object.keys(m).length) {
+            ops.push({t: 'avis', o: Object.assign({}, a, m)});
+          }
+        });
+      }
+      ecrire(ops).then(function () {
+        apresEcriture();
+        ACTIONS.mesListes();
+      }).catch(erreurEcriture);
+    });
   };
 };
 </script>
@@ -7147,7 +7320,7 @@ ACTIONS.formCitation = function (el) {
       fc.photo = blob;
       rendrePhotoCitation();
     }).catch(function () {
-      alert('Je n\'arrive pas à lire cette image.');
+      avertir('Je n\'arrive pas à lire cette image.');
     });
     e.target.value = '';
   });
@@ -7202,14 +7375,14 @@ ACTIONS.ciEnregistrer = function () {
   if (document.getElementById('ciLivre')) {
     var b = livreDepuisTitre(val('ciLivre'));
     if (!b) {
-      alert('Choisis le livre dans la liste (commence à taper son titre).');
+      avertir('Choisis le livre dans la liste (commence à taper son titre).');
       return;
     }
     livreId = b.id;
   }
   var texte = val('ciTexte');
   if (!texte && !fc.photo && !fc.photoId) {
-    alert('Écris le texte ou ajoute une photo.');
+    avertir('Écris le texte ou ajoute une photo.');
     return;
   }
   var ancienne = (fc.id && D.citations[fc.id]) || null;
@@ -7246,23 +7419,25 @@ ACTIONS.ciEnregistrer = function () {
 };
 ACTIONS.ciSupprimer = function () {
   var c = D.citations[fc.id];
-  if (!confirm('Supprimer cette citation ?')) {
-    return;
-  }
-  var ops = [{t: 'citations', suppr: c.id}];
-  if (c.photoId) {
-    ops.push({t: 'photos', suppr: c.photoId});
-  }
-  var retour = fc.retour;
-  ecrire(ops).then(function () {
-    fc = null;
-    apresEcriture();
-    if (retour) {
-      ouvrirFiche(retour);
-    } else {
-      fermerFeuille();
+  demander('Supprimer cette citation ?', {oui: 'Supprimer', danger: true}).then(function (ok) {
+    if (!ok) {
+      return;
     }
-  }).catch(erreurEcriture);
+    var ops = [{t: 'citations', suppr: c.id}];
+    if (c.photoId) {
+      ops.push({t: 'photos', suppr: c.photoId});
+    }
+    var retour = fc.retour;
+    ecrire(ops).then(function () {
+      fc = null;
+      apresEcriture();
+      if (retour) {
+        ouvrirFiche(retour);
+      } else {
+        fermerFeuille();
+      }
+    }).catch(erreurEcriture);
+  });
 };
 
 // ---------- lecture du texte d'une photo (Tesseract, en français, chargé au premier usage) ----------
@@ -7305,7 +7480,7 @@ ACTIONS.preparerOcr = function () {
     regler('ocrPret', Date.now());
     toast('✨ Lecture de texte prête, même hors connexion');
   }).catch(function (e) {
-    alert('Téléchargement impossible : ' + ((e && e.message) || e));
+    avertir('Téléchargement impossible : ' + ((e && e.message) || e));
   });
 };
 
@@ -7366,7 +7541,7 @@ function lancerOcr(zoneSeule) {
   var source = img;
   if (zoneSeule) {
     if (!recadre || recadre.w < 0.03 || recadre.h < 0.02) {
-      alert('Trace d\'abord un cadre autour du passage (ou choisis « Toute la page »).');
+      avertir('Trace d\'abord un cadre autour du passage (ou choisis « Toute la page »).');
       return;
     }
     var c = document.createElement('canvas');
@@ -7393,14 +7568,22 @@ function lancerOcr(zoneSeule) {
       toast('Je n\'ai pas trouvé de texte lisible');
       return;
     }
-    if (t) {
-      if (t.value.trim() && !confirm('Remplacer le texte déjà écrit par celui de la photo ?')) {
-        t.value = t.value.trim() + '\n' + texte;
-      } else {
-        t.value = texte;
-      }
+    if (!t) {
+      return;
     }
-    toast('✨ Texte lu : relis-le et corrige si besoin');
+    if (!t.value.trim()) {
+      t.value = texte;
+      toast('✨ Texte lu : relis-le et corrige si besoin');
+      return;
+    }
+    demander('Tu avais déjà écrit un texte : le remplacer par celui de la photo, ou ajouter celui de la photo à la suite ?', {oui: 'Remplacer', non: 'Ajouter à la suite'}).then(function (remplacer) {
+      if (remplacer) {
+        t.value = texte;
+      } else {
+        t.value = t.value.trim() + '\n' + texte;
+      }
+      toast('✨ Texte lu : relis-le et corrige si besoin');
+    });
   }).catch(function (e) {
     suiviOcr.f = null;
     d.querySelectorAll('.bas button').forEach(function (b) { b.disabled = false; });
@@ -7488,7 +7671,7 @@ ACTIONS.proposerBascule = function () {
 ACTIONS.relierDrive = function () {
   var l = lireCodeLiaison(document.getElementById('codeLiaison').value);
   if (!l) {
-    alert('Ce code ne ressemble pas à un code de liaison : il commence par https://script.google.com/macros/s/ et contient un # suivi du secret.');
+    avertir('Ce code ne ressemble pas à un code de liaison : il commence par https://script.google.com/macros/s/ et contient un # suivi du secret.');
     return;
   }
   toast('🔗 Vérification du code…');
@@ -7499,16 +7682,18 @@ ACTIONS.relierDrive = function () {
     toast('✨ Drive relié');
     return sauvegarderMaintenant(true);
   }).catch(function (e) {
-    alert('La liaison n\'a pas marché : ' + ((e && e.message) || e));
+    avertir('La liaison n\'a pas marché : ' + ((e && e.message) || e));
   });
 };
 ACTIONS.delierDrive = function () {
-  if (!confirm('Arrêter la sauvegarde automatique dans ton Drive ? Les sauvegardes déjà faites y restent.')) {
-    return;
-  }
-  ecrire([{t: 'reglages', suppr: 'liaison'}]).then(function () {
-    majTemoin('');
-    ACTIONS.reglages();
+  demander('Arrêter la sauvegarde automatique dans ton Drive ? Les sauvegardes déjà faites y restent.', {oui: 'Arrêter', danger: true}).then(function (ok) {
+    if (!ok) {
+      return;
+    }
+    ecrire([{t: 'reglages', suppr: 'liaison'}]).then(function () {
+      majTemoin('');
+      ACTIONS.reglages();
+    });
   });
 };
 ACTIONS.sauverDrive = function () {
@@ -7522,14 +7707,14 @@ ACTIONS.restaurerDrive = function () {
   toast('☁️ Je regarde dans ton Drive…');
   listerSauvegardesDrive().then(function (l) {
     if (!l.length) {
-      alert('Aucune sauvegarde dans ton Drive pour l\'instant.');
+      avertir('Aucune sauvegarde dans ton Drive pour l\'instant.');
       return;
     }
     ouvrirFeuille('<h3>Restaurer depuis le Drive</h3><p class="small muted">Choisis la copie à remettre dans le grimoire.</p><div class="liste-sauv">' + l.map(function (f) {
       return '<button class="act doux" data-act="restaurerFichierDrive" data-id="' + esc(f.id) + '"><span>' + esc(f.nom.replace(/^grimoire-|\.zip$/g, '')) + '</span><span class="muted">' + nombre(f.taille / 1048576) + ' Mo</span></button>';
     }).join('') + '</div>');
   }).catch(function (e) {
-    alert('Impossible de lire ton Drive : ' + ((e && e.message) || e));
+    avertir('Impossible de lire ton Drive : ' + ((e && e.message) || e));
   });
 };
 ACTIONS.restaurerFichierDrive = function (el) {
@@ -7540,7 +7725,7 @@ ACTIONS.restaurerFichierDrive = function (el) {
     }
     proposerRestauration(lu);
   }).catch(function (e) {
-    alert('Restauration impossible : ' + ((e && e.message) || e));
+    avertir('Restauration impossible : ' + ((e && e.message) || e));
   });
 };
 </script>
@@ -7624,16 +7809,24 @@ function recevoirFichier(buf) {
     if (lu) {
       return proposerRestauration(lu);
     }
-    if (reglage('mode', 'miroir') !== 'miroir' && !confirm('Ton grimoire ne dépend plus de Bookmory. Réimporter cet export remplacera les livres venus de Bookmory par leur version de l\'export. Continuer ?')) {
-      return afficherSiPossible();
+    if (reglage('mode', 'miroir') !== 'miroir') {
+      afficherSiPossible();
+      return demander('Ton grimoire ne dépend plus de Bookmory. Réimporter cet export remplacera les livres venus de Bookmory par leur version de l\'export.', {titre: 'Réimporter un export Bookmory ?', oui: 'Réimporter', danger: true}).then(function (ok) {
+        if (ok) {
+          return importerEtAfficher(buf);
+        }
+      });
     }
-    return importerBookmory(buf).then(function (recap) {
-      afficherGrimoire();
-      planifierSauvegarde();
-      toast('✨ Grimoire mis à jour · ' + recap.livres + ' livres');
-    });
+    return importerEtAfficher(buf);
   }).catch(function (e) {
     erreurEcran(e);
+  });
+}
+function importerEtAfficher(buf) {
+  return importerBookmory(buf).then(function (recap) {
+    afficherGrimoire();
+    planifierSauvegarde();
+    toast('✨ Grimoire mis à jour · ' + recap.livres + ' livres');
   });
 }
 function afficherSiPossible() {
