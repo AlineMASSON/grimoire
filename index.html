@@ -2880,6 +2880,8 @@ function banniereFete() {
 .import-btn{left:16px;right:auto}
 .vide{text-align:center}
 .vide .etapes{text-align:left;margin:12px auto;max-width:320px;line-height:1.8}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--card);font:700 14px Nunito,sans-serif;padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transition:all .3s;z-index:70;white-space:nowrap}
+.toast.vis{opacity:1;transform:translate(-50%,0)}
 </style>
 <script>
 // ---------- Version appli (PWA) : l'export et le carnet restent sur le téléphone ----------
@@ -2927,6 +2929,18 @@ function idbSet(k, v) {
   });
 }
 
+function toast(texte) {
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = texte;
+  document.body.appendChild(t);
+  setTimeout(function () { t.classList.add('vis'); }, 50);
+  setTimeout(function () {
+    t.classList.remove('vis');
+    setTimeout(function () { t.remove(); }, 400);
+  }, 3500);
+}
+
 // Reçoit un export Bookmory (.zip ou .db), le garde sur le téléphone et l'affiche.
 function importer(buf, nom) {
   var u8 = new Uint8Array(buf);
@@ -2944,6 +2958,8 @@ function importer(buf, nom) {
     var quand = Date.now();
     return idbSet('export', {octets: db, nom: nom, date: quand}).then(function () {
       return charger(db, 'Export du ' + fdate(quand));
+    }).then(function () {
+      toast('✨ Grimoire mis à jour');
     });
   }).catch(function (e) {
     document.getElementById('app').innerHTML = '<div id="load" class="err">' + esc(e.message) + '</div>';
