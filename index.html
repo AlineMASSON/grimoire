@@ -330,6 +330,7 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 <input type="file" id="fichierImport" accept="application/zip,application/x-zip-compressed,application/octet-stream,application/x-sqlite3,.zip,.db" hidden>
 </header>
 <main id="app"><div id="load">J'ouvre ton grimoire…</div></main>
+<button class="fab-scan" id="fabScan" data-act="scanner" aria-label="Scanner un livre" hidden>📷</button>
 <nav id="nav"></nav>
 <script>
 var DAY = 86400000;
@@ -2874,6 +2875,339 @@ function banniereFete() {
   var f = FETES[feteActive];
   return '<div class="fete-banniere"><b>' + f.emoji + ' ' + f.nom + '</b><span>' + f.phrase + '</span></div>';
 }
+</script>
+
+<style>
+.fab-scan{position:fixed;right:16px;bottom:calc(86px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--accent),var(--lav));color:#fff;font-size:25px;box-shadow:0 8px 22px rgba(0,0,0,.28),0 0 0 3px var(--card);z-index:6;cursor:pointer}
+.fab-scan[hidden]{display:none}
+.scan{position:fixed;inset:0;z-index:45;background:#000;display:flex;flex-direction:column;color:#fff}
+.scan video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.scan .viseur{position:absolute;left:10%;right:10%;top:34%;height:24%;border:3px solid var(--gold);border-radius:18px;box-shadow:0 0 0 9999px rgba(10,5,20,.55);overflow:hidden}
+.scan .viseur::after{content:"";position:absolute;left:6%;right:6%;height:2px;background:var(--accent);box-shadow:0 0 12px var(--accent);animation:balaye 1.6s ease-in-out infinite alternate}
+@keyframes balaye{from{top:12%}to{top:86%}}
+.scan .haut{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:center;padding:calc(16px + env(safe-area-inset-top)) 16px 0}
+.scan .haut button{width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.18);color:#fff;font-size:18px}
+.scan .consigne{position:absolute;left:0;right:0;top:calc(34% - 54px);text-align:center;font:700 16px Nunito,sans-serif;z-index:2;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+.scan .bas{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:16px 16px calc(24px + env(safe-area-inset-bottom));display:flex;gap:8px;justify-content:center;background:linear-gradient(transparent,rgba(0,0,0,.6))}
+.scan .bas input{flex:1;max-width:220px;border-radius:999px;border:0;padding:11px 16px;font:600 15px Nunito,sans-serif}
+.scan .bas button{border-radius:999px;border:0;padding:11px 16px;font:700 14px Nunito,sans-serif;background:var(--gold);color:#2a1a10}
+.verdict{border-radius:18px;padding:12px 14px;margin:10px 0 4px;font:700 17px "Cormorant Garamond",Georgia,serif;background:linear-gradient(135deg,var(--accent-soft),var(--lav-soft))}
+.verdict small{display:block;font:400 13px Nunito,sans-serif;color:var(--muted);margin-top:2px}
+.jauge{height:10px;border-radius:6px;background:var(--heat0);margin:6px 0;overflow:hidden}
+.jauge i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--lav),var(--accent))}
+</style>
+<script>
+// ---------- Scanner de code-barres (en librairie : « est-ce que je l'ai déjà ? ») ----------
+var scan = {flux: null, minuteur: null, detecteur: null};
+
+function chiffres(s) {
+  return String(s || '').replace(/[^0-9Xx]/g, '').toUpperCase();
+}
+// convertit un ISBN-10 en ISBN-13 pour pouvoir comparer
+function isbn13(s) {
+  var c = chiffres(s);
+  if (c.length === 13) {
+    return c;
+  }
+  if (c.length !== 10) {
+    return '';
+  }
+  var base = '978' + c.slice(0, 9);
+  var somme = 0;
+  for (var i = 0; i < 12; i++) {
+    var poids = 1;
+    if (i % 2 === 1) {
+      poids = 3;
+    }
+    somme += parseInt(base[i], 10) * poids;
+  }
+  return base + ((10 - somme % 10) % 10);
+}
+function normTitre(t) {
+  return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\([^)]*\)/g, ' ').split(/\s[:\-–]\s|:/)[0].replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+// « Jennifer Twice » → {nom: 'twice', initiale: 'j'} ; gère « Nom, Prénom » et « A & B »
+function personnes(l) {
+  var p = [];
+  (l || []).join(' & ').split(/\s*(?:&|;| et | and )\s*/).forEach(function (n) {
+    n = n.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+    if (!n) {
+      return;
+    }
+    var mots;
+    if (n.indexOf(',') > 0) {
+      var parts = n.split(',');
+      mots = (parts[1] + ' ' + parts[0]).split(/[^a-z]+/).filter(Boolean);
+    } else {
+      mots = n.split(/[^a-z]+/).filter(Boolean);
+    }
+    if (!mots.length) {
+      return;
+    }
+    var initiale = '';
+    if (mots.length > 1) {
+      initiale = mots[0][0];
+    }
+    p.push({nom: mots[mots.length - 1], initiale: initiale});
+  });
+  return p;
+}
+function memeAuteur(a, b) {
+  var pa = personnes(a), pb = personnes(b);
+  return pa.some(function (x) {
+    return pb.some(function (y) {
+      return x.nom === y.nom && x.nom.length >= 3 && (!x.initiale || !y.initiale || x.initiale === y.initiale);
+    });
+  });
+}
+
+// ---------- caméra ----------
+function ouvrirScanner() {
+  if (!M) {
+    alert('Envoie d\'abord un export Bookmory au grimoire.');
+    return;
+  }
+  var d = document.createElement('div');
+  d.className = 'scan';
+  d.id = 'scan';
+  d.innerHTML = '<video playsinline muted></video><div class="viseur"></div><div class="haut"><button data-act="fermerScanner" aria-label="Fermer">✕</button><button id="torche" data-act="torche" aria-label="Lampe" hidden>🔦</button></div><div class="consigne">Vise le code-barres du livre</div><div class="bas"><input id="isbnManuel" inputmode="numeric" placeholder="ou tape l\'ISBN"><button data-act="isbnManuel">Chercher</button></div>';
+  document.body.appendChild(d);
+  if (!('BarcodeDetector' in window) || !navigator.mediaDevices) {
+    d.querySelector('.consigne').textContent = 'Ce navigateur ne sait pas lire les codes-barres : tape l\'ISBN';
+    return;
+  }
+  scan.detecteur = new BarcodeDetector({formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e']});
+  navigator.mediaDevices.getUserMedia({video: {facingMode: {ideal: 'environment'}, width: {ideal: 1280}, height: {ideal: 720}}, audio: false}).then(function (flux) {
+    scan.flux = flux;
+    var v = d.querySelector('video');
+    v.srcObject = flux;
+    v.play();
+    var piste = flux.getVideoTracks()[0];
+    if (piste.getCapabilities && piste.getCapabilities().torch) {
+      document.getElementById('torche').hidden = false;
+    }
+    scan.minuteur = setInterval(function () {
+      if (v.readyState < 2) {
+        return;
+      }
+      scan.detecteur.detect(v).then(function (codes) {
+        var code = codes.map(function (c) { return chiffres(c.rawValue); }).find(function (c) { return /^97[89]\d{10}$/.test(c); });
+        if (code) {
+          if (navigator.vibrate) {
+            navigator.vibrate(80);
+          }
+          fermerScanner();
+          resultatScan(code);
+        }
+      }).catch(function () {});
+    }, 250);
+  }).catch(function () {
+    d.querySelector('.consigne').textContent = 'Caméra refusée : autorise-la ou tape l\'ISBN';
+  });
+}
+function fermerScanner() {
+  clearInterval(scan.minuteur);
+  if (scan.flux) {
+    scan.flux.getTracks().forEach(function (t) { t.stop(); });
+    scan.flux = null;
+  }
+  var d = document.getElementById('scan');
+  if (d) {
+    d.remove();
+  }
+}
+ACTIONS.scanner = ouvrirScanner;
+ACTIONS.fermerScanner = fermerScanner;
+ACTIONS.torche = function (el) {
+  if (!scan.flux) {
+    return;
+  }
+  var piste = scan.flux.getVideoTracks()[0];
+  var allume = el.dataset.on !== '1';
+  piste.applyConstraints({advanced: [{torch: allume}]});
+  el.dataset.on = allume ? '1' : '0';
+};
+ACTIONS.isbnManuel = function () {
+  var c = chiffres(document.getElementById('isbnManuel').value);
+  var i = isbn13(c);
+  if (!i) {
+    alert('Un ISBN fait 10 ou 13 chiffres.');
+    return;
+  }
+  fermerScanner();
+  resultatScan(i);
+};
+
+// ---------- recherche du livre ----------
+function infosEnLigne(isbn) {
+  return fetch('https://www.googleapis.com/books/v1/volumes?q=isbn:' + isbn).then(function (r) { return r.json(); }).then(function (j) {
+    var v = j.items && j.items[0] && j.items[0].volumeInfo;
+    if (!v) {
+      throw new Error('inconnu');
+    }
+    var image = '';
+    if (v.imageLinks) {
+      image = (v.imageLinks.thumbnail || v.imageLinks.smallThumbnail || '').replace('http:', 'https:');
+    }
+    return {titre: v.title + (v.subtitle ? ' : ' + v.subtitle : ''), titreCourt: v.title, auteurs: v.authors || [], categories: v.categories || [], image: image, pages: v.pageCount, date: v.publishedDate || ''};
+  }).catch(function () {
+    return fetch('https://openlibrary.org/api/books?bibkeys=ISBN:' + isbn + '&format=json&jscmd=data').then(function (r) { return r.json(); }).then(function (j) {
+      var v = j['ISBN:' + isbn];
+      if (!v) {
+        return null;
+      }
+      var image = '';
+      if (v.cover) {
+        image = v.cover.medium || v.cover.small || '';
+      }
+      return {titre: v.title, titreCourt: v.title, auteurs: (v.authors || []).map(function (a) { return a.name; }), categories: (v.subjects || []).map(function (s) { return s.name; }), image: image, pages: v.number_of_pages, date: v.publish_date || ''};
+    });
+  }).catch(function () {
+    return null;
+  });
+}
+function trouverDansBibliotheque(isbn, infos) {
+  var parIsbn = M.livres.find(function (b) { return b.isbn && isbn13(b.isbn) === isbn; });
+  if (parIsbn || !infos) {
+    return parIsbn || null;
+  }
+  var t = normTitre(infos.titreCourt);
+  if (t.length < 3) {
+    return null;
+  }
+  return M.livres.find(function (b) {
+    var tb = normTitre(b.title);
+    var titreOk = tb === t || (Math.min(tb.length, t.length) >= 6 && (tb.indexOf(t) === 0 || t.indexOf(tb) === 0));
+    return titreOk && (!infos.auteurs.length || memeAuteur(b.authors, infos.auteurs));
+  }) || null;
+}
+var GENRES_CATEGORIES = [
+  [/fantasy|fantastique|magic|magie|dragon|fairy|f[ée]e/i, 'Fantasy'], [/romance|love|amour/i, 'Romance'],
+  [/thriller|suspense/i, 'Thriller'], [/mystery|detective|crime|policier|polar|murder|enqu[eê]te/i, 'Policier'],
+  [/horror|horreur|ghost/i, 'Horreur'], [/science fiction|science-fiction|dystop/i, 'Science-fiction'],
+  [/young adult|adolescen/i, 'Young adult'], [/juvenile|children|jeunesse|enfant/i, 'Jeunesse'],
+  [/historical|histori/i, 'Historique'], [/paranormal|supernatural|surnaturel|witch|sorci/i, 'Surnaturel'],
+  [/gothic|gothique/i, 'Gothique'], [/war|guerre/i, 'Guerre'], [/humor|humour|comed/i, 'Feel-good'],
+  [/contemporary|contemporain/i, 'Contemporain'], [/biograph|essai|nonfiction|non-fiction/i, 'Documentaire']
+];
+function genresDepuis(categories) {
+  var t = categories.join(' ');
+  return GENRES_CATEGORIES.filter(function (g) { return g[0].test(t); }).map(function (g) { return g[1]; });
+}
+function affiniteEstimee(genres) {
+  var aff = avec('reco', affinites);
+  var s = genres.map(function (g) {
+    if (aff[g] && aff[g].notes.length >= 2) {
+      return moy(aff[g].notes) - aff[g].abandons / aff[g].n;
+    }
+    return null;
+  }).filter(function (x) { return x !== null; });
+  return moy(s);
+}
+function blocAuteur(auteurs, sauf) {
+  var lus = finies().filter(function (r) { return r.book !== sauf && memeAuteur(r.book.authors, auteurs); });
+  if (!lus.length) {
+    return '';
+  }
+  var notes = lus.filter(function (r) { return r.star; }).map(function (r) { return r.star; });
+  var nom = (auteurs[0] || '');
+  var s = '';
+  if (lus.length > 1) {
+    s = 's';
+  }
+  var noteTxt = '';
+  if (notes.length) {
+    noteTxt = ' · ' + etoiles(moy(notes)) + ' en moyenne';
+  }
+  return '<p class="small">✍️ Tu as déjà lu <b>' + lus.length + ' livre' + s + '</b> de ' + esc(nom) + noteTxt + '</p>';
+}
+function blocSerie(b) {
+  var k = Object.keys(b.series_memberships || {})[0];
+  if (!k) {
+    return '';
+  }
+  var s = M.series[k] || {name: 'Série'};
+  var tomes = M.livres.filter(function (x) { return x.series_memberships && x.series_memberships[k]; }).sort(function (x, y) {
+    return x.series_memberships[k].number - y.series_memberships[k].number;
+  }).map(function (x) {
+    var etat = '';
+    if (x.statut === 'DONE') {
+      etat = ' ✓';
+    }
+    return 't.' + x.series_memberships[k].number + etat;
+  });
+  return '<p class="small">🗝️ Série <b>' + esc(s.name) + '</b> : tu as ' + tomes.join(', ') + ' (✓ = lu)</p>';
+}
+
+function resultatScan(isbn) {
+  var f = ouvrirFeuille('<h3>Recherche…</h3><p class="small muted">ISBN ' + isbn + '</p>');
+  infosEnLigne(isbn).then(function (infos) {
+    var b = trouverDansBibliotheque(isbn, infos);
+    var h = '';
+    var autre = '<div class="row" style="margin-top:16px"><button class="act" data-act="scanner">📷 Scanner un autre livre</button><button class="act doux" data-act="fermer">Fermer</button></div>';
+    if (b) {
+      var verdict = '';
+      var r = (b.reads || []).slice().sort(function (x, y) { return (y.end || y.start || 0) - (x.end || x.start || 0); })[0];
+      if (b.statut === 'DONE' && r) {
+        verdict = '✅ Déjà lu !<small>le ' + fdate(r.end || r.start) + ' · ' + etoiles(r.star) + '</small>';
+      } else if (b.statut === 'READING' || b.statut === 'PAUSE') {
+        verdict = '📖 Tu es en train de le lire<small>il est déjà chez toi</small>';
+      } else if (b.statut === 'GIVE_UP') {
+        verdict = '🏳️ Tu l\'as abandonné<small>pas la peine de le racheter</small>';
+      } else if (b.wishlist) {
+        verdict = '💫 Dans tes envies<small>depuis ' + depuis(b.created_at) + ', c\'est peut-être le moment !</small>';
+      } else {
+        verdict = '📚 Déjà dans ta pile à lire<small>depuis ' + depuis(b.created_at) + ', inutile de le racheter</small>';
+      }
+      var carnet = '';
+      if (NOTES[b.id]) {
+        carnet = '<h4>Mon carnet</h4>' + resumeNote(NOTES[b.id]);
+      }
+      h = '<div class="tete">' + cover(b) + '<div><h3>' + esc(titre(b)) + '</h3><div class="small muted">' + esc((b.authors || []).join(', ')) + '</div></div></div><div class="verdict">' + verdict + '</div>' + blocSerie(b) + blocAuteur(b.authors, b) + carnet + autre;
+    } else if (infos) {
+      var genres = genresDepuis(infos.categories);
+      var a = affiniteEstimee(genres);
+      var jauge = '<p class="small muted">Pas assez d\'infos sur ce genre pour estimer ton affinité.</p>';
+      if (a !== null) {
+        var avis = '🤔 Pas vraiment ton style';
+        if (a >= 4.2) {
+          avis = '💖 Coup de cœur probable';
+        } else if (a >= 3.5) {
+          avis = '🙂 Ça pourrait te plaire';
+        }
+        jauge = '<p class="small" style="margin:8px 0 0"><b>Affinité estimée : ' + nombre(a) + '/5</b> · ' + avis + '</p><div class="jauge"><i style="width:' + Math.max(0, Math.min(100, a * 20)) + '%"></i></div>';
+      }
+      var img = '<div class="ph">' + esc(infos.titreCourt).slice(0, 40) + '</div>';
+      if (infos.image) {
+        img = '<img src="' + esc(infos.image) + '" alt="">';
+      }
+      var details = [];
+      var an = /\d{4}/.exec(String(infos.date || ''));
+      if (an) {
+        details.push(an[0]);
+      }
+      if (infos.pages) {
+        details.push(infos.pages + ' p.');
+      }
+      h = '<div class="tete">' + img + '<div><h3>' + esc(infos.titre) + '</h3><div class="small muted">' + esc(infos.auteurs.join(', ')) + '</div><div class="small muted">' + details.join(' · ') + '</div></div></div><div class="verdict">✨ Nouveau pour toi<small>il n\'est pas dans ta bibliothèque Bookmory</small></div>' +
+        (genres.length ? '<div>' + genres.map(function (g) { return '<span class="chip">' + esc(g) + '</span>'; }).join('') + '</div>' : '') + jauge + blocAuteur(infos.auteurs, null) + autre;
+    } else {
+      h = '<h3>Livre introuvable</h3><p class="small muted">ISBN ' + isbn + ' : il n\'est pas dans ta bibliothèque, et je n\'ai pas trouvé ses infos en ligne (ou tu es hors connexion).</p>' + autre;
+    }
+    f.innerHTML = '<button class="sheet-x" data-act="fermer" aria-label="Fermer">✕</button>' + h;
+  });
+}
+
+// le bouton 📷 n'apparaît qu'une fois les données chargées
+var rendreAvantScanner = rendre;
+rendre = function () {
+  rendreAvantScanner();
+  var b = document.getElementById('fabScan');
+  if (b) {
+    b.hidden = false;
+  }
+};
 </script>
 
 <style>

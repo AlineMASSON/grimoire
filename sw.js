@@ -1,5 +1,5 @@
 // Service worker du grimoire : fonctionnement hors ligne + réception des exports partagés depuis Bookmory.
-var VERSION = 'grimoire-v3';
+var VERSION = 'grimoire-v4';
 var PARTAGE = 'grimoire-partage';
 var FICHIERS = [
   './',
