@@ -1,5 +1,5 @@
-// Service worker du grimoire : fonctionnement hors ligne + réception des exports partagés depuis Bookmory.
-var VERSION = 'grimoire-v5';
+// Service worker du grimoire : fonctionnement hors ligne + réception des fichiers partagés (sauvegarde, export Bookmory).
+var VERSION = 'grimoire-v6';
 var PARTAGE = 'grimoire-partage';
 var FICHIERS = [
   './',
@@ -44,7 +44,7 @@ function cacheable(req, url) {
 self.addEventListener('fetch', function (e) {
   var url = new URL(e.request.url);
 
-  // Bookmory → Partager → Grimoire : on garde le fichier reçu puis on ouvre l'appli.
+  // Partager → Grimoire : on garde le fichier reçu puis on ouvre l'appli.
   if (e.request.method === 'POST' && url.pathname.endsWith('/partage')) {
     e.respondWith(e.request.formData().then(function (form) {
       var f = form.get('export');

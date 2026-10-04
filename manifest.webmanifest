@@ -1,7 +1,7 @@
 {
   "name": "Mon grimoire de lectures",
   "short_name": "Grimoire",
-  "description": "Mes stats, mon étagère et mon carnet de lectures Bookmory",
+  "description": "Mes lectures, mon étagère magique, mon carnet et mes citations",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",
