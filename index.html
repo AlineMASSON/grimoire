@@ -360,10 +360,9 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 .couv-carte{cursor:pointer}
 .couv-carte img,.couv-carte .ph{width:100%;height:170px;object-fit:cover;object-position:center 30%;border-radius:14px;box-shadow:var(--cover-shadow);display:block;background:var(--heat0)}
 .couv-carte .ph{display:flex;align-items:center;justify-content:center;font:700 16px "Cormorant Garamond",serif;color:var(--muted);text-align:center;padding:10px}
-.couv-carte.entiere{position:relative;height:200px;border-radius:14px;overflow:hidden;box-shadow:var(--cover-shadow);background:var(--heat0)}
-.couv-carte.entiere .flou-couv{position:absolute;inset:-20px;background:center/cover no-repeat;filter:blur(16px) saturate(1.2);opacity:.7}
-.couv-carte.entiere img{position:relative;height:100%;width:auto;max-width:100%;margin:0 auto;object-fit:contain;border-radius:4px;box-shadow:0 6px 16px rgba(0,0,0,.45)}
-.couv-carte.entiere .ph{height:100%;box-shadow:none}
+.couv-carte.entiere{height:200px}
+.couv-carte.entiere img{height:100%;width:auto;max-width:100%;margin:0 auto;object-fit:contain;border-radius:6px;box-shadow:var(--cover-shadow);background:none}
+.couv-carte.entiere .ph{height:100%;width:134px;margin:0 auto}
 .carte-livre .lire{position:absolute;right:24px;top:180px;width:56px;height:56px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--accent),var(--lav));color:#fff;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.35),0 0 0 3px var(--card);cursor:pointer}
 .carte-livre .lire.en-cours{background:var(--gold);color:#2a1a08;animation:respire-bouton 2s ease-in-out infinite}
 @keyframes respire-bouton{50%{box-shadow:0 6px 22px var(--gold),0 0 0 3px var(--card)}}
@@ -408,9 +407,9 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
   .carte-livre{width:86%;max-width:340px;padding:10px;display:grid;grid-template-columns:62px 1fr;column-gap:12px;align-content:start}
   .couv-carte{grid-row:1 / span 4}
   .couv-carte img,.couv-carte .ph{height:93px;width:62px;border-radius:8px}
-  .couv-carte.entiere{height:93px;width:62px;border-radius:8px}
-  .couv-carte.entiere .flou-couv{display:none}
-  .couv-carte.entiere img{width:62px;object-fit:cover;border-radius:8px;box-shadow:none}
+  .couv-carte.entiere{height:93px;width:62px}
+  .couv-carte.entiere img{width:62px;object-fit:cover;border-radius:8px}
+  .couv-carte.entiere .ph{width:62px}
   .carte-livre .t{margin:0;padding-right:0;font-size:16px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .carte-livre .prog{margin:6px 0 4px;height:7px}
   .carte-livre .small{font-size:11px;line-height:1.45;padding-right:48px}
@@ -1263,12 +1262,8 @@ function carteEnCours(r) {
     bouton = '<button class="lire en-cours" data-act="pageMinuteur" aria-label="Voir le minuteur">' + ic('timer') + '</button>';
   }
   var position = 'J\'en suis à…';
-  // la couverture en entier, posée sur une version floutée d'elle-même
-  var flou = '';
-  if (b.image && /^(https?|blob):/.test(b.image)) {
-    flou = '<span class="flou-couv" style="background-image:url(&quot;' + esc(b.image) + '&quot;)"></span>';
-  }
-  return '<div class="carte-livre"><div class="couv-carte entiere" data-act="livre" data-id="' + b.id + '">' + flou + cover(b) + '</div>' + bouton +
+  // la couverture en entier, seule (sans recadrage)
+  return '<div class="carte-livre"><div class="couv-carte entiere" data-act="livre" data-id="' + b.id + '">' + cover(b) + '</div>' + bouton +
     '<div class="t" data-act="livre" data-id="' + b.id + '">' + esc(titre(b)) + '</div><div class="prog"><div style="width:' + pct + '%"></div></div>' +
     '<div class="small muted">' + infos.join(' · ') + '</div><div class="carte-actions"><button class="mini-btn" data-act="progression" data-lecture="' + r._id + '">' + ic('bookmark') + ' ' + position + '</button></div></div>';
 }
@@ -9773,7 +9768,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-04 21:38:58';
+var VERSION_APPLI = '2026-10-04 21:42:36';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
