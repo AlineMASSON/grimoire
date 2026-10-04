@@ -2845,8 +2845,68 @@ ACTIONS.imageCitation = function (el) {
 };
 </script>
 
+<style>
+/* niveau : frise de médaillons */
+.frise{position:relative;display:flex;justify-content:space-between;align-items:center;margin:10px 2px 14px}
+.frise::before{content:"";position:absolute;left:14px;right:14px;top:50%;height:3px;margin-top:-1.5px;border-radius:3px;background:linear-gradient(90deg,var(--gold) 0 var(--fait),color-mix(in srgb,var(--muted) 30%,transparent) var(--fait))}
+.med{position:relative;z-index:1;width:34px;height:34px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;background:var(--card);border:2px solid color-mix(in srgb,var(--muted) 40%,transparent);transition:transform .2s}
+.med.fait{border-color:var(--gold);background:radial-gradient(circle at 35% 30%,var(--gold-soft),var(--card));box-shadow:0 0 8px color-mix(in srgb,var(--gold) 45%,transparent)}
+.med.ici{width:48px;height:48px;font-size:24px;border:3px solid var(--gold);background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--accent) 60%,var(--card)),var(--card));box-shadow:0 0 0 5px color-mix(in srgb,var(--gold) 18%,transparent),0 0 18px color-mix(in srgb,var(--accent) 70%,transparent)}
+.med.futur>span:first-child{filter:grayscale(1);opacity:.45}
+.med .cad{position:absolute;bottom:-5px;right:-5px;font-size:10px}
+.med.vu{transform:translateY(-4px);outline:2px solid var(--accent);outline-offset:3px}
+.detail-niv{border-radius:16px;padding:12px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line)}
+.detail-niv .nom{font:700 22px/1.15 "Cormorant Garamond",Georgia,serif;margin:2px 0 6px}
+.voisins{display:flex;gap:8px;margin-top:10px}
+.voisins button{flex:1;min-width:0;text-align:left;border-radius:12px;padding:8px 10px;font:600 12px/1.35 Nunito,sans-serif;color:var(--ink);background:color-mix(in srgb,var(--ink) 3%,transparent);border:1px dashed var(--line);cursor:pointer}
+.voisins button b{display:block;font-size:13px}
+.voisins .vide{visibility:hidden}
+/* bingo */
+.entete-bingo{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.anneau-bingo{width:62px;height:62px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(closest-side,var(--card) 76%,transparent 78%),conic-gradient(var(--gold) 0 var(--p),color-mix(in srgb,var(--muted) 25%,transparent) var(--p))}
+.anneau-bingo b{font:800 17px/1 Nunito,sans-serif}
+.anneau-bingo span{font-size:10px;color:var(--muted)}
+.entete-bingo select{margin-top:6px}
+.astuce-bingo{margin:0 0 10px;padding:9px 11px;border-radius:12px;font-size:12.5px;line-height:1.45;background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.grille-bingo{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.cb{position:relative;aspect-ratio:1/1.08;border-radius:12px;padding:5px 2px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:3px;cursor:pointer;font-family:Nunito,sans-serif;color:var(--ink)}
+.cb .e{font-size:21px;line-height:1}
+.cb .l{font:800 9.5px/1.15 Nunito,sans-serif;overflow-wrap:anywhere}
+.cb.ok{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 45%,var(--card)),color-mix(in srgb,var(--lav) 30%,var(--card)));border:1.5px solid color-mix(in srgb,var(--gold) 70%,transparent)}
+.cb.ok::after{content:"✓";position:absolute;top:-6px;right:-5px;width:17px;height:17px;border-radius:50%;background:var(--gold);color:#2a1d0c;font:900 11px/17px Nunito,sans-serif;text-align:center;box-shadow:0 0 6px color-mix(in srgb,var(--gold) 80%,transparent)}
+.cb.ligne{background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 45%,var(--card)),color-mix(in srgb,var(--accent) 45%,var(--card)));border-color:var(--gold);box-shadow:0 0 10px color-mix(in srgb,var(--gold) 45%,transparent)}
+.cb.vide{background:none;border:1.5px dashed color-mix(in srgb,var(--muted) 45%,transparent);color:var(--muted)}
+.cb.vide .e{filter:grayscale(1);opacity:.5}
+.cb.cible{border:1.5px solid var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}
+.legende-bingo{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--muted)}
+.legende-bingo i{display:inline-block;width:11px;height:11px;border-radius:4px;vertical-align:-1px;margin-right:4px}
+/* défis */
+.defi{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line)}
+.defi:last-child{border:0}
+.defi .ico{width:36px;height:36px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;font-size:18px;background:color-mix(in srgb,var(--ink) 7%,transparent)}
+.defi .txt{flex:1;min-width:0}
+.defi .txt b{font-size:13.5px}
+.defi .prog{height:7px;margin:6px 0 3px}
+.defi .xp{font:800 12px Nunito,sans-serif;color:var(--gold);white-space:nowrap}
+.defi.fini .ico{background:color-mix(in srgb,var(--gold) 25%,transparent)}
+.defi.fini .txt b::after{content:" ✓";color:var(--gold)}
+/* sceaux en cire */
+.sceaux{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 8px}
+.sceau{text-align:center;font-size:11.5px;line-height:1.25}
+.cire{position:relative;width:62px;height:62px;margin:0 auto 6px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 3px 8px rgba(0,0,0,.35),inset 0 0 0 4px rgba(255,255,255,.18)}
+.cire.p1{background:radial-gradient(circle at 35% 30%,#ffb3c4,#c2385d 60%,#701a33)}
+.cire.p2{background:radial-gradient(circle at 35% 30%,#d4b8ff,#7a4fd0 60%,#40237f)}
+.cire.p3{background:radial-gradient(circle at 35% 30%,#ffe7a3,#c9952f 60%,#8a5f17)}
+.cire.p4{background:radial-gradient(circle at 35% 30%,#c9fff1,#2fb3c9 45%,#7a4fd0 80%,#40237f)}
+.cire.verrou{box-shadow:none;background:radial-gradient(closest-side,var(--card) 82%,transparent 84%),conic-gradient(var(--accent) 0 var(--p),color-mix(in srgb,var(--muted) 25%,transparent) var(--p))}
+.cire.verrou>span{filter:grayscale(1);opacity:.45}
+.cire .nouveau{position:absolute;top:-7px;left:50%;transform:translateX(-50%);font:900 9px Nunito,sans-serif;letter-spacing:.5px;color:#2a1d0c;background:var(--gold);padding:2px 6px;border-radius:999px;white-space:nowrap}
+.sceau b{display:block}
+.sceau .palier{display:block;font:900 9px Nunito,sans-serif;color:var(--gold);letter-spacing:.5px;margin-top:1px}
+.sceau .prog{height:5px;margin:5px 8px 2px}
+</style>
 <script>
-// ---------- Quêtes : niveau de sorcière, bingo, sceaux ----------
+// ---------- Quêtes : niveau de sorcière, défis, bingo, sceaux ----------
 var NIVEAUX = [
   [0, '🌱', 'Apprentie des grimoires'],
   [3000, '🕯️', 'Novice à la chandelle'],
@@ -2858,40 +2918,274 @@ var NIVEAUX = [
   [85000, '🌌', 'Grande Bibliothécaire céleste']
 ];
 var anBingo = null;
+var nivVu = null;
 
-// XP : 1 par page, 40 par heure d'écoute, 60 par livre fini, 5 par jour de lecture
+// défis déjà réussis (enregistrés dans la base : leur XP compte pour le niveau)
+function defisReussis() {
+  return reglage('defisReussis', {}) || {};
+}
+// XP : 1 par page, 40 par heure d'écoute, 60 par livre fini, 5 par jour de lecture, + les défis réussis
+function xpLecture(r) {
+  if (r.page_type === 'TIME') {
+    return 60 + r.total_page / 3600 * 40;
+  }
+  return 60 + pagesLecture(r);
+}
+function evenementsXp() {
+  var ev = finies().map(function (r) { return {t: r.end, xp: xpLecture(r)}; });
+  Object.keys(jours()).forEach(function (k) {
+    ev.push({t: new Date(k + 'T12:00:00').getTime(), xp: 5});
+  });
+  var d = defisReussis();
+  Object.keys(d).forEach(function (k) {
+    ev.push({t: d[k].date, xp: d[k].xp});
+  });
+  return ev.sort(function (a, b) { return a.t - b.t; });
+}
 function niveau() {
   return avec('quetes', niveauCorps);
 }
 function niveauCorps() {
-  var fin = finies();
-  var pages = 0, sec = 0;
-  fin.forEach(function (r) {
-    if (r.page_type === 'TIME') {
-      sec += r.total_page;
-    } else {
-      pages += pagesLecture(r);
+  var ev = evenementsXp();
+  var total = 0;
+  var i = 0;
+  var dates = [ev.length ? ev[0].t : Date.now()];
+  ev.forEach(function (e) {
+    total += e.xp;
+    while (i + 1 < NIVEAUX.length && Math.round(total) >= NIVEAUX[i + 1][0]) {
+      i++;
+      dates[i] = e.t;
     }
   });
-  var xp = Math.round(pages + sec / 3600 * 40 + fin.length * 60 + Object.keys(jours()).length * 5);
-  var i = 0;
-  while (i + 1 < NIVEAUX.length && xp >= NIVEAUX[i + 1][0]) {
-    i++;
-  }
+  var xp = Math.round(total);
   var suivant = NIVEAUX[i + 1];
   var pct = 100;
   if (suivant) {
     pct = 100 * (xp - NIVEAUX[i][0]) / (suivant[0] - NIVEAUX[i][0]);
   }
-  return {xp: xp, i: i, n: NIVEAUX[i], suivant: suivant, pct: pct};
+  // rythme : XP gagnée par jour sur les 90 derniers jours
+  var depuis = Date.now() - 90 * DAY;
+  var recent = ev.filter(function (e) { return e.t >= depuis; }).reduce(function (s, e) { return s + e.xp; }, 0);
+  return {xp: xp, i: i, n: NIVEAUX[i], suivant: suivant, pct: pct, dates: dates, rythme: recent / 90};
+}
+// « ≈ 4 mois » pour gagner tant d'XP au rythme actuel
+function delaiXp(reste, rythme) {
+  if (!rythme || reste <= 0) {
+    return '';
+  }
+  var j = reste / rythme;
+  if (j < 14) {
+    return '≈ ' + Math.max(1, Math.round(j)) + ' jour' + (Math.round(j) > 1 ? 's' : '');
+  }
+  if (j < 60) {
+    return '≈ ' + Math.round(j / 7) + ' semaines';
+  }
+  if (j < 730) {
+    return '≈ ' + Math.round(j / 30) + ' mois';
+  }
+  return '≈ ' + Math.round(j / 365) + ' ans';
+}
+function dureeNiveau(ms) {
+  var j = Math.round(ms / DAY);
+  if (j < 60) {
+    return j + ' jour' + (j > 1 ? 's' : '');
+  }
+  if (j < 730) {
+    return Math.round(j / 30) + ' mois';
+  }
+  return Math.round(j / 365) + ' ans';
+}
+function nombreFr(n) {
+  return Math.round(n).toLocaleString('fr-FR');
 }
 function carteNiveau() {
   var n = niveau();
-  var reste = '<b>Niveau maximum atteint ✨</b>';
-  if (n.suivant) {
-    reste = 'Encore <b>' + (n.suivant[0] - n.xp).toLocaleString('fr-FR') + ' XP</b> pour devenir ' + n.suivant[1] + ' ' + n.suivant[2];
+  var vu = n.i;
+  if (nivVu !== null && NIVEAUX[nivVu]) {
+    vu = nivVu;
   }
-  return card('Mon niveau', '<div class="niveau"><div class="em">' + n.n[1] + '</div><div style="flex:1"><div class="small muted">Niveau ' + (n.i + 1) + ' · ' + n.xp.toLocaleString('fr-FR') + ' XP</div><div class="nom">' + n.n[2] + '</div><div class="prog"><div style="width:' + n.pct + '%"></div></div><div class="small">' + reste + '</div></div></div>', '1 XP par page · 40 par heure d\'écoute · 60 par livre fini · 5 par jour de lecture');
+  var dernier = NIVEAUX.length - 1;
+  // la ligne dorée va jusqu'au niveau actuel, plus la part déjà faite vers le suivant
+  var fait = 100 * (n.i + Math.min(n.pct, 100) / 100 * (n.suivant ? 1 : 0)) / dernier;
+  var frise = '<div class="frise" style="--fait:' + fait.toFixed(1) + '%">' + NIVEAUX.map(function (lv, k) {
+    var cls = 'med';
+    var cad = '';
+    if (k < n.i) {
+      cls += ' fait';
+    } else if (k === n.i) {
+      cls += ' ici';
+    } else {
+      cls += ' futur';
+      cad = '<span class="cad">🔒</span>';
+    }
+    if (k === vu && vu !== n.i) {
+      cls += ' vu';
+    }
+    return '<button class="' + cls + '" data-act="voirNiveau" data-i="' + k + '" aria-label="Niveau ' + (k + 1) + ' : ' + esc(lv[2]) + '"><span>' + lv[1] + '</span>' + cad + '</button>';
+  }).join('') + '</div>';
+
+  var lv = NIVEAUX[vu];
+  var d = '';
+  if (vu < n.i) {
+    d = '<div class="small muted">Niveau ' + (vu + 1) + ' · atteint le ' + fdate(n.dates[vu]) + '</div><div class="nom">' + lv[1] + ' ' + esc(lv[2]) + '</div><div class="small">✓ Passé. Tu y es restée ' + dureeNiveau(n.dates[vu + 1] - n.dates[vu]) + '.</div>';
+  } else if (vu === n.i) {
+    var reste = '<b>Niveau maximum atteint ✨</b>';
+    if (n.suivant) {
+      var delai = delaiXp(n.suivant[0] - n.xp, n.rythme);
+      reste = '<b>' + nombreFr(n.xp) + ' XP</b> · encore <b>' + nombreFr(n.suivant[0] - n.xp) + ' XP</b>' + (delai ? ' (' + delai + ' à ton rythme)' : '');
+    }
+    var depuis = 'depuis le ' + fdate(n.dates[vu]);
+    if (vu === 0) {
+      depuis = 'depuis tes débuts';
+    }
+    d = '<div class="small muted">Niveau ' + (vu + 1) + ' · ' + depuis + '</div><div class="nom">' + lv[1] + ' ' + esc(lv[2]) + '</div><div class="prog"><div style="width:' + n.pct + '%"></div></div><div class="small" style="margin-top:6px">' + reste + '</div>';
+  } else {
+    var delai2 = delaiXp(lv[0] - n.xp, n.rythme);
+    d = '<div class="small muted">🔒 Niveau ' + (vu + 1) + ' · à ' + nombreFr(lv[0]) + ' XP</div><div class="nom">' + lv[1] + ' ' + esc(lv[2]) + '</div><div class="small">Encore <b>' + nombreFr(lv[0] - n.xp) + ' XP</b>' + (delai2 ? ' (' + delai2 + ' à ton rythme)' : '') + '.</div>';
+  }
+  function voisin(k, sens) {
+    if (!NIVEAUX[k]) {
+      return '<button class="vide" tabindex="-1"></button>';
+    }
+    var info = '';
+    if (k < n.i) {
+      info = 'atteint le ' + fdate(n.dates[k]);
+    } else if (k === n.i) {
+      info = 'ton niveau actuel';
+    } else {
+      info = '🔒 à ' + nombreFr(NIVEAUX[k][0]) + ' XP';
+    }
+    var titreV = '◀ Précédent';
+    if (sens > 0) {
+      titreV = 'Suivant ▶';
+    }
+    return '<button data-act="voirNiveau" data-i="' + k + '"><span class="muted">' + titreV + '</span><b>' + NIVEAUX[k][1] + ' ' + esc(NIVEAUX[k][2]) + '</b>' + info + '</button>';
+  }
+  var corps = frise + '<div class="detail-niv">' + d + '<div class="voisins">' + voisin(vu - 1, -1) + voisin(vu + 1, 1) + '</div></div>';
+  return card('Mon niveau', corps, 'touche un médaillon · 1 XP par page, 40 par heure d\'écoute, 60 par livre fini, 5 par jour de lecture, + tes défis');
+}
+ACTIONS.voirNiveau = function (el) {
+  nivVu = parseInt(el.dataset.i, 10);
+  rendre();
+};
+
+// ---------- défis de la semaine et du mois (XP bonus) ----------
+function debutSemaine(ts) {
+  var d = new Date(ts);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+  return d.getTime();
+}
+function dansPeriode(ts, a, b) {
+  return ts >= a && ts < b;
+}
+function arrondi(x, pas) {
+  return Math.max(pas, Math.round(x / pas) * pas);
+}
+function dureeDefi(sec) {
+  var m = Math.round(sec / 60);
+  if (m < 60) {
+    return m + ' min';
+  }
+  return Math.floor(m / 60) + ' h' + (m % 60 ? ' ' + String(m % 60).padStart(2, '0') : '');
+}
+// les défis de la période en cours, avec leur avancement
+function defisEnCours() {
+  var now = Date.now();
+  var lundi = debutSemaine(now);
+  var dimanche = lundi + 7 * DAY;
+  var cleSem = 'S' + dkey(new Date(lundi));
+  var J = jours();
+  var ppj = pagesParJour();
+  var ss = (M.sessions || []).filter(function (s) { return compte(s.book); });
+  // le rythme des 8 semaines précédentes rend les défis à ta mesure
+  var avant = lundi - 56 * DAY;
+  var joursAvant = Object.keys(J).filter(function (k) { var t = new Date(k + 'T12:00:00').getTime(); return dansPeriode(t, avant, lundi); }).length;
+  var pagesAvant = Object.keys(ppj).filter(function (k) { var t = new Date(k + 'T12:00:00').getTime(); return dansPeriode(t, avant, lundi); }).reduce(function (s, k) { return s + ppj[k]; }, 0);
+  var minutesAvant = ss.filter(function (s) { return dansPeriode(s.debut, avant, lundi); }).reduce(function (s, x) { return s + x.dureeSec; }, 0) / 60;
+
+  function joursSemaine() {
+    return Object.keys(J).filter(function (k) { var t = new Date(k + 'T12:00:00').getTime(); return dansPeriode(t, lundi, dimanche); }).length;
+  }
+  var POOL = [
+    {id: 'jours', ico: '📖', xp: 50, cible: Math.min(7, Math.max(3, Math.round(joursAvant / 8) + 1)), titre: function (c) { return 'Lire ' + c + ' jours cette semaine'; }, unite: function (v, c) { return v + ' / ' + c + ' jours'; }, val: joursSemaine},
+    {id: 'pages', ico: '📄', xp: 50, cible: arrondi(pagesAvant / 8 * 1.15, 10), titre: function (c) { return 'Lire ' + c + ' pages cette semaine'; }, unite: function (v, c) { return v + ' / ' + c + ' p.'; }, val: function () {
+      return Object.keys(ppj).filter(function (k) { var t = new Date(k + 'T12:00:00').getTime(); return dansPeriode(t, lundi, dimanche); }).reduce(function (s, k) { return s + ppj[k]; }, 0);
+    }},
+    {id: 'minuteur', ico: '⏱️', xp: 40, cible: arrondi(Math.max(30, minutesAvant / 8 * 1.1), 15) * 60, titre: function (c) { return 'Lire ' + dureeDefi(c) + ' avec le minuteur'; }, unite: function (v, c) { return dureeDefi(v) + ' / ' + dureeDefi(c); }, val: function () {
+      return ss.filter(function (s) { return dansPeriode(s.debut, lundi, dimanche); }).reduce(function (s, x) { return s + x.dureeSec; }, 0);
+    }},
+    {id: 'finir', ico: '✅', xp: 60, cible: 1, titre: function () { return 'Terminer un livre cette semaine'; }, unite: function (v, c) { return v + ' / ' + c + ' livre'; }, val: function () {
+      return finies().filter(function (r) { return dansPeriode(r.end, lundi, dimanche); }).length;
+    }},
+    {id: 'citation', ico: '✍️', xp: 30, cible: 1, titre: function () { return 'Noter une citation, une pensée ou une note'; }, unite: function (v, c) { return v + ' / ' + c; }, val: function () {
+      return M.notes.filter(function (x) { return dansPeriode(x.created_at, lundi, dimanche); }).length;
+    }},
+    {id: 'carnet', ico: '📝', xp: 30, cible: 1, titre: function () { return 'Remplir le carnet d\'un livre'; }, unite: function (v, c) { return v + ' / ' + c; }, val: function () {
+      return valeurs(D.avis).filter(function (a) { return dansPeriode(a.maj || 0, lundi, dimanche); }).length;
+    }},
+    {id: 'matin', ico: '☀️', xp: 30, cible: 1, titre: function () { return 'Lire avant 9 h un matin'; }, unite: function (v, c) { return v + ' / ' + c + ' matin'; }, val: function () {
+      var vus = {};
+      ss.forEach(function (s) {
+        var d = new Date(s.debut);
+        if (dansPeriode(s.debut, lundi, dimanche) && d.getHours() >= 5 && d.getHours() < 9) {
+          vus[dkey(d)] = 1;
+        }
+      });
+      return Object.keys(vus).length;
+    }},
+    {id: 'pal', ico: '🕸️', xp: 40, cible: 1, titre: function () { return 'Commencer un livre qui attendait dans ta PAL'; }, unite: function (v, c) { return v + ' / ' + c; }, val: function () {
+      return lect().filter(function (r) { return r.start && dansPeriode(r.start, lundi, dimanche) && r.book.created_at && r.book.created_at < lundi - 30 * DAY; }).length;
+    }}
+  ];
+  // trois défis par semaine : jours ou pages (en alternance), puis deux autres tirés au sort pour la semaine
+  var n = Math.round(lundi / (7 * DAY));
+  var choisis = [POOL[n % 2]];
+  var reste = POOL.slice(2);
+  if (!ss.some(function (s) { return s.dureeSec > 0; })) {
+    reste = reste.filter(function (p) { return p.id !== 'minuteur'; });
+  }
+  var graine = n * 7 + 3;
+  while (choisis.length < 3 && reste.length) {
+    graine = (graine * 31 + 11) % 997;
+    choisis.push(reste.splice(graine % reste.length, 1)[0]);
+  }
+  var defis = choisis.map(function (p) {
+    var v = p.val();
+    return {cle: cleSem + ':' + p.id, ico: p.ico, titre: p.titre(p.cible), xp: p.xp, v: v, cible: p.cible, texte: p.unite(v, p.cible), fini: v >= p.cible};
+  });
+  // défi du mois : finir autant de livres que d'habitude (moyenne des 6 derniers mois)
+  var d0 = new Date(now);
+  var debutMois = new Date(d0.getFullYear(), d0.getMonth(), 1).getTime();
+  var finMois = new Date(d0.getFullYear(), d0.getMonth() + 1, 1).getTime();
+  var finiesAvant = finies().filter(function (r) { return dansPeriode(r.end, debutMois - 183 * DAY, debutMois); }).length;
+  var cibleMois = Math.max(1, Math.round(finiesAvant / 6));
+  var vMois = finies().filter(function (r) { return dansPeriode(r.end, debutMois, finMois); }).length;
+  var nomMois = d0.toLocaleDateString('fr-FR', {month: 'long'});
+  var de = 'de ';
+  if (/^[aeiouyéèâ]/i.test(nomMois)) {
+    de = 'd\'';
+  }
+  defis.push({cle: 'M' + d0.getFullYear() + '-' + (d0.getMonth() + 1) + ':finir', ico: '🌕', titre: 'Défi ' + de + nomMois + ' : finir ' + cibleMois + ' livre' + (cibleMois > 1 ? 's' : ''), xp: 150, v: vMois, cible: cibleMois, texte: vMois + ' / ' + cibleMois + ' livre' + (cibleMois > 1 ? 's' : ''), fini: vMois >= cibleMois, mois: true});
+  return defis;
+}
+function carteDefis() {
+  var defis = defisEnCours();
+  var deja = defisReussis();
+  var gagne = 0;
+  var h = defis.map(function (d) {
+    var pct = Math.min(100, 100 * d.v / d.cible);
+    var xp = '+' + d.xp + ' XP';
+    if (deja[d.cle]) {
+      gagne += d.xp;
+    }
+    return '<div class="defi' + (d.fini ? ' fini' : '') + '"><div class="ico">' + d.ico + '</div><div class="txt"><b>' + esc(d.titre) + '</b><div class="prog"><div style="width:' + pct + '%"></div></div><div class="small muted">' + esc(d.texte) + '</div></div><div class="xp">' + xp + '</div></div>';
+  }).join('');
+  var sous = 'de nouveaux défis chaque lundi · l\'XP gagnée compte pour ton niveau';
+  if (gagne) {
+    sous = gagne + ' XP déjà gagnés · de nouveaux défis chaque lundi';
+  }
+  return card('Défis de la semaine', h, sous);
 }
 
 // ---------- bingo ----------
@@ -2904,6 +3198,13 @@ function anneePub(b) {
     return parseInt(m[1], 10);
   }
   return 0;
+}
+function auteursLus() {
+  var vu = {};
+  lect().forEach(function (r) {
+    (r.book.authors || []).forEach(function (a) { vu[a] = 1; });
+  });
+  return vu;
 }
 function premiersAuteurs() {
   var vu = {};
@@ -2918,15 +3219,23 @@ function premiersAuteurs() {
   });
   return premier;
 }
+function enPapier(b) {
+  return b.book_type !== 'audioBook' && b.page_type !== 'TIME';
+}
+// une case : [emoji, libellé court, libellé long, résultat (lecture, {book} ou {}), comment la cocher, livre qui conviendrait]
 function casesBingo(y) {
   var fin = finies().filter(function (r) { return annee(r.end) === y; });
   var tout = lect().filter(function (r) { return r.date && annee(r.date) === y; });
   var nouveaux = premiersAuteurs();
+  var lus = auteursLus();
   function lecture(test) {
     return fin.filter(test)[0] || null;
   }
   function tag(re) {
     return lecture(function (r) { return re.test(tagsDe(r.book)); });
+  }
+  function aTag(re) {
+    return function (b) { return re.test(tagsDe(b)); };
   }
   var J = jours();
   var joursAn = Object.keys(J).filter(function (k) { return k.slice(0, 4) === String(y); });
@@ -2959,33 +3268,78 @@ function casesBingo(y) {
     }
     return !!J[dkey(new Date(d.getTime() + DAY))];
   });
+  var RE_THRILLER = /thriller|policier|mystère|espionnage/i;
   return [
-    ['🧱', 'Un pavé de 500 p.', lecture(function (r) { return pagesLecture(r) >= 500; })],
-    ['🍬', 'Moins de 200 p.', lecture(function (r) { var p = pagesLecture(r); return p > 0 && p < 200; })],
-    ['🎧', 'Un livre audio', lecture(function (r) { return r.fmt === 'audioBook'; })],
-    ['📱', 'Un ebook', lecture(function (r) { return r.fmt === 'eBook'; })],
-    ['🆕', 'Un nouvel auteur', lecture(function (r) { return nouveaux[r.book.id + ':' + r.nth]; })],
-    ['1️⃣', 'Un tome 1', lecture(function (r) { return r.book.series_key && r.book.series_number === 1; })],
-    ['🐉', 'De la fantasy', tag(/fantasy/i)],
-    ['🔪', 'Un thriller', tag(/thriller|policier|mystère|espionnage/i)],
-    ['💌', 'Une romance', tag(/romance/i)],
-    ['👻', 'Un livre qui fait peur', tag(/horreur|gothique/i)],
-    ['🧒', 'Jeunesse ou YA', tag(/jeunesse|young adult/i)],
-    ['🏛️', 'Un classique (avant 1970)', lecture(function (r) { var a = anneePub(r.book); return a > 0 && a < 1970; })],
-    ['✨', 'Case magique', {}],
-    ['🗞️', 'Une sortie de l\'année', lecture(function (r) { return anneePub(r.book) === y; })],
-    ['🌍', 'Un livre traduit', lecture(function (r) { return (r.book.translators || []).length > 0; })],
-    ['💖', 'Un coup de cœur 5★', lecture(function (r) { return r.star >= 5; })],
-    ['🔚', 'Un tome 3 ou plus', lecture(function (r) { return r.book.series_key && r.book.series_number >= 3; })],
-    ['🕸️', 'Sorti de la PAL après 1 an', lecture(function (r) { return r.start && r.start - r.book.created_at > 365 * DAY; })],
-    ['⚡', 'Lu en 3 jours max', lecture(function (r) { return r.start && r.created_at < r.end && r.end - r.start <= 3 * DAY; })],
-    ['🛍️', 'Un livre acheté', achat],
-    ['✍️', 'Une citation notée', cit],
-    ['🔥', '7 jours d\'affilée', serie7 ? {} : null],
-    ['🌙', 'Lu après minuit', minuit],
-    ['🛋️', 'Un week-end lecture', weekend ? {} : null],
-    ['🏳️', 'Un abandon assumé', tout.filter(function (r) { return r.status === 'GIVE_UP'; })[0] || null]
+    ['🧱', 'Un pavé de 500 p.', 'Un pavé de 500 pages', lecture(function (r) { return pagesLecture(r) >= 500; }), 'Termine un livre de 500 pages ou plus.', function (b) { return enPapier(b) && (b.total_page || 0) >= 500; }],
+    ['🍬', 'Moins de 200 p.', 'Un livre de moins de 200 pages', lecture(function (r) { var p = pagesLecture(r); return p > 0 && p < 200; }), 'Termine un livre de moins de 200 pages.', function (b) { return enPapier(b) && b.total_page > 0 && b.total_page < 200; }],
+    ['🎧', 'Un livre audio', 'Un livre audio', lecture(function (r) { return r.fmt === 'audioBook'; }), 'Termine un livre en audio.', function (b) { return b.book_type === 'audioBook'; }],
+    ['📱', 'Un ebook', 'Un ebook', lecture(function (r) { return r.fmt === 'eBook'; }), 'Termine un livre numérique.', function (b) { return b.book_type === 'eBook'; }],
+    ['🆕', 'Un nouvel auteur', 'Un·e nouvel·le auteur·ice', lecture(function (r) { return nouveaux[r.book.id + ':' + r.nth]; }), 'Termine un livre d\'un·e auteur·ice que tu n\'avais encore jamais lu·e.', function (b) { return (b.authors || []).length && !(b.authors || []).some(function (a) { return lus[a]; }); }],
+    ['1️⃣', 'Un tome 1', 'Un tome 1', lecture(function (r) { return r.book.series_key && r.book.series_number === 1; }), 'Termine le premier tome d\'une série.', function (b) { return b.series_key && b.series_number === 1; }],
+    ['🐉', 'De la fantasy', 'De la fantasy', tag(/fantasy/i), 'Termine un livre de fantasy.', aTag(/fantasy/i)],
+    ['🔪', 'Un thriller', 'Un thriller ou un polar', tag(RE_THRILLER), 'Termine un thriller, un polar ou un mystère.', aTag(RE_THRILLER)],
+    ['💌', 'Une romance', 'Une romance', tag(/romance/i), 'Termine une romance.', aTag(/romance/i)],
+    ['👻', 'Qui fait peur', 'Un livre qui fait peur', tag(/horreur|gothique/i), 'Termine un livre d\'horreur ou gothique.', aTag(/horreur|gothique/i)],
+    ['🧒', 'Jeunesse ou YA', 'Jeunesse ou young adult', tag(/jeunesse|young adult/i), 'Termine un livre jeunesse ou young adult.', aTag(/jeunesse|young adult/i)],
+    ['🏛️', 'Un classique', 'Un classique (paru avant 1970)', lecture(function (r) { var a = anneePub(r.book); return a > 0 && a < 1970; }), 'Termine un livre paru avant 1970.', function (b) { var a = anneePub(b); return a > 0 && a < 1970; }],
+    ['✨', 'Case magique', 'Case magique', {}, 'Offerte ! Elle est toujours cochée.', null],
+    ['🗞️', 'Sortie de l\'année', 'Une sortie de l\'année', lecture(function (r) { return anneePub(r.book) === y; }), 'Termine un livre paru en ' + y + '.', function (b) { return anneePub(b) === y; }],
+    ['🌍', 'Un livre traduit', 'Un livre traduit', lecture(function (r) { return (r.book.translators || []).length > 0; }), 'Termine un livre traduit (avec un·e traducteur·ice dans sa fiche).', function (b) { return (b.translators || []).length > 0; }],
+    ['💖', 'Coup de cœur 5★', 'Un coup de cœur à 5 étoiles', lecture(function (r) { return r.star >= 5; }), 'Donne 5 étoiles à un livre que tu as fini.', null],
+    ['🔚', 'Tome 3 ou plus', 'Un tome 3 ou plus', lecture(function (r) { return r.book.series_key && r.book.series_number >= 3; }), 'Termine le tome 3 (ou un suivant) d\'une série.', function (b) { return b.series_key && b.series_number >= 3; }],
+    ['🕸️', 'PAL depuis 1 an', 'Sorti de la PAL après un an', lecture(function (r) { return r.start && r.start - r.book.created_at > 365 * DAY; }), 'Termine un livre qui attendait dans ta PAL depuis plus d\'un an.', function (b) { return b.created_at && Date.now() - b.created_at > 365 * DAY; }],
+    ['⚡', 'Lu en 3 jours', 'Lu en 3 jours maximum', lecture(function (r) { return r.start && r.created_at < r.end && r.end - r.start <= 3 * DAY; }), 'Termine un livre moins de 3 jours après l\'avoir commencé.', function (b) { return enPapier(b) && b.total_page > 0 && b.total_page < 250; }],
+    ['🛍️', 'Un livre acheté', 'Un livre acheté', achat, 'Ajoute un achat dans la fiche d\'un livre (+ Achat).', null],
+    ['✍️', 'Une citation', 'Une citation notée', cit, 'Note une citation ou une pensée dans ton carnet.', null],
+    ['🔥', '7 jours d\'affilée', '7 jours de lecture d\'affilée', serie7 ? {} : null, 'Lis au moins 7 jours de suite.', null],
+    ['🌙', 'Après minuit', 'Lu après minuit', minuit, 'Note où tu en es entre minuit et 4 h du matin.', null],
+    ['🛋️', 'Week-end lecture', 'Un week-end lecture', weekend ? {} : null, 'Lis un samedi et le dimanche qui suit.', null],
+    ['🏳️', 'Abandon assumé', 'Un abandon assumé', tout.filter(function (r) { return r.status === 'GIVE_UP'; })[0] || null, 'Abandonne un livre en cours de route (« Plus envie » ne compte pas).', null]
   ];
+}
+var LIGNES_BINGO = (function () {
+  var l = [];
+  for (var i = 0; i < 5; i++) {
+    l.push([0, 1, 2, 3, 4].map(function (j) { return i * 5 + j; }));
+    l.push([0, 1, 2, 3, 4].map(function (j) { return j * 5 + i; }));
+  }
+  l.push([0, 6, 12, 18, 24], [4, 8, 12, 16, 20]);
+  return l;
+})();
+function etatBingo(y) {
+  var cases = casesBingo(y);
+  var ok = cases.map(function (c) { return !!c[3]; });
+  var gagnees = LIGNES_BINGO.filter(function (l) { return l.every(function (k) { return ok[k]; }); });
+  return {cases: cases, ok: ok, gagnees: gagnees, nbOk: ok.filter(Boolean).length};
+}
+// livres en cours puis de la PAL qui cocheraient une case
+function livresPourCase(test) {
+  if (!test) {
+    return [];
+  }
+  var enCours = M.livres.filter(function (b) { return compte(b) && b.statut === 'READING' && test(b); });
+  var pal = M.livres.filter(function (b) { return compte(b) && b.statut === 'NOT_STARTED' && !b.wishlist && test(b); }).sort(function (a, b) { return (a.created_at || 0) - (b.created_at || 0); });
+  return enCours.concat(pal);
+}
+// la case qui ferait le plus de bingos (lignes où il ne manque qu'elle)
+function prochainBingo(eb) {
+  var compteCase = {};
+  LIGNES_BINGO.forEach(function (l) {
+    var manque = l.filter(function (k) { return !eb.ok[k]; });
+    if (manque.length === 1) {
+      compteCase[manque[0]] = (compteCase[manque[0]] || 0) + 1;
+    }
+  });
+  var meilleure = null;
+  Object.keys(compteCase).forEach(function (k) {
+    if (meilleure === null || compteCase[k] > compteCase[meilleure]) {
+      meilleure = k;
+    }
+  });
+  if (meilleure === null) {
+    return null;
+  }
+  return {k: parseInt(meilleure, 10), lignes: compteCase[meilleure]};
 }
 function vBingo() {
   var ans = {};
@@ -2994,61 +3348,111 @@ function vBingo() {
       ans[annee(r.date)] = 1;
     }
   });
+  ans[new Date().getFullYear()] = 1;
   var liste = Object.keys(ans).sort().reverse();
   if (!anBingo) {
     anBingo = String(new Date().getFullYear());
   }
   var y = parseInt(anBingo, 10);
-  var cases = casesBingo(y);
-  var ok = cases.map(function (c) { return !!c[2]; });
-  var lignes = [];
-  for (var i = 0; i < 5; i++) {
-    lignes.push([0, 1, 2, 3, 4].map(function (j) { return i * 5 + j; }));
-    lignes.push([0, 1, 2, 3, 4].map(function (j) { return j * 5 + i; }));
-  }
-  lignes.push([0, 6, 12, 18, 24], [4, 8, 12, 16, 20]);
-  var gagnees = lignes.filter(function (l) { return l.every(function (k) { return ok[k]; }); });
+  var eb = etatBingo(y);
   var dansLigne = {};
-  gagnees.forEach(function (l) { l.forEach(function (k) { dansLigne[k] = 1; }); });
-  var nbOk = ok.filter(Boolean).length;
-  var grille = '<div class="bingo">' + cases.map(function (c, k) {
-    var cls = 'c';
-    var img = '';
-    if (c[2]) {
-      cls += ' ok';
-      if (c[2].book && c[2].book.image) {
-        img = '<img src="' + esc(c[2].book.image) + '" alt="">';
+  eb.gagnees.forEach(function (l) { l.forEach(function (k) { dansLigne[k] = 1; }); });
+  var cetteAnnee = y === new Date().getFullYear();
+  var pb = null;
+  var astuce = '';
+  if (eb.nbOk === 25) {
+    astuce = '<div class="astuce-bingo">🏆 <b>Carton plein !</b> Les 25 cases sont cochées. Bravo, sorcière !</div>';
+  } else if (cetteAnnee) {
+    pb = prochainBingo(eb);
+    if (pb) {
+      var c = eb.cases[pb.k];
+      var idees = livresPourCase(c[5]);
+      var idee = '';
+      if (idees.length) {
+        idee = ' Par exemple : <i>' + esc(titre(idees[0])) + '</i>.';
       }
+      astuce = '<div class="astuce-bingo">🎯 <b>Prochain bingo :</b> ' + c[0] + ' <b>' + esc(c[2].toLowerCase()) + '</b> complète ' + (pb.lignes > 1 ? pb.lignes + ' lignes d\'un coup' : 'une ligne') + '.' + idee + '</div>';
+    } else {
+      var manquantes = eb.cases.filter(function (x, k) { return !eb.ok[k]; }).map(function (x) { return x[0]; });
+      astuce = '<div class="astuce-bingo">🎯 Il te reste ' + manquantes.length + ' cases à cocher : ' + manquantes.join(' ') + '. Touche-en une pour des idées.</div>';
+    }
+  }
+  var grille = '<div class="grille-bingo">' + eb.cases.map(function (c, k) {
+    var cls = 'cb';
+    if (eb.ok[k]) {
+      cls += ' ok';
+    } else {
+      cls += ' vide';
     }
     if (dansLigne[k]) {
       cls += ' ligne';
     }
-    var attr = '';
-    if (c[2] && c[2].book && c[2].book.id) {
-      attr = ' data-act="livre" data-id="' + c[2].book.id + '"';
+    if (pb && pb.k === k) {
+      cls += ' cible';
     }
-    return '<div class="' + cls + '"' + attr + ' title="' + esc(c[1]) + '">' + img + '<b>' + c[0] + '</b><span>' + esc(c[1]) + '</span></div>';
+    return '<button class="' + cls + '" data-act="caseBingo" data-k="' + k + '" aria-label="' + esc(c[2]) + '"><span class="e">' + c[0] + '</span><span class="l">' + esc(c[1]) + '</span></button>';
   }).join('') + '</div>';
-  var choix = '<div class="row" style="margin-bottom:10px"><select data-chg="anBingo">' + liste.map(function (a) {
+  var choix = '<select data-chg="anBingo">' + liste.map(function (a) {
     var sel = '';
     if (String(a) === String(anBingo)) {
       sel = ' selected';
     }
     return '<option' + sel + '>' + a + '</option>';
-  }).join('') + '</select><span class="small"><b>' + nbOk + '/25</b> cases · <b>' + gagnees.length + '</b> bingo' + (gagnees.length > 1 ? 's' : '') + ' 🎉</span></div>';
-  return card('Mon bingo de lecture', choix + grille, 'les cases se cochent toutes seules avec tes lectures');
+  }).join('') + '</select>';
+  var reste = 25 - eb.nbOk;
+  var resteTxt = 'carton plein 🏆';
+  if (reste) {
+    resteTxt = 'plus que ' + reste + ' case' + (reste > 1 ? 's' : '') + ' pour le carton plein';
+  }
+  var entete = '<div class="entete-bingo"><div class="anneau-bingo" style="--p:' + (eb.nbOk * 4) + '%"><b>' + eb.nbOk + '</b><span>/ 25</span></div><div><div style="font:800 16px Nunito,sans-serif">' + eb.gagnees.length + ' bingo' + (eb.gagnees.length > 1 ? 's' : '') + (eb.gagnees.length ? ' 🎉' : '') + '</div><div class="small muted">' + resteTxt + '</div>' + choix + '</div></div>';
+  var legende = '<div class="legende-bingo"><span><i style="background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 45%,var(--card)),color-mix(in srgb,var(--accent) 45%,var(--card)));border:1px solid var(--gold)"></i>dans un bingo</span><span><i style="background:color-mix(in srgb,var(--accent) 45%,var(--card))"></i>cochée</span><span><i style="border:1.5px dashed var(--muted)"></i>à faire</span></div>';
+  return card('Mon bingo ' + y, entete + astuce + grille + legende, 'les cases se cochent toutes seules · touche une case pour le détail');
 }
 ACTIONS.anBingo = function (el) {
   anBingo = el.value;
   rendre();
 };
+// détail d'une case : le livre qui l'a cochée, ou comment la cocher (et des idées dans ta PAL)
+ACTIONS.caseBingo = function (el) {
+  var y = parseInt(anBingo || new Date().getFullYear(), 10);
+  avec('quetes', function () {
+    var c = casesBingo(y)[parseInt(el.dataset.k, 10)];
+    var h = '<h3>' + c[0] + ' ' + esc(c[2]) + '</h3>';
+    var r = c[3];
+    if (r) {
+      h += '<p class="small" style="color:var(--gold);font-weight:800">✓ Case cochée</p>';
+      if (r.book) {
+        var quand = '';
+        if (r.end) {
+          quand = 'fini le ' + fdate(r.end);
+        }
+        h += ligneLivre(r.book, quand, 'data-act="livre" data-id="' + r.book.id + '"');
+      } else {
+        h += '<p class="small muted">' + esc(c[4]) + '</p>';
+      }
+    } else {
+      h += '<p>' + esc(c[4]) + '</p>';
+      var idees = livresPourCase(c[5]).slice(0, 4);
+      if (idees.length) {
+        h += '<h4 style="margin-top:14px">Des idées pour la cocher</h4>' + idees.map(function (b) {
+          var ou = 'dans ta PAL';
+          if (b.statut === 'READING') {
+            ou = 'en cours';
+          }
+          return ligneLivre(b, ou, 'data-act="livre" data-id="' + b.id + '"');
+        }).join('');
+      } else if (c[5]) {
+        h += '<p class="small muted">Rien dans ta PAL ne la coche pour l\'instant : une bonne excuse pour un nouveau livre ✨</p>';
+      }
+    }
+    ouvrirFeuille(h);
+  });
+};
 
-// ---------- sceaux magiques (succès) ----------
-function vSceaux() {
+// ---------- sceaux magiques (succès, avec paliers) ----------
+function donneesSceaux() {
   var fin = finies();
-  var sj = series_jours();
   var ppj = pagesParJour();
-  var maxPages = Math.max.apply(null, Object.keys(ppj).map(function (k) { return ppj[k]; }).concat([0]));
   var nuit = 0;
   lect().forEach(function (r) {
     r.logs.forEach(function (l) {
@@ -3060,9 +3464,6 @@ function vSceaux() {
   });
   var au = {};
   fin.forEach(function (r) { (r.book.authors || []).forEach(function (a) { au[a] = (au[a] || 0) + 1; }); });
-  var maxAu = Math.max.apply(null, Object.keys(au).map(function (k) { return au[k]; }).concat([0]));
-  var pave = Math.max.apply(null, fin.filter(function (r) { return r.fmt !== 'audioBook'; }).map(function (r) { return r.total_page || 0; }).concat([0]));
-  var relu = lect().some(function (r) { return r.nth >= 2; });
   var fmtAn = {};
   fin.forEach(function (r) {
     var y = annee(r.end);
@@ -3071,37 +3472,148 @@ function vSceaux() {
     }
     fmtAn[y][r.fmt] = 1;
   });
-  var trio = Object.keys(fmtAn).some(function (y) { return Object.keys(fmtAn[y]).length >= 3; });
-  var nbNotes = Object.keys(NOTES).length;
-  var B = [
-    ['📗', '50 livres', fin.length >= 50, fin.length + '/50'],
-    ['📘', '100 livres', fin.length >= 100, fin.length + '/100'],
-    ['📙', '200 livres', fin.length >= 200, fin.length + '/200'],
-    ['🔥', '7 jours d\'affilée', sj.best >= 7, 'record ' + sj.best + ' j'],
-    ['🔥', '30 jours d\'affilée', sj.best >= 30, 'record ' + sj.best + ' j'],
-    ['🌋', '100 jours d\'affilée', sj.best >= 100, 'record ' + sj.best + ' j'],
-    ['🏃', 'Marathon : 150 p. en un jour', maxPages >= 150, 'record ' + maxPages + ' p.'],
-    ['🧱', 'Un pavé de 700 p.', pave >= 700, 'le plus gros : ' + pave + ' p.'],
-    ['🦉', 'Noctambule : 20 relevés après 23h', nuit >= 20, nuit + '/20'],
-    ['💞', 'Fidèle : 10 livres d\'un même auteur', maxAu >= 10, 'max ' + maxAu],
-    ['🧭', 'Exploratrice : 75 auteurs', Object.keys(au).length >= 75, Object.keys(au).length + '/75'],
-    ['🎧', 'Les 3 formats la même année', trio, ''],
-    ['🔁', 'Relire un livre', relu, ''],
-    ['✒️', 'Carnet : 10 livres notés', nbNotes >= 10, nbNotes + '/10']
-  ];
-  var nbOk = B.filter(function (b) { return b[2]; }).length;
-  return card('Mes sceaux magiques', '<div class="badges">' + B.map(function (b) {
-    var cls = 'badge';
-    if (b[2]) {
-      cls += ' ok';
+  // séries terminées : au moins 2 tomes, tous lus, série finie (ou nombre de tomes atteint)
+  var parSerie = {};
+  M.livres.filter(compte).forEach(function (b) {
+    Object.keys(b.series_memberships || {}).forEach(function (k) {
+      (parSerie[k] = parSerie[k] || []).push(b);
+    });
+  });
+  var seriesFinies = Object.keys(parSerie).filter(function (k) {
+    var s = M.series[k] || {};
+    var l = parSerie[k];
+    return l.length >= 2 && l.every(function (b) { return b.statut === 'DONE'; }) && s.status !== 'ongoing' && s.status !== 'abandoned' && (!s.nbTomes || l.length >= s.nbTomes);
+  }).length;
+  var ans = {};
+  fin.forEach(function (r) { ans[annee(r.end)] = (ans[annee(r.end)] || 0) + 1; });
+  var objectif = Object.keys(ans).some(function (y) {
+    var o = objectifAnnee(y);
+    return o.livres && ans[y] >= o.livres;
+  });
+  var carton = Object.keys(ans).some(function (y) { return etatBingo(parseInt(y, 10)).nbOk === 25; });
+  return {
+    livres: fin.length,
+    flamme: series_jours().best,
+    pages: fin.reduce(function (s, r) { return s + pagesLecture(r); }, 0),
+    ecoute: fin.filter(function (r) { return r.page_type === 'TIME'; }).reduce(function (s, r) { return s + r.total_page; }, 0) / 3600,
+    auteurs: Object.keys(au).length,
+    marathon: Math.max.apply(null, Object.keys(ppj).map(function (k) { return ppj[k]; }).concat([0])),
+    nuit: nuit,
+    carnet: Object.keys(NOTES).length,
+    citations: M.notes.filter(function (n) { return n.type !== 'NOTE' && (!n.book || compte(n.book)); }).length,
+    series: seriesFinies,
+    pave: Math.max.apply(null, fin.filter(function (r) { return r.fmt !== 'audioBook'; }).map(function (r) { return r.total_page || 0; }).concat([0])),
+    fidele: Math.max.apply(null, Object.keys(au).map(function (k) { return au[k]; }).concat([0])),
+    formats: Object.keys(fmtAn).some(function (y) { return Object.keys(fmtAn[y]).length >= 3; }),
+    relu: lect().some(function (r) { return r.nth >= 2; }),
+    carton: carton,
+    objectif: objectif
+  };
+}
+var FAMILLES_SCEAUX = [
+  ['livres', '📚', 'Collectionneuse', [25, 50, 100, 200], 'livres lus'],
+  ['flamme', '🔥', 'Flamme fidèle', [7, 30, 100, 365], 'jours d\'affilée'],
+  ['pages', '📖', 'Dévoreuse de pages', [10000, 25000, 50000, 100000], 'pages lues'],
+  ['ecoute', '🎧', 'Oreille d\'or', [10, 50, 100, 250], 'heures d\'écoute'],
+  ['auteurs', '🧭', 'Exploratrice', [25, 75, 150, 300], 'auteur·ices'],
+  ['marathon', '🏃', 'Marathonienne', [100, 150, 250, 400], 'pages en un jour'],
+  ['nuit', '🦉', 'Noctambule', [5, 20, 50, 100], 'relevés après 23 h'],
+  ['carnet', '✒️', 'Plume du carnet', [1, 10, 25, 50], 'livres dans le carnet'],
+  ['citations', '✍️', 'Cueilleuse de mots', [5, 15, 50, 100], 'citations et pensées'],
+  ['series', '🗝️', 'Gardienne des séries', [1, 3, 5, 10], 'séries terminées']
+];
+var SCEAUX_UNIQUES = [
+  ['pave', '🧱', 'Pavé de 700 p.', function (d) { return d.pave >= 700; }, function (d) { return 'le plus gros : ' + d.pave + ' p.'; }, function (d) { return d.pave / 700; }],
+  ['fidele', '💞', 'Fidèle', function (d) { return d.fidele >= 10; }, function (d) { return d.fidele + ' livres d\'un même auteur'; }, function (d) { return d.fidele / 10; }],
+  ['formats', '🌈', 'Les 3 formats la même année', function (d) { return d.formats; }, function () { return 'papier, ebook et audio'; }, null],
+  ['relu', '🔁', 'Relire un livre', function (d) { return d.relu; }, function () { return 'une deuxième lecture'; }, null],
+  ['carton', '🎯', 'Carton plein au bingo', function (d) { return d.carton; }, function () { return '25 cases la même année'; }, null],
+  ['objectif', '🏆', 'Objectif de l\'année atteint', function (d) { return d.objectif; }, function () { return 'livres de l\'année'; }, null]
+];
+var CHIFFRES_ROMAINS = ['', 'I', 'II', 'III', 'IV'];
+// palier atteint de chaque sceau : {livres: 3, pave: 1…}
+function paliersSceaux(d) {
+  d = d || donneesSceaux();
+  var p = {};
+  FAMILLES_SCEAUX.forEach(function (f) {
+    p[f[0]] = f[3].filter(function (s) { return d[f[0]] >= s; }).length;
+  });
+  SCEAUX_UNIQUES.forEach(function (u) {
+    p[u[0]] = u[3](d) ? 1 : 0;
+  });
+  return p;
+}
+function datesSceaux() {
+  try {
+    return JSON.parse(lsGet('bm_sceaux_dates') || '{}');
+  } catch (e) {
+    return {};
+  }
+}
+function vSceaux() {
+  var d = donneesSceaux();
+  var p = paliersSceaux(d);
+  var dates = datesSceaux();
+  var recents = Date.now() - 7 * DAY;
+  var proche = null;
+  function nouveau(cle) {
+    if (dates[cle] && dates[cle] > recents) {
+      return '<span class="nouveau">NOUVEAU</span>';
     }
-    return '<div class="' + cls + '"><b>' + b[0] + '</b>' + b[1] + '<div class="small muted">' + b[3] + '</div></div>';
-  }).join('') + '</div>', nbOk + ' / ' + B.length + ' débloqués');
+    return '';
+  }
+  function retenir(nom, pct, texte) {
+    if (pct < 1 && (!proche || pct > proche.pct)) {
+      proche = {nom: nom, pct: pct, texte: texte};
+    }
+  }
+  var h = FAMILLES_SCEAUX.map(function (f) {
+    var palier = p[f[0]];
+    var v = d[f[0]];
+    var prochain = f[3][palier];
+    var cire = '';
+    var info = '';
+    if (palier) {
+      cire = '<div class="cire p' + palier + '">' + nouveau(f[0] + ':' + palier) + '<span>' + f[1] + '</span></div>';
+      info = '<span class="palier">PALIER ' + CHIFFRES_ROMAINS[palier] + ' · ' + nombreFr(f[3][palier - 1]) + '</span>';
+    } else {
+      cire = '<div class="cire verrou" style="--p:' + Math.min(100, 100 * v / f[3][0]).toFixed(0) + '%"><span>' + f[1] + '</span></div>';
+    }
+    if (prochain) {
+      var pct = v / prochain;
+      retenir(f[1] + ' ' + f[2] + ' ' + CHIFFRES_ROMAINS[palier + 1], pct, nombreFr(v) + ' / ' + nombreFr(prochain));
+      info += '<div class="prog"><div style="width:' + Math.min(100, 100 * pct) + '%"></div></div><span class="muted">' + nombreFr(v) + ' / ' + nombreFr(prochain) + ' ' + f[4] + '</span>';
+    } else {
+      info += '<span class="muted">' + nombreFr(v) + ' ' + f[4] + ' · tous les paliers ✨</span>';
+    }
+    return '<div class="sceau">' + cire + '<b>' + f[2] + '</b>' + info + '</div>';
+  });
+  h = h.concat(SCEAUX_UNIQUES.map(function (u) {
+    var ok = p[u[0]];
+    var cire = '';
+    if (ok) {
+      cire = '<div class="cire p3">' + nouveau(u[0] + ':1') + '<span>' + u[1] + '</span></div>';
+    } else {
+      var pct = u[5] ? Math.min(1, u[5](d)) : 0;
+      if (u[5]) {
+        retenir(u[1] + ' ' + u[2], pct, u[4](d));
+      }
+      cire = '<div class="cire verrou" style="--p:' + (100 * pct).toFixed(0) + '%"><span>' + u[1] + '</span></div>';
+    }
+    return '<div class="sceau">' + cire + '<b>' + u[2] + '</b><span class="muted">' + esc(u[4](d)) + '</span></div>';
+  }));
+  var nbPaliers = Object.keys(p).reduce(function (s, k) { return s + p[k]; }, 0);
+  var total = FAMILLES_SCEAUX.length * 4 + SCEAUX_UNIQUES.length;
+  var sous = nbPaliers + ' / ' + total + ' paliers débloqués';
+  if (proche) {
+    sous += ' · le plus proche : ' + proche.nom + ' (' + proche.texte + ')';
+  }
+  return card('Mes sceaux magiques', '<div class="sceaux">' + h.join('') + '</div>', sous);
 }
 
 function vQuetes() {
   return avec('quetes', function () {
-    return noteExclus('quetes') + carteNiveau() + vBingo() + vSceaux();
+    return noteExclus('quetes') + carteNiveau() + carteDefis() + vBingo() + vSceaux();
   });
 }
 </script>
@@ -7931,6 +8443,293 @@ ACTIONS.ocrTout = function () {
 </script>
 
 <style>
+/* célébrations plein écran : livre terminé, case de bingo, défi, sceau, niveau */
+.fete-jeu{position:fixed;inset:0;z-index:95;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px 20px calc(24px + env(safe-area-inset-bottom));background:rgba(10,5,20,.86);color:#fff;overflow:hidden;animation:jeu-fondu .25s ease}
+.fete-jeu.sort{animation:jeu-sortie .25s ease forwards}
+.fete-jeu h2{margin:10px 0 4px;font:700 30px/1.15 "Cormorant Garamond",Georgia,serif;max-width:340px}
+.fete-jeu .etiq{font:900 12px Nunito,sans-serif;letter-spacing:2px;color:var(--gold);text-transform:uppercase}
+.fete-jeu .sous-fete{font-size:13.5px;line-height:1.5;color:rgba(255,255,255,.75);max-width:320px}
+.fete-jeu .pastilles-fete{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.fete-jeu .pastilles-fete span{font:800 12.5px Nunito,sans-serif;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15)}
+.fete-jeu .pastilles-fete .or{border-color:color-mix(in srgb,var(--gold) 70%,transparent);background:color-mix(in srgb,var(--gold) 18%,transparent);color:#fff3c4}
+.fete-jeu .fermer-fete{margin-top:22px;font:800 15px Nunito,sans-serif;padding:12px 28px;border:0;border-radius:999px;color:#fff;background:linear-gradient(135deg,var(--accent),var(--lav));box-shadow:0 8px 20px rgba(0,0,0,.35);cursor:pointer;position:relative;z-index:2}
+.fete-jeu>*{position:relative;z-index:1}
+.fete-jeu .confettis,.fete-jeu .rayons-fete{position:absolute;z-index:0;pointer-events:none}
+.fete-jeu .confettis{inset:0}
+.fete-jeu .confettis i{position:absolute;top:-20px;width:7px;height:12px;border-radius:2px;animation:jeu-chute linear infinite}
+.fete-jeu .rayons-fete{width:520px;height:520px;left:50%;top:50%;margin:-330px 0 0 -260px;border-radius:50%;background:repeating-conic-gradient(color-mix(in srgb,var(--gold) 28%,transparent) 0 8deg,transparent 8deg 20deg);-webkit-mask:radial-gradient(closest-side,#000 35%,transparent);mask:radial-gradient(closest-side,#000 35%,transparent);animation:jeu-tourne 14s linear infinite}
+.couv-fete{position:relative;width:120px;height:180px;border-radius:6px;overflow:hidden;box-shadow:0 0 0 3px var(--gold),0 0 40px color-mix(in srgb,var(--gold) 60%,transparent);animation:jeu-monte .9s cubic-bezier(.2,1.4,.4,1) both;transform:rotate(-6deg);background:linear-gradient(160deg,var(--accent),var(--lav));display:flex;align-items:flex-end;justify-content:center;padding:10px;font:700 15px/1.2 "Cormorant Garamond",Georgia,serif}
+.couv-fete img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tampon-fete{width:96px;height:96px;margin-top:14px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:40px;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 55%,#1b1330),color-mix(in srgb,var(--lav) 40%,#1b1330));border:2px solid var(--gold);box-shadow:0 0 30px color-mix(in srgb,var(--gold) 50%,transparent);animation:jeu-tampon .55s cubic-bezier(.3,1.6,.5,1) both .15s}
+.tampon-fete::after{content:"✓";position:absolute;top:-12px;right:-12px;width:34px;height:34px;border-radius:50%;background:var(--gold);color:#2a1d0c;font:900 21px/34px Nunito,sans-serif;transform:rotate(-12deg);box-shadow:0 0 12px color-mix(in srgb,var(--gold) 90%,transparent);animation:jeu-pop .4s ease both .6s}
+.tampon-fete{position:relative}
+.autres-cases{margin-top:8px;font-size:22px;letter-spacing:4px}
+.bingo-fete{margin-top:14px;font:900 34px Nunito,sans-serif;letter-spacing:4px;color:var(--gold);text-shadow:0 0 18px color-mix(in srgb,var(--gold) 80%,transparent);animation:jeu-pop .5s cubic-bezier(.3,1.6,.5,1) both .8s,jeu-brille 1.6s ease-in-out infinite 1.4s}
+.cire-fete{width:124px;height:124px;margin-top:16px;font-size:54px;animation:jeu-sceau .7s cubic-bezier(.3,1.5,.5,1) both .1s}
+.medaille-fete{width:124px;height:124px;margin-top:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:64px;border:4px solid var(--gold);background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--accent) 70%,#24133a),#24133a);box-shadow:0 0 0 8px color-mix(in srgb,var(--gold) 15%,transparent),0 0 40px color-mix(in srgb,var(--accent) 80%,transparent);animation:jeu-pop .8s cubic-bezier(.3,1.6,.5,1) both .2s}
+.ico-defi-fete{width:96px;height:96px;margin-top:14px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:46px;background:color-mix(in srgb,var(--gold) 22%,#1b1330);border:2px solid var(--gold);animation:jeu-pop .6s cubic-bezier(.3,1.6,.5,1) both .1s}
+@keyframes jeu-fondu{from{opacity:0}to{opacity:1}}
+@keyframes jeu-sortie{to{opacity:0;transform:scale(1.04)}}
+@keyframes jeu-chute{0%{transform:translateY(0) rotate(0)}100%{transform:translateY(110vh) rotate(720deg)}}
+@keyframes jeu-tourne{to{transform:rotate(360deg)}}
+@keyframes jeu-monte{0%{opacity:0;transform:translateY(80px) rotate(-30deg) scale(.5)}100%{opacity:1;transform:translateY(0) rotate(-6deg) scale(1)}}
+@keyframes jeu-tampon{0%{opacity:0;transform:scale(2.6) rotate(-18deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes jeu-pop{0%{opacity:0;transform:scale(.2)}100%{opacity:1;transform:scale(1)}}
+@keyframes jeu-brille{0%,100%{text-shadow:0 0 18px color-mix(in srgb,var(--gold) 80%,transparent)}50%{text-shadow:0 0 34px var(--gold),0 0 4px #fff}}
+@keyframes jeu-sceau{0%{opacity:0;transform:translateY(-160px) scale(1.7)}70%{opacity:1;transform:translateY(0) scale(.92,1.06)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.fete-jeu,.fete-jeu *{animation:none !important}}
+@media (max-height:620px){.fete-jeu h2{font-size:24px}.couv-fete{width:84px;height:126px}.cire-fete,.medaille-fete{width:92px;height:92px;font-size:42px}.tampon-fete,.ico-defi-fete{width:76px;height:76px;font-size:32px}.bingo-fete{font-size:26px}.fete-jeu .fermer-fete{margin-top:14px}}
+</style>
+<script>
+// ---------- Célébrations : on compare l'état du jeu à ce qui a déjà été fêté ----------
+var fileFetes = [];
+var jeuEnCours = false;
+
+function lireEtatJeu() {
+  try {
+    return JSON.parse(lsGet('bm_etat_jeu') || 'null');
+  } catch (e) {
+    return null;
+  }
+}
+function etatJeu() {
+  return avec('quetes', function () {
+    var y = new Date().getFullYear();
+    var eb = etatBingo(y);
+    return {
+      niveau: niveauCorps().i,
+      annee: y,
+      cases: eb.ok.map(function (o, k) { return o ? k : -1; }).filter(function (k) { return k >= 0; }),
+      bingos: eb.gagnees.length,
+      sceaux: paliersSceaux(),
+      livres: finies().map(function (r) { return r.book.id + ':' + r.nth; })
+    };
+  });
+}
+// défis réussis pas encore enregistrés → on les garde dans la base (leur XP compte), une seule fois
+function enregistrerDefis() {
+  var deja = defisReussis();
+  var nouveaux = avec('quetes', defisEnCours).filter(function (d) { return d.fini && !deja[d.cle]; });
+  if (!nouveaux.length) {
+    return Promise.resolve([]);
+  }
+  var tous = Object.assign({}, deja);
+  nouveaux.forEach(function (d) {
+    tous[d.cle] = {xp: d.xp, date: Date.now(), titre: d.titre};
+  });
+  return ecrire([{t: 'reglages', o: {id: 'defisReussis', v: tous}}]).then(function () {
+    M = modeleDepuisBase();
+    planifierSauvegarde();
+    return nouveaux;
+  });
+}
+function verifierJeu() {
+  if (jeuEnCours || !M || !D.livres || !valeurs(D.livres).length) {
+    return;
+  }
+  jeuEnCours = true;
+  enregistrerDefis().then(function (defis) {
+    var avant = lireEtatJeu();
+    var apres = etatJeu();
+    var fetes = [];
+    if (avant) {
+      fetes = differencesJeu(avant, apres, defis);
+      // on garde le meilleur déjà fêté : un niveau ou un sceau perdu puis retrouvé n'est pas refêté
+      apres.niveau = Math.max(apres.niveau, avant.niveau || 0);
+      Object.keys(avant.sceaux || {}).forEach(function (k) {
+        apres.sceaux[k] = Math.max(apres.sceaux[k] || 0, avant.sceaux[k]);
+      });
+      if (avant.annee === apres.annee) {
+        (avant.cases || []).forEach(function (k) {
+          if (apres.cases.indexOf(k) < 0) {
+            apres.cases.push(k);
+          }
+        });
+        apres.bingos = Math.max(apres.bingos, avant.bingos || 0);
+      }
+    }
+    lsSet('bm_etat_jeu', JSON.stringify(apres));
+    // une restauration ou un import : pas de feu d'artifice géant
+    if (fetes.length > 8) {
+      fetes = [];
+    }
+    fetes.forEach(function (f) { fileFetes.push(f); });
+    if (defis.length && onglet === 'quetes') {
+      rendre();
+    }
+    montrerFete();
+  }).catch(function () {}).then(function () {
+    jeuEnCours = false;
+  });
+}
+function differencesJeu(avant, apres, defis) {
+  var fetes = [];
+  // livres terminés (récemment : pas les vieilles lectures retrouvées)
+  var connus = {};
+  (avant.livres || []).forEach(function (k) { connus[k] = 1; });
+  var nouveauxLivres = avec('quetes', function () {
+    return finies().filter(function (r) { return !connus[r.book.id + ':' + r.nth] && r.end > Date.now() - 3 * DAY; });
+  });
+  if (nouveauxLivres.length <= 3) {
+    nouveauxLivres.forEach(function (r) { fetes.push({type: 'livre', r: r}); });
+  }
+  // cases de bingo de l'année
+  if (avant.annee === apres.annee) {
+    var nouvellesCases = apres.cases.filter(function (k) { return (avant.cases || []).indexOf(k) < 0; });
+    if (nouvellesCases.length) {
+      fetes.push({type: 'case', cases: nouvellesCases, bingos: apres.bingos, avantBingos: avant.bingos || 0, nbOk: apres.cases.length});
+    }
+  }
+  defis.forEach(function (d) { fetes.push({type: 'defi', d: d}); });
+  // sceaux et paliers
+  var dates = datesSceaux();
+  Object.keys(apres.sceaux).forEach(function (k) {
+    var a = (avant.sceaux || {})[k] || 0;
+    for (var p = a + 1; p <= apres.sceaux[k]; p++) {
+      dates[k + ':' + p] = Date.now();
+      fetes.push({type: 'sceau', cle: k, palier: p});
+    }
+  });
+  lsSet('bm_sceaux_dates', JSON.stringify(dates));
+  if (apres.niveau > (avant.niveau || 0)) {
+    fetes.push({type: 'niveau', de: avant.niveau || 0, a: apres.niveau});
+  }
+  return fetes;
+}
+
+function confettis() {
+  var c = ['#e7c36b', '#a879ff', '#2fd0a8', '#ff8fb8', '#fff3c4'];
+  var s = '';
+  for (var i = 0; i < 40; i++) {
+    s += '<i style="left:' + (Math.random() * 100).toFixed(1) + '%;background:' + c[i % 5] + ';animation-duration:' + (2.4 + Math.random() * 2.4).toFixed(2) + 's;animation-delay:-' + (Math.random() * 4).toFixed(2) + 's"></i>';
+  }
+  return '<div class="confettis">' + s + '</div>';
+}
+function vibrerFete(motif) {
+  if (navigator.vibrate) {
+    try {
+      navigator.vibrate(motif);
+    } catch (e) {}
+  }
+}
+function contenuFete(f) {
+  var y = new Date().getFullYear();
+  if (f.type === 'livre') {
+    var b = f.r.book;
+    var couv = esc(titre(b));
+    if (b.image && /^(https?|blob):/.test(b.image)) {
+      couv = '<img src="' + esc(b.image) + '" alt="">';
+    }
+    var xp = Math.round(xpLecture(f.r));
+    var taille = '';
+    if (f.r.page_type === 'TIME') {
+      taille = '<span>' + dureeDefi(f.r.total_page) + ' d\'écoute</span>';
+    } else if (pagesLecture(f.r)) {
+      taille = '<span>' + pagesLecture(f.r) + ' pages</span>';
+    }
+    var rang = avec('quetes', function () { return finies().filter(function (r) { return annee(r.end) === y; }).length; });
+    return {html: confettis() + '<div class="couv-fete">' + couv + '</div><div class="etiq" style="margin-top:22px">Livre terminé</div><h2>' + esc(titre(b)) + '</h2><div class="pastilles-fete"><span class="or" data-compteur="' + xp + '">+0 XP</span>' + taille + '<span>' + rang + (rang > 1 ? 'ᵉ' : 'ᵉʳ') + ' livre de ' + y + '</span></div>', bouton: 'Youpi ✨', vib: [80, 60, 80]};
+  }
+  if (f.type === 'case') {
+    var cases = avec('quetes', function () { return casesBingo(y); });
+    var c = cases[f.cases[0]];
+    var avecLivre = '';
+    if (c[3] && c[3].book) {
+      avecLivre = '<div class="sous-fete">avec <i>' + esc(titre(c[3].book)) + '</i></div>';
+    }
+    var autres = '';
+    if (f.cases.length > 1) {
+      autres = '<div class="autres-cases">' + f.cases.slice(1).map(function (k) { return cases[k][0]; }).join('') + '</div><div class="sous-fete">et ' + (f.cases.length - 1) + ' autre' + (f.cases.length > 2 ? 's' : '') + ' case' + (f.cases.length > 2 ? 's' : '') + '</div>';
+    }
+    var bingo = '';
+    var nb = f.bingos - f.avantBingos;
+    var vib = [50];
+    if (nb > 0) {
+      bingo = '<div class="bingo-fete">BINGO' + (nb > 1 ? ' ×' + nb : '') + ' !</div>';
+      vib = [60, 40, 60, 40, 160];
+    }
+    return {html: (nb > 0 ? confettis() : '') + '<div class="etiq">Case' + (f.cases.length > 1 ? 's' : '') + ' cochée' + (f.cases.length > 1 ? 's' : '') + '</div><div class="tampon-fete">' + c[0] + '</div><h2>' + esc(c[2]) + '</h2>' + avecLivre + autres + bingo + '<div class="sous-fete" style="margin-top:6px">' + f.nbOk + ' / 25 cases · ' + f.bingos + ' bingo' + (f.bingos > 1 ? 's' : '') + '</div>', bouton: 'Trop bien 🎉', vib: vib};
+  }
+  if (f.type === 'defi') {
+    return {html: '<div class="etiq">Défi réussi</div><div class="ico-defi-fete">' + f.d.ico + '</div><h2>' + esc(f.d.titre) + '</h2><div class="pastilles-fete"><span class="or" data-compteur="' + f.d.xp + '">+0 XP</span></div>', bouton: 'Bien joué ✨', vib: [50, 40, 50]};
+  }
+  if (f.type === 'sceau') {
+    var fam = FAMILLES_SCEAUX.filter(function (x) { return x[0] === f.cle; })[0];
+    var uni = SCEAUX_UNIQUES.filter(function (x) { return x[0] === f.cle; })[0];
+    var em = '', nom = '', desc = '', cls = 'p3';
+    if (fam) {
+      em = fam[1];
+      nom = fam[2] + ' · palier ' + CHIFFRES_ROMAINS[f.palier];
+      desc = nombreFr(fam[3][f.palier - 1]) + ' ' + fam[4] + '. Bravo !';
+      cls = 'p' + f.palier;
+    } else if (uni) {
+      em = uni[1];
+      nom = uni[2];
+      desc = avec('quetes', function () { return uni[4](donneesSceaux()); });
+    }
+    return {html: '<div class="rayons-fete"></div><div class="etiq">Nouveau sceau</div><div class="cire cire-fete ' + cls + '"><span>' + em + '</span></div><h2>' + esc(nom) + '</h2><div class="sous-fete">' + esc(desc) + '</div>', bouton: 'Je le garde 💛', vib: [100, 50, 100]};
+  }
+  // niveau
+  var n = niveau();
+  var de = NIVEAUX[f.de];
+  var lv = NIVEAUX[f.a];
+  var prochain = '';
+  if (NIVEAUX[f.a + 1]) {
+    prochain = '<br>Prochain : ' + NIVEAUX[f.a + 1][1] + ' ' + esc(NIVEAUX[f.a + 1][2]) + ' à ' + nombreFr(NIVEAUX[f.a + 1][0]) + ' XP';
+  }
+  var quitte = '';
+  if (n.dates[f.de] && n.dates[f.a]) {
+    quitte = 'Tu quittes ' + de[1] + ' ' + esc(de[2]) + ' après ' + dureeNiveau(n.dates[f.a] - n.dates[f.de]) + '.';
+  }
+  return {html: '<div class="rayons-fete"></div>' + confettis() + '<div class="etiq">Niveau ' + (f.a + 1) + '</div><div class="medaille-fete">' + lv[1] + '</div><h2>' + esc(lv[2]) + '</h2><div class="sous-fete">' + quitte + prochain + '</div>', bouton: 'Je déploie mes ailes ✨', vib: [100, 60, 100, 60, 300]};
+}
+function montrerFete() {
+  if (document.getElementById('feteJeu') || !fileFetes.length) {
+    return;
+  }
+  var f = fileFetes.shift();
+  var c = contenuFete(f);
+  var d = document.createElement('div');
+  d.id = 'feteJeu';
+  d.className = 'fete-jeu';
+  d.setAttribute('role', 'dialog');
+  d.setAttribute('aria-modal', 'true');
+  d.innerHTML = c.html + '<button class="fermer-fete">' + c.bouton + '</button>';
+  document.body.appendChild(d);
+  vibrerFete(c.vib);
+  // l'XP défile en comptant
+  var compteur = d.querySelector('[data-compteur]');
+  if (compteur) {
+    var cible = parseInt(compteur.dataset.compteur, 10);
+    var t0 = null;
+    var pas = function (t) {
+      if (!t0) {
+        t0 = t;
+      }
+      var p = Math.min(1, (t - t0) / 1200);
+      compteur.textContent = '+' + nombreFr(cible * (1 - Math.pow(1 - p, 3))) + ' XP';
+      if (p < 1 && document.body.contains(compteur)) {
+        requestAnimationFrame(pas);
+      }
+    };
+    setTimeout(function () { requestAnimationFrame(pas); }, 500);
+  }
+  d.querySelector('.fermer-fete').addEventListener('click', function (e) {
+    e.stopPropagation();
+    d.classList.add('sort');
+    setTimeout(function () {
+      d.remove();
+      montrerFete();
+    }, 240);
+  });
+  setTimeout(function () { d.querySelector('.fermer-fete').focus(); }, 60);
+}
+apresEcritureHooks.push(function () {
+  setTimeout(verifierJeu, 350);
+});
+</script>
+
+<style>
 .reglage{border-top:1px dashed var(--line);padding-top:6px;margin-top:6px}
 .reglage:first-of-type{border-top:0}
 .reglage p{margin:4px 0}
@@ -8134,6 +8933,8 @@ function afficherGrimoire() {
   majSource();
   rendre();
   majPastille();
+  // défis réussis, cases, sceaux ou niveau gagnés depuis la dernière fois
+  setTimeout(verifierJeu, 1200);
 }
 
 // Fichier reçu : sauvegarde du grimoire (→ restaurer) ou export Bookmory (→ importer en miroir)
@@ -8232,7 +9033,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-04 20:44:02';
+var VERSION_APPLI = '2026-10-04 21:04:57';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
