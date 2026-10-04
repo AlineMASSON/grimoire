@@ -1,5 +1,5 @@
 // Service worker du grimoire : fonctionnement hors ligne + réception des exports partagés depuis Bookmory.
-var VERSION = 'grimoire-v4';
+var VERSION = 'grimoire-v5';
 var PARTAGE = 'grimoire-partage';
 var FICHIERS = [
   './',
@@ -30,6 +30,16 @@ self.addEventListener('activate', function (e) {
     return self.clients.claim();
   }));
 });
+
+// Seuls nos fichiers, les bibliothèques (adresses versionnées, donc immuables) et les ressources statiques
+// (scripts, styles, polices, images) passent par le cache.
+var BIBLIOTHEQUES = ['cdnjs.cloudflare.com', 'cdn.jsdelivr.net'];
+function cacheable(req, url) {
+  if (url.origin === self.location.origin || BIBLIOTHEQUES.indexOf(url.hostname) !== -1) {
+    return true;
+  }
+  return ['script', 'style', 'font', 'image'].indexOf(req.destination) !== -1;
+}
 
 self.addEventListener('fetch', function (e) {
   var url = new URL(e.request.url);
@@ -65,6 +75,11 @@ self.addEventListener('fetch', function (e) {
     }).catch(function () {
       return caches.match('./index.html');
     }));
+    return;
+  }
+
+  // Les API (Google Books, Open Library, relais de sauvegarde…) : toujours le réseau, jamais le cache.
+  if (!cacheable(e.request, url)) {
     return;
   }
 

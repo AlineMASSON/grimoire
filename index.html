@@ -10,8 +10,6 @@
 <meta name="theme-color" content="#1a1230" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="icone-192.png">
 <link rel="apple-touch-icon" href="icone-192.png">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500;1,600&family=Dancing+Script:wght@600;700&family=Nunito:wght@400;600;700&display=swap">
 <style>
@@ -320,7 +318,7 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 <body>
 <div class="etoiles" aria-hidden="true"><i style="left:8%;top:12%;font-size:10px">✦</i><i style="left:88%;top:8%;font-size:13px;animation-delay:.8s">✧</i><i style="left:76%;top:34%;font-size:8px;animation-delay:1.6s">✦</i><i style="left:4%;top:48%;font-size:12px;animation-delay:2.2s">✧</i><i style="left:93%;top:62%;font-size:9px;animation-delay:.4s">✦</i><i style="left:12%;top:80%;font-size:11px;animation-delay:1.2s">✧</i><i style="left:60%;top:90%;font-size:8px;animation-delay:2.6s">✦</i></div>
 <header>
-<button class="theme-btn import-btn" id="importBtn" aria-label="Importer un export Bookmory">📥</button>
+<button class="theme-btn import-btn" id="importBtn" aria-label="Importer un fichier">📥</button>
 <button class="theme-btn" id="themeBtn" aria-label="Changer de thème">🎨</button>
 <div class="moon">☾</div>
 <h1>Mon grimoire <span>de lectures</span></h1>
@@ -339,7 +337,6 @@ var FMT_CLASS = {paperBook: 'paper', audioBook: 'audio', eBook: 'ebook'};
 var MOIS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 var MOIS_LONGS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 var JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-var ENLIGNE = typeof google !== 'undefined' && google.script && google.script.run;
 var M = null;
 var NOTES = {};
 var ACTIONS = {};
@@ -425,7 +422,7 @@ function titre(b) {
   return b.title.replace(/\s*\([^)]*#\d+(\.\d+)?\)\s*$/, '');
 }
 function cover(b) {
-  if (b.image && /^https?:/.test(b.image)) {
+  if (b.image && /^(https?|blob):/.test(b.image)) {
     return '<img loading="lazy" src="' + esc(b.image) + '" alt="">';
   }
   return '<div class="ph">' + esc(titre(b)).slice(0, 40) + '</div>';
@@ -553,10 +550,6 @@ function melanger(a) {
   return l;
 }
 
-try {
-  EXCLUS = JSON.parse(lsGet('bm_exclus') || '{}');
-} catch (e) {}
-
 // ---------- feuille (fenêtre qui monte du bas) ----------
 function ouvrirFeuille(html) {
   fermerFeuille();
@@ -639,139 +632,6 @@ document.getElementById('themeBtn').addEventListener('click', function () {
   var t = document.getElementById('themes');
   t.hidden = !t.hidden;
 });
-
-// ---------- chargement ----------
-function b64ToU8(b64) {
-  var bin = atob(b64);
-  var u8 = new Uint8Array(bin.length);
-  for (var i = 0; i < bin.length; i++) {
-    u8[i] = bin.charCodeAt(i);
-  }
-  return u8;
-}
-function u8ToB64(u8) {
-  var s = '';
-  for (var i = 0; i < u8.length; i += 32768) {
-    s += String.fromCharCode.apply(null, u8.subarray(i, i + 32768));
-  }
-  return btoa(s);
-}
-var sqlPromise = initSqlJs({locateFile: function (f) { return 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/' + f; }});
-
-function charger(u8, source) {
-  return sqlPromise.then(function (SQL) {
-    var db = new SQL.Database(u8);
-    var res = db.exec("SELECT store, CAST(key AS TEXT), value FROM entry WHERE deleted IS NULL OR deleted = 0");
-    var stores = {};
-    res[0].values.forEach(function (r) {
-      if (!stores[r[0]]) {
-        stores[r[0]] = [];
-      }
-      var o = JSON.parse(r[2]);
-      o._key = r[1];
-      stores[r[0]].push(o);
-    });
-    db.close();
-    M = modele(stores);
-    document.getElementById('src').textContent = source;
-    rendre();
-  });
-}
-
-function chargerNotes() {
-  var c = lsGet('bm_notes');
-  if (c) {
-    try {
-      NOTES = JSON.parse(c);
-    } catch (e) {}
-  }
-  if (ENLIGNE) {
-    google.script.run.withSuccessHandler(function (s) {
-      try {
-        NOTES = JSON.parse(s || '{}');
-      } catch (e) {
-        NOTES = {};
-      }
-      lsSet('bm_notes', JSON.stringify(NOTES));
-      if (M) {
-        rendre();
-      }
-    }).getNotes();
-  }
-}
-function sauverNotes() {
-  var s = JSON.stringify(NOTES);
-  lsSet('bm_notes', s);
-  if (ENLIGNE) {
-    google.script.run.withFailureHandler(function (e) {
-      alert('Ta note n\'a pas pu être enregistrée dans Drive : ' + e.message);
-    }).saveNotes(s);
-  }
-}
-
-function demarrer() {
-  appliquerTheme(lsGet('bm_theme') || 'auto');
-  try {
-    var s = JSON.parse(lsGet('bm_sous') || '{}');
-    Object.keys(s).forEach(function (k) { sous[k] = s[k]; });
-  } catch (e) {}
-  onglet = lsGet('bm_onglet') || 'accueil';
-  chargerNotes();
-  var cache = lsGet('bm_db');
-  var cacheSrc = lsGet('bm_src');
-  if (cache) {
-    charger(b64ToU8(cache), (cacheSrc || '') + ' (en cache, mise à jour…)');
-  }
-  if (ENLIGNE) {
-    google.script.run
-      .withSuccessHandler(function (r) {
-        var src = 'Export du ' + fdate(new Date(r.date).getTime());
-        lsSet('bm_db', r.b64);
-        lsSet('bm_src', src);
-        charger(b64ToU8(r.b64), src);
-      })
-      .withFailureHandler(function (e) {
-        document.getElementById('app').innerHTML = '<div id="load" class="err">' + esc(e.message) + '</div>';
-      })
-      .getLatestExport();
-  } else {
-    modeFichier(!!cache);
-  }
-}
-
-// Hors Apps Script : choix manuel du fichier (.zip ou .db)
-function modeFichier(dejaCharge) {
-  var url = new URLSearchParams(location.search).get('db');
-  if (url) {
-    fetch(url).then(function (r) { return r.arrayBuffer(); }).then(function (b) {
-      charger(new Uint8Array(b), url);
-    });
-    return;
-  }
-  var html = '<div class="card"><h2>Choisis ton export Bookmory</h2><input type="file" id="fic"><p class="small muted">Le fichier .zip exporté depuis Bookmory (ou new_bookmory.db).</p></div>';
-  if (dejaCharge) {
-    document.getElementById('src').insertAdjacentHTML('afterend', '<label class="small muted">Autre export : <input type="file" id="fic"></label>');
-  } else {
-    document.getElementById('app').innerHTML = html;
-  }
-  document.getElementById('fic').addEventListener('change', function (e) {
-    var f = e.target.files[0];
-    f.arrayBuffer().then(function (buf) {
-      var u8 = new Uint8Array(buf);
-      if (u8[0] === 0x50 && u8[1] === 0x4b) {
-        return JSZip.loadAsync(buf).then(function (z) {
-          var nom = Object.keys(z.files).find(function (n) { return /new_bookmory\.db$/.test(n); });
-          return z.file(nom).async('uint8array');
-        });
-      }
-      return u8;
-    }).then(function (u8) {
-      lsSet('bm_db', u8ToB64(u8));
-      lsSet('bm_src', f.name);
-      charger(u8, f.name);
-    });
-  });
-}
 
 // ---------- genres : tags Goodreads regroupés et traduits ----------
 // null = pas un genre (format, pays, époque, étiquette trop générale) : le tag est ignoré
@@ -961,9 +821,8 @@ ACTIONS.exclure = function (el) {
   } else {
     delete EXCLUS[id];
   }
-  lsSet('bm_exclus', JSON.stringify(EXCLUS));
   el.classList.toggle('on');
-  rendre();
+  sauverExclusion(id);
 };
 function blocExclusion(b) {
   var e = EXCLUS[b.id] || {};
@@ -1130,7 +989,7 @@ function vAccueilCorps() {
     var d = new Date(r.end);
     return d.getFullYear() === y - 1 && d <= new Date(y - 1, now.getMonth(), now.getDate());
   }).length;
-  var objectif = parseInt(lsGet('bm_objectif') || '25', 10);
+  var objectif = objectifAnnee(y).livres || 25;
   var proj = Math.round(cetteAnnee / jourAn * nbJoursAn);
   var ecart = cetteAnnee - anDernier;
   var ecartTxt = String(ecart);
@@ -1181,8 +1040,10 @@ vAccueil.apres = function () {
   var i = document.getElementById('obj');
   if (i) {
     i.addEventListener('change', function () {
-      lsSet('bm_objectif', i.value);
-      rendre();
+      var n = parseInt(i.value, 10);
+      if (n > 0) {
+        sauverObjectif(new Date().getFullYear(), {livres: n});
+      }
     });
   }
 };
@@ -1434,7 +1295,7 @@ function vGouts() {
     tags.map(function (t) {
       var x = aff[t];
       return '<tr><td>' + esc(t) + '</td><td class="n">' + x.n + '</td><td class="n">' + etoiles(moy(x.notes)) + '</td><td class="n">' + Math.round(100 * x.abandons / x.n) + ' %</td></tr>';
-    }).join('') + '</table>', 'd\'après les tags Goodreads traduits, au moins 3 lectures');
+    }).join('') + '</table>', 'au moins 3 lectures');
 
   // évolution des genres
   var top = tags.filter(function (t) { return t !== 'Fiction'; }).slice(0, 6);
@@ -1528,7 +1389,7 @@ function vArgent() {
     });
   });
   if (!achats.length) {
-    return card('Argent', '<p class="muted">Aucun prix saisi dans Bookmory pour l\'instant.</p>');
+    return card('Argent', '<p class="muted">Aucun prix saisi pour l\'instant.</p>');
   }
   var total = achats.reduce(function (s, a) { return s + a.prix; }, 0);
   var parAn = {};
@@ -3210,17 +3071,1073 @@ rendre = function () {
 };
 </script>
 
+<script>
+// ---------- Base de données du grimoire (IndexedDB « grimoire-base ») ----------
+// Tout est chargé en mémoire dans D (D.livres = {id: objet}…) ; une seule fonction écrit : ecrire().
+// L'adaptateur modeleDepuisBase() fabrique ensuite le modèle M attendu par les vues.
+var BASE_NOM = 'grimoire-base';
+var BASE_VERSION = 1;
+var TABLES = {
+  livres: ['serieId'],
+  auteurs: [],
+  series: [],
+  genres: [],
+  criteres: [],
+  humeurs: [],
+  tropes: [],
+  etageres: [],
+  lectures: ['livreId'],
+  sessions: ['lectureId', 'livreId'],
+  citations: ['livreId'],
+  achats: ['livreId'],
+  avis: [],
+  objectifs: [],
+  photos: [],
+  reglages: []
+};
+var D = {};
+// adresses blob: des photos (couvertures, citations), créées au chargement
+var PHOTOS = {};
+var baseOuverte = null;
+
+var FORMAT_BM = {papier: 'paperBook', numerique: 'eBook', audio: 'audioBook'};
+var STATUT_BM = {en_cours: 'READING', pause: 'PAUSE', terminee: 'DONE', abandonnee: 'GIVE_UP'};
+var UNITE_BM = {pages: 'PAGE', secondes: 'TIME', pourcent: 'PERCENT', episodes: 'EPISODE'};
+var ROLES = [['auteur', 'Auteur·ice'], ['preface', 'Préface'], ['traduction', 'Traduction'], ['illustration', 'Illustration'], ['narration', 'Narration'], ['autre', 'Autre']];
+
+function valeurs(o) {
+  return Object.keys(o || {}).map(function (k) { return o[k]; });
+}
+function slug(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+function nouvelId() {
+  if (window.crypto && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+function ouvrirBase() {
+  if (baseOuverte) {
+    return baseOuverte;
+  }
+  baseOuverte = new Promise(function (ok, ko) {
+    var r = indexedDB.open(BASE_NOM, BASE_VERSION);
+    r.onupgradeneeded = function () {
+      var db = r.result;
+      Object.keys(TABLES).forEach(function (t) {
+        if (!db.objectStoreNames.contains(t)) {
+          var s = db.createObjectStore(t, {keyPath: 'id'});
+          TABLES[t].forEach(function (i) { s.createIndex(i, i); });
+        }
+      });
+    };
+    r.onsuccess = function () {
+      var db = r.result;
+      // une nouvelle version de l'appli a besoin de la base : on lui laisse la place
+      db.onversionchange = function () {
+        db.close();
+        location.reload();
+      };
+      ok(db);
+    };
+    r.onerror = function () {
+      ko(r.error);
+    };
+  });
+  return baseOuverte;
+}
+
+function chargerBase() {
+  return ouvrirBase().then(function (db) {
+    var noms = Object.keys(TABLES);
+    return new Promise(function (ok, ko) {
+      var tx = db.transaction(noms);
+      noms.forEach(function (t) {
+        var q = tx.objectStore(t).getAll();
+        q.onsuccess = function () {
+          D[t] = {};
+          q.result.forEach(function (o) { D[t][o.id] = o; });
+        };
+      });
+      tx.oncomplete = function () {
+        Object.keys(PHOTOS).forEach(function (id) { URL.revokeObjectURL(PHOTOS[id]); });
+        PHOTOS = {};
+        valeurs(D.photos).forEach(function (p) { PHOTOS[p.id] = URL.createObjectURL(p.blob); });
+        ok(D);
+      };
+      tx.onerror = function () {
+        ko(tx.error);
+      };
+    });
+  });
+}
+
+// ecrire([{t: 'livres', o: objet}, {t: 'sessions', suppr: id}…]) : une seule transaction pour tout.
+// Ce qui est asynchrone (réseau, photos) doit être fait AVANT. D n'est mis à jour qu'une fois tout écrit.
+// {garderDate: true} conserve modifieLe (import).
+function ecrire(ops) {
+  if (!ops.length) {
+    return Promise.resolve();
+  }
+  return ouvrirBase().then(function (db) {
+    var tables = [];
+    ops.forEach(function (op) {
+      if (tables.indexOf(op.t) < 0) {
+        tables.push(op.t);
+      }
+    });
+    return new Promise(function (ok, ko) {
+      var tx = db.transaction(tables, 'readwrite');
+      var maintenant = Date.now();
+      ops.forEach(function (op) {
+        var s = tx.objectStore(op.t);
+        if (op.suppr !== undefined) {
+          s.delete(op.suppr);
+          return;
+        }
+        if (!op.o.id) {
+          op.o.id = nouvelId();
+        }
+        if (!op.o.creeLe) {
+          op.o.creeLe = maintenant;
+        }
+        if (!op.garderDate || !op.o.modifieLe) {
+          op.o.modifieLe = maintenant;
+        }
+        s.put(op.o);
+      });
+      tx.oncomplete = function () {
+        ops.forEach(function (op) {
+          if (op.suppr !== undefined) {
+            delete D[op.t][op.suppr];
+            if (op.t === 'photos' && PHOTOS[op.suppr]) {
+              URL.revokeObjectURL(PHOTOS[op.suppr]);
+              delete PHOTOS[op.suppr];
+            }
+            return;
+          }
+          D[op.t][op.o.id] = op.o;
+          if (op.t === 'photos') {
+            if (PHOTOS[op.o.id]) {
+              URL.revokeObjectURL(PHOTOS[op.o.id]);
+            }
+            PHOTOS[op.o.id] = URL.createObjectURL(op.o.blob);
+          }
+        });
+        ok();
+      };
+      tx.onerror = function () {
+        ko(tx.error);
+      };
+      tx.onabort = function () {
+        ko(tx.error || new Error('Écriture annulée'));
+      };
+    });
+  });
+}
+
+// après toute modification : modèle recalculé, vues redessinées, sauvegarde programmée
+var apresEcritureHooks = [];
+function apresEcriture() {
+  M = modeleDepuisBase();
+  if (typeof roue !== 'undefined') {
+    roue.livres = null;
+  }
+  rendre();
+  apresEcritureHooks.forEach(function (f) { f(); });
+}
+function enregistrer(t, o) {
+  return ecrire([{t: t, o: o}]).then(apresEcriture);
+}
+
+// ---------- réglages (table « reglages » : {id: clé, v: valeur}) ----------
+function reglage(k, defaut) {
+  var r = D.reglages && D.reglages[k];
+  if (r === undefined) {
+    return defaut;
+  }
+  return r.v;
+}
+function regler(k, v) {
+  return ecrire([{t: 'reglages', o: {id: k, v: v}}]);
+}
+
+// ---------- listes de départ (critères, humeurs, tropes, genres) ----------
+// Ids fixes : les critères gardent les clés du carnet actuel, humeurs et tropes leur libellé en « slug ».
+function idHumeur(libelle) {
+  return 'h:' + slug(libelle.replace(/^\S+\s/, ''));
+}
+function idTrope(libelle) {
+  return 't:' + slug(libelle);
+}
+function idGenre(nom) {
+  return 'g:' + slug(nom);
+}
+function opsListesDeDepart() {
+  var ops = [];
+  if (!valeurs(D.criteres).length) {
+    CRITERES.forEach(function (c, i) {
+      ops.push({t: 'criteres', o: {id: c[0], nom: c[2], emoji: c[1], ordre: i}});
+    });
+  }
+  if (!valeurs(D.humeurs).length) {
+    HUMEURS.forEach(function (h, i) {
+      var p = h.split(' ');
+      ops.push({t: 'humeurs', o: {id: idHumeur(h), nom: p.slice(1).join(' '), emoji: p[0], ordre: i}});
+    });
+  }
+  if (!valeurs(D.tropes).length) {
+    TROPES.forEach(function (x, i) {
+      ops.push({t: 'tropes', o: {id: idTrope(x), nom: x, emoji: '', ordre: i}});
+    });
+  }
+  if (!valeurs(D.genres).length) {
+    var vus = {};
+    Object.keys(GENRES_FR).forEach(function (k) {
+      var g = GENRES_FR[k];
+      if (g && !vus[g]) {
+        vus[g] = 1;
+        ops.push({t: 'genres', o: {id: idGenre(g), nom: g, emoji: '', couleur: '', ordre: ops.length}});
+      }
+    });
+  }
+  return ops;
+}
+// au démarrage : base chargée, listes de départ créées si besoin
+function preparerBase() {
+  return chargerBase().then(function () {
+    return ecrire(opsListesDeDepart());
+  });
+}
+function listeTriee(t) {
+  return valeurs(D[t]).sort(function (a, b) { return (a.ordre || 0) - (b.ordre || 0); });
+}
+
+// ---------- adaptateur : base → modèle « façon Bookmory » lu par les vues ----------
+function urlPhoto(id) {
+  return PHOTOS[id] || '';
+}
+function urlCouverture(l) {
+  if (l.couverture && /^p:|^photo:/.test(l.couverture)) {
+    return urlPhoto(l.couverture);
+  }
+  return l.couverture || '';
+}
+function nomsContributeurs(l, role) {
+  return (l.contributeurs || []).filter(function (c) { return c.role === role && D.auteurs[c.auteurId]; }).map(function (c) {
+    return D.auteurs[c.auteurId].nom;
+  });
+}
+
+function modeleDepuisBase() {
+  var series = {};
+  valeurs(D.series).forEach(function (s) {
+    var st = '';
+    if (s.statut === 'en_cours') {
+      st = 'ongoing';
+    } else if (s.statut === 'terminee') {
+      st = 'completed';
+    }
+    series[s.id] = {_key: s.id, name: s.nom, status: st, nbTomes: s.nbTomes};
+  });
+
+  var achatsPar = {};
+  valeurs(D.achats).forEach(function (a) {
+    if (!achatsPar[a.livreId]) {
+      achatsPar[a.livreId] = [];
+    }
+    achatsPar[a.livreId].push({_id: a.id, price: a.prix || 0, purchased_at: a.date, created_at: a.creeLe, from: a.boutique || '', currency_code: a.devise || 'EUR', memo: a.memo || ''});
+  });
+  var sessionsPar = {};
+  valeurs(D.sessions).forEach(function (s) {
+    if (!sessionsPar[s.lectureId]) {
+      sessionsPar[s.lectureId] = [];
+    }
+    sessionsPar[s.lectureId].push(s);
+  });
+  var lecturesPar = {};
+  valeurs(D.lectures).forEach(function (l) {
+    if (!lecturesPar[l.livreId]) {
+      lecturesPar[l.livreId] = [];
+    }
+    lecturesPar[l.livreId].push(l);
+  });
+
+  var parId = {};
+  var lectures = [];
+  var livres = valeurs(D.livres).sort(function (a, b) { return (a.creeLe || 0) - (b.creeLe || 0) || (a.id < b.id ? -1 : 1); }).map(function (l) {
+    var membres = {};
+    if (l.serieId) {
+      membres[l.serieId] = {number: l.tome, order: 0};
+    }
+    var b = {
+      id: l.id,
+      _key: l.id,
+      title: l.titre || 'Sans titre',
+      image: urlCouverture(l),
+      authors: nomsContributeurs(l, 'auteur'),
+      translators: nomsContributeurs(l, 'traduction'),
+      illustrators: nomsContributeurs(l, 'illustration'),
+      narrators: nomsContributeurs(l, 'narration'),
+      book_type: FORMAT_BM[l.format] || 'paperBook',
+      page_type: UNITE_BM[l.unite] || 'PAGE',
+      total_page: l.total || 0,
+      created_at: l.creeLe,
+      wishlist: l.possession === 'envie',
+      possession: l.possession || '',
+      isbn: (l.isbns || [])[0] || '',
+      publication_date: l.annee ? String(l.annee) : '',
+      publisher: l.editeur || '',
+      description: l.resume || '',
+      tagsBruts: [],
+      tagList: (l.genreIds || []).filter(function (g) { return D.genres[g]; }).map(function (g) { return D.genres[g].nom; }),
+      series_memberships: membres,
+      series_key: l.serieId || '',
+      series_number: l.tome,
+      purchases: achatsPar[l.id] || [],
+      reads: [],
+      statut: 'NOT_STARTED'
+    };
+    var ls = (lecturesPar[l.id] || []).sort(function (x, y) { return (x.nth || 0) - (y.nth || 0); });
+    ls.forEach(function (x) {
+      var logs = (sessionsPar[x.id] || []).filter(function (s) {
+        return s.position !== null && s.position !== undefined && s.fin;
+      }).map(function (s) {
+        return {page: s.position, created_at: s.fin};
+      }).sort(function (p, q) { return p.created_at - q.created_at; });
+      var r = {
+        _id: x.id,
+        book: b,
+        nth: x.nth || 1,
+        status: STATUT_BM[x.statut] || 'READING',
+        star: x.etoiles || 0,
+        start: x.debut || 0,
+        end: x.fin || 0,
+        created_at: x.creeLe,
+        updated_at: x.modifieLe,
+        total_page: x.total || 0,
+        page: x.position || 0,
+        page_type: UNITE_BM[x.unite] || b.page_type,
+        book_type: FORMAT_BM[x.format] || b.book_type,
+        comment: x.commentaire || '',
+        logs: logs
+      };
+      r.fmt = r.book_type || b.book_type;
+      r.date = r.end || r.start;
+      b.reads.push(r);
+      lectures.push(r);
+    });
+    // comme Bookmory : « lu » dès qu'une lecture est finie, sinon l'état de la dernière lecture
+    if (b.reads.some(function (r) { return r.status === 'DONE'; })) {
+      b.statut = 'DONE';
+    } else if (b.reads.length) {
+      b.statut = b.reads[b.reads.length - 1].status;
+    }
+    parId[b.id] = b;
+    return b;
+  });
+
+  var notes = valeurs(D.citations).sort(function (a, b) { return (a.creeLe || 0) - (b.creeLe || 0); }).map(function (c) {
+    var type = 'BOOK_CONTENT';
+    if (c.type === 'pensee') {
+      type = 'THOUGHT';
+    }
+    return {_key: c.id, texte: c.texte || '', book: parId[c.livreId], bid: c.livreId, page: c.page || 0, page_end: c.pageFin || 0, type: type, created_at: c.creeLe, photo: urlPhoto(c.photoId), favori: !!c.favori};
+  });
+
+  // jours de lecture, comme Bookmory : un relevé, un minuteur, un début ou une fin de lecture
+  var jl = {};
+  function marquer(ts, livreId) {
+    if (!ts || !parId[livreId]) {
+      return;
+    }
+    var k = dkey(new Date(ts));
+    if (!jl[k]) {
+      jl[k] = [];
+    }
+    if (jl[k].indexOf(livreId) < 0) {
+      jl[k].push(livreId);
+    }
+  }
+  valeurs(D.lectures).forEach(function (x) {
+    marquer(x.debut, x.livreId);
+    marquer(x.fin, x.livreId);
+  });
+  valeurs(D.sessions).forEach(function (s) {
+    marquer(s.debut, s.livreId);
+  });
+  var jours = {};
+  Object.keys(jl).forEach(function (k) { jours[k] = jl[k].length; });
+
+  var sessions = valeurs(D.sessions).filter(function (s) { return parId[s.livreId]; }).map(function (s) {
+    return {id: s.id, book: parId[s.livreId], lectureId: s.lectureId, debut: s.debut, fin: s.fin, dureeSec: s.dureeSec || 0, position: s.position, origine: s.origine};
+  });
+
+  // carnet et exclusions, au format attendu par les vues actuelles
+  EXCLUS = {};
+  valeurs(D.livres).forEach(function (l) {
+    var e = {};
+    CATS_EXCLUSION.forEach(function (c) {
+      if (l.exclusions && l.exclusions[c[0]]) {
+        e[c[0]] = 1;
+      }
+    });
+    if (Object.keys(e).length) {
+      EXCLUS[l.id] = e;
+    }
+  });
+  NOTES = {};
+  valeurs(D.avis).forEach(function (a) {
+    var n = {humeurs: [], tropes: [], mot: a.mot || '', maj: a.maj || a.modifieLe};
+    Object.keys(a.notes || {}).forEach(function (k) { n[k] = a.notes[k]; });
+    (a.humeurIds || []).forEach(function (id) {
+      var h = D.humeurs[id];
+      if (h) {
+        n.humeurs.push((h.emoji ? h.emoji + ' ' : '') + h.nom);
+      }
+    });
+    (a.tropeIds || []).forEach(function (id) {
+      if (D.tropes[id]) {
+        n.tropes.push(D.tropes[id].nom);
+      }
+    });
+    NOTES[a.id] = n;
+  });
+
+  return {livres: livres, lectures: lectures, notes: notes, series: series, jours: jours, joursLivres: jl, parId: parId, sessions: sessions};
+}
+
+// ---------- écritures venues des vues actuelles (carnet, exclusions, objectif) ----------
+// Le carnet édite NOTES (format historique) : on le retraduit en « avis ».
+function avisDepuisNote(id, n) {
+  var notes = {};
+  valeurs(D.criteres).forEach(function (c) {
+    if (n[c.id]) {
+      notes[c.id] = n[c.id];
+    }
+  });
+  var ops = [];
+  var humeurIds = (n.humeurs || []).map(function (libelle) {
+    var id = idHumeur(libelle);
+    if (!D.humeurs[id]) {
+      var p = libelle.split(' ');
+      ops.push({t: 'humeurs', o: {id: id, nom: p.slice(1).join(' ') || libelle, emoji: p[0], ordre: valeurs(D.humeurs).length + ops.length}});
+    }
+    return id;
+  });
+  var tropeIds = (n.tropes || []).map(function (nom) {
+    var id = idTrope(nom);
+    if (!D.tropes[id]) {
+      ops.push({t: 'tropes', o: {id: id, nom: nom, emoji: '', ordre: valeurs(D.tropes).length + ops.length}});
+    }
+    return id;
+  });
+  var ancien = D.avis[id] || {};
+  ops.push({t: 'avis', o: {id: id, notes: notes, humeurIds: humeurIds, tropeIds: tropeIds, mot: n.mot || '', maj: n.maj || Date.now(), creeLe: ancien.creeLe}});
+  return ops;
+}
+function sauverNotes() {
+  var ops = [];
+  Object.keys(NOTES).forEach(function (id) {
+    var a = D.avis[id];
+    if (!a || (NOTES[id].maj || 0) !== (a.maj || 0)) {
+      ops = ops.concat(avisDepuisNote(id, NOTES[id]));
+    }
+  });
+  Object.keys(D.avis).forEach(function (id) {
+    if (!NOTES[id]) {
+      ops.push({t: 'avis', suppr: id});
+    }
+  });
+  ecrire(ops).then(apresEcriture).catch(erreurEcriture);
+}
+function chargerNotes() {}
+function sauverExclusion(id) {
+  var l = D.livres[id];
+  if (!l) {
+    return;
+  }
+  var copie = Object.assign({}, l, {exclusions: Object.assign({}, EXCLUS[id] || {})});
+  ecrire([{t: 'livres', o: copie}]).then(apresEcriture).catch(erreurEcriture);
+}
+function objectifAnnee(y) {
+  return D.objectifs[String(y)] || {id: String(y)};
+}
+function sauverObjectif(y, champs) {
+  var o = Object.assign({}, objectifAnnee(y), champs);
+  ecrire([{t: 'objectifs', o: o}]).then(apresEcriture).catch(erreurEcriture);
+}
+function erreurEcriture(e) {
+  alert('Oups, la modification n\'a pas pu être enregistrée : ' + ((e && e.message) || e));
+}
+</script>
+
+<script>
+// ---------- Import d'un export Bookmory (une fois, ou en miroir avant la bascule) ----------
+// Avant la bascule, chaque export reçu remplace les données venues de Bookmory, sans toucher à ce qui
+// appartient au grimoire (carnet, exclusions, listes, objectifs).
+var SQLJS = 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/';
+var JSZIP = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+var TABLES_BOOKMORY = ['livres', 'auteurs', 'series', 'etageres', 'lectures', 'sessions', 'citations', 'achats', 'photos'];
+var scriptsCharges = {};
+
+function chargerScript(src) {
+  if (!scriptsCharges[src]) {
+    scriptsCharges[src] = new Promise(function (ok, ko) {
+      var s = document.createElement('script');
+      s.src = src;
+      s.onload = ok;
+      s.onerror = function () {
+        delete scriptsCharges[src];
+        ko(new Error('Impossible de charger ' + src + ' (es-tu hors connexion ?)'));
+      };
+      document.head.appendChild(s);
+    });
+  }
+  return scriptsCharges[src];
+}
+function sqlJs() {
+  return chargerScript(SQLJS + 'sql-wasm.js').then(function () {
+    return initSqlJs({locateFile: function (f) { return SQLJS + f; }});
+  });
+}
+function jszip() {
+  return chargerScript(JSZIP).then(function () { return JSZip; });
+}
+
+function estZip(u8) {
+  return u8[0] === 0x50 && u8[1] === 0x4b;
+}
+
+// Lit un export (.zip complet avec photos, ou base new_bookmory.db seule) → {stores, images: {nom: Blob}}
+function lireExportBookmory(buf) {
+  var u8 = new Uint8Array(buf);
+  var images = {};
+  var etape = Promise.resolve(u8);
+  if (estZip(u8)) {
+    etape = jszip().then(function (JSZip) {
+      return JSZip.loadAsync(buf);
+    }).then(function (z) {
+      var f = Object.keys(z.files).find(function (n) { return /new_bookmory\.db$/.test(n); });
+      if (!f) {
+        throw new Error('Ce fichier ne contient pas de base Bookmory (new_bookmory.db).');
+      }
+      var photos = Object.keys(z.files).filter(function (n) { return /images\/notes\/[^/]+\.(jpe?g|png|webp)$/i.test(n); });
+      return Promise.all(photos.map(function (n) {
+        return z.file(n).async('blob').then(function (b) {
+          images[n.split('/').pop()] = b;
+        });
+      })).then(function () {
+        return z.file(f).async('uint8array');
+      });
+    });
+  }
+  return etape.then(function (db) {
+    return sqlJs().then(function (SQL) {
+      return {stores: storesBookmory(SQL, db), images: images};
+    });
+  });
+}
+function storesBookmory(SQL, u8) {
+  var db = new SQL.Database(u8);
+  var res = db.exec("SELECT store, CAST(key AS TEXT), value FROM entry WHERE deleted IS NULL OR deleted = 0");
+  var stores = {};
+  res[0].values.forEach(function (r) {
+    if (!stores[r[0]]) {
+      stores[r[0]] = [];
+    }
+    var o = JSON.parse(r[2]);
+    o._key = r[1];
+    stores[r[0]].push(o);
+  });
+  db.close();
+  return stores;
+}
+
+// ---------- conversion ----------
+var FORMAT_FR = {paperBook: 'papier', eBook: 'numerique', audioBook: 'audio'};
+var STATUT_FR = {READING: 'en_cours', PAUSE: 'pause', DONE: 'terminee', GIVE_UP: 'abandonnee'};
+var UNITE_FR = {PAGE: 'pages', TIME: 'secondes', PERCENT: 'pourcent', EPISODE: 'episodes'};
+var ROLES_SUFFIXES = [
+  [/^(pr[ée]face|introductions?|avant-propos|postface)$/i, 'preface'],
+  [/^(traduction|traducteur|traductrice|translator)$/i, 'traduction'],
+  [/^(illustrations?|illustrateur|illustratrice|illustrator)$/i, 'illustration'],
+  [/^(narration|narrateur|narratrice|lu par|narrator)$/i, 'narration']
+];
+
+function idAuteur(nom) {
+  return 'a:' + slug(nom);
+}
+// « Evanna Lynch - préface » → {nom: 'Evanna Lynch', role: 'preface'}
+function lireContributeur(s, roleParDefaut) {
+  var nom = String(s || '').trim();
+  var role = roleParDefaut;
+  var m = nom.match(/^(.+?)\s+-\s+([^-]+)$/);
+  if (m) {
+    var r = ROLES_SUFFIXES.find(function (x) { return x[0].test(m[2].trim()); });
+    if (r) {
+      nom = m[1].trim();
+      role = r[1];
+    }
+  }
+  return {nom: nom, role: role};
+}
+function texteQuill(q) {
+  try {
+    return JSON.parse(q).map(function (op) {
+      if (typeof op.insert === 'string') {
+        return op.insert;
+      }
+      return '';
+    }).join('').trim();
+  } catch (e) {
+    return '';
+  }
+}
+
+// ancien = {notes, exclus, objectif} : le carnet et les réglages de la version « lecture seule »
+function convertirBookmory(S, images, ancien) {
+  var ops = [];
+  var nouveaux = {};
+  TABLES_BOOKMORY.forEach(function (t) { nouveaux[t] = {}; });
+  function mettre(t, o) {
+    o.origine = 'bookmory';
+    nouveaux[t][o.id] = o;
+    ops.push({t: t, o: o, garderDate: true});
+  }
+
+  // genres manquants (les listes de départ existent déjà : preparerBase)
+  var opsListes = [];
+  var genresConnus = {};
+  valeurs(D.genres).forEach(function (g) { genresConnus[g.id] = g; });
+
+  (S.series || []).forEach(function (s) {
+    var st = '';
+    if (s.status === 'ongoing') {
+      st = 'en_cours';
+    } else if (s.status === 'completed') {
+      st = 'terminee';
+    }
+    var ancienne = D.series[s._key] || {};
+    mettre('series', {id: s._key, nom: s.name || 'Série', statut: st, nbTomes: ancienne.nbTomes || null, creeLe: s.created_at, modifieLe: s.updated_at});
+  });
+  (S.collections || []).forEach(function (c, i) {
+    var ancienne = D.etageres[c._key] || {};
+    mettre('etageres', {id: c._key, nom: c.name || 'Étagère', emoji: ancienne.emoji || '', ordre: i, creeLe: c.created_at, modifieLe: c.updated_at});
+  });
+
+  var auteurs = {};
+  (S.books || []).forEach(function (b) {
+    var id = b._key;
+    var ancienLivre = D.livres[id] || {};
+    var fmtLivre = FORMAT_FR[b.book_type] || 'papier';
+    var uniteLivre = UNITE_FR[b.page_type] || 'pages';
+
+    var contributeurs = [];
+    function ajouterContributeur(s, role) {
+      var c = lireContributeur(s, role);
+      if (!c.nom) {
+        return;
+      }
+      var aid = idAuteur(c.nom);
+      if (!auteurs[aid]) {
+        var ancienAuteur = D.auteurs[aid] || {};
+        auteurs[aid] = {id: aid, nom: ancienAuteur.nom || c.nom, tri: slug(c.nom.split(' ').pop()), creeLe: ancienAuteur.creeLe};
+        mettre('auteurs', auteurs[aid]);
+      }
+      if (!contributeurs.some(function (x) { return x.auteurId === aid && x.role === c.role; })) {
+        contributeurs.push({auteurId: aid, role: c.role});
+      }
+    }
+    var listeAuteurs = b.authors || [];
+    if (!listeAuteurs.length && b.author) {
+      listeAuteurs = [b.author];
+    }
+    listeAuteurs.forEach(function (a) { ajouterContributeur(a, 'auteur'); });
+    (b.translators || []).forEach(function (a) { ajouterContributeur(a, 'traduction'); });
+    (b.illustrators || []).forEach(function (a) { ajouterContributeur(a, 'illustration'); });
+    (b.narrators || []).forEach(function (a) { ajouterContributeur(a, 'narration'); });
+
+    var tags = (b.tags || '').split(/\s+/).filter(Boolean).map(function (t) { return t.replace(/^#/, ''); });
+    var genreIds = genresFr(tags).map(function (g) {
+      var gid = idGenre(g);
+      if (!genresConnus[gid]) {
+        genresConnus[gid] = {id: gid, nom: g, emoji: '', couleur: '', ordre: Object.keys(genresConnus).length};
+        opsListes.push({t: 'genres', o: genresConnus[gid]});
+      }
+      return gid;
+    });
+
+    var serieId = '';
+    var tome = null;
+    var mb = b.series_memberships || {};
+    var cle = Object.keys(mb)[0];
+    if (cle) {
+      serieId = cle;
+      tome = mb[cle].number;
+    } else if (b.series_key) {
+      serieId = b.series_key;
+      tome = b.series_number || null;
+    }
+
+    var isbn = isbn13(chiffres(b.isbn || ''));
+    var annee = parseInt(String(b.publication_date || '').slice(0, 4), 10) || null;
+    var possession = '';
+    if (b.wishlist) {
+      possession = 'envie';
+    } else if (!(b.reads || []).length || (b.purchases || []).length) {
+      possession = 'possede';
+    }
+    var exclusions = ancienLivre.exclusions || (ancien.exclus || {})[id] || {};
+
+    mettre('livres', {
+      id: id,
+      titre: b.title || 'Sans titre',
+      contributeurs: contributeurs,
+      isbns: isbn ? [isbn] : [],
+      editeur: b.publisher || '',
+      annee: annee,
+      langue: b.language || '',
+      resume: b.description || '',
+      couverture: b.image || '',
+      lien: b.link || '',
+      format: fmtLivre,
+      unite: uniteLivre,
+      total: b.total_page || 0,
+      genreIds: genreIds,
+      serieId: serieId,
+      tome: tome,
+      possession: possession,
+      etagereIds: (b.collection_keys || []).slice(),
+      exclusions: exclusions,
+      creeLe: b.created_at,
+      modifieLe: b.updated_at
+    });
+
+    (b.purchases || []).forEach(function (p, i) {
+      var pid = id + ':P:' + (p.created_at || i);
+      mettre('achats', {id: pid, livreId: id, date: p.purchased_at || p.created_at || null, prix: p.price || 0, devise: p.currency_code || 'EUR', boutique: p.from || '', memo: p.memo || '', format: fmtLivre, creeLe: p.created_at, modifieLe: p.updated_at});
+    });
+
+    (b.reads || []).forEach(function (r, i) {
+      var nth = r.nth || i + 1;
+      var lid = id + ':' + nth;
+      mettre('lectures', {
+        id: lid,
+        livreId: id,
+        nth: nth,
+        format: FORMAT_FR[r.book_type] || fmtLivre,
+        debut: r.start || null,
+        fin: r.end || null,
+        statut: STATUT_FR[r.status] || 'en_cours',
+        unite: UNITE_FR[r.page_type] || uniteLivre,
+        total: r.total_page || 0,
+        position: r.page || 0,
+        etoiles: r.star || null,
+        commentaire: r.comment || '',
+        creeLe: r.created_at,
+        modifieLe: r.updated_at
+      });
+      var vus = {};
+      function idUnique(base) {
+        var k = base;
+        var n = 1;
+        while (vus[k]) {
+          n++;
+          k = base + ':' + n;
+        }
+        vus[k] = 1;
+        return k;
+      }
+      (r.page_log_list || []).forEach(function (l) {
+        mettre('sessions', {id: idUnique(lid + ':L:' + l.created_at), lectureId: lid, livreId: id, debut: l.created_at, fin: l.created_at, dureeSec: null, position: l.page, creeLe: l.created_at, modifieLe: l.updated_at});
+      });
+      (r.read_timer_list || []).forEach(function (t) {
+        var debut = t.read_started_at || t.created_at;
+        mettre('sessions', {id: idUnique(lid + ':T:' + debut), lectureId: lid, livreId: id, debut: debut, fin: debut + (t.elapsed_sec || 0) * 1000, dureeSec: t.elapsed_sec || 0, position: null, creeLe: t.created_at, modifieLe: t.updated_at});
+      });
+    });
+  });
+
+  var nbPhotos = 0;
+  (S.notes || []).forEach(function (n) {
+    var photoId = null;
+    var fichier = ((n.images || [])[0] || '').split('/').pop();
+    if (fichier) {
+      var pid = 'p:' + fichier;
+      if (images[fichier]) {
+        mettre('photos', {id: pid, blob: images[fichier], type: images[fichier].type || 'image/jpeg', creeLe: n.created_at});
+        photoId = pid;
+        nbPhotos++;
+      } else if (D.photos[pid]) {
+        // export sans photos : on garde celle déjà importée
+        nouveaux.photos[pid] = D.photos[pid];
+        photoId = pid;
+      }
+    }
+    var type = 'citation';
+    if (n.type === 'THOUGHT') {
+      type = 'pensee';
+    }
+    var lectureId = null;
+    if (n.read_nth) {
+      lectureId = n.bid + ':' + n.read_nth;
+    }
+    mettre('citations', {
+      id: n._key,
+      livreId: n.bid,
+      lectureId: lectureId,
+      type: type,
+      texte: texteQuill(n.content_quill),
+      page: n.page || null,
+      pageFin: n.page_end || null,
+      photoId: photoId,
+      favori: !!n.like,
+      commentaires: (n.comments || []).map(function (c) { return {texte: c.content || '', creeLe: c.created_at}; }),
+      creeLe: n.created_at,
+      modifieLe: n.updated_at
+    });
+  });
+
+  // miroir : ce qui venait de Bookmory et n'y est plus disparaît (les données du grimoire restent)
+  var suppressions = 0;
+  TABLES_BOOKMORY.forEach(function (t) {
+    valeurs(D[t]).forEach(function (o) {
+      if (o.origine === 'bookmory' && !nouveaux[t][o.id]) {
+        ops.push({t: t, suppr: o.id});
+        suppressions++;
+      }
+    });
+  });
+
+  // carnet, exclusions et objectif de la version précédente (seulement s'ils n'existent pas encore)
+  var nbAvis = 0;
+  Object.keys(ancien.notes || {}).forEach(function (id) {
+    if (!D.avis[id] && nouveaux.livres[id]) {
+      avisDepuisNote(id, ancien.notes[id]).forEach(function (op) {
+        if (op.t === 'avis') {
+          nbAvis++;
+          op.o.creeLe = ancien.notes[id].maj;
+        }
+        ops.push(op);
+      });
+    }
+  });
+  var y = String(new Date().getFullYear());
+  if (ancien.objectif && !D.objectifs[y]) {
+    ops.push({t: 'objectifs', o: {id: y, livres: parseInt(ancien.objectif, 10) || 25}});
+  }
+
+  return {
+    ops: opsListes.concat(ops),
+    recap: {
+      livres: Object.keys(nouveaux.livres).length,
+      lectures: Object.keys(nouveaux.lectures).length,
+      sessions: Object.keys(nouveaux.sessions).length,
+      citations: Object.keys(nouveaux.citations).length,
+      photos: nbPhotos,
+      achats: Object.keys(nouveaux.achats).length,
+      series: Object.keys(nouveaux.series).length,
+      auteurs: Object.keys(nouveaux.auteurs).length,
+      avis: nbAvis,
+      suppressions: suppressions
+    }
+  };
+}
+
+// ancien carnet, exclusions et objectif (localStorage de la version « lecture seule »)
+function ancienCarnet() {
+  var a = {notes: {}, exclus: {}, objectif: lsGet('bm_objectif')};
+  try {
+    a.notes = JSON.parse(lsGet('bm_notes') || '{}');
+  } catch (e) {}
+  try {
+    a.exclus = JSON.parse(lsGet('bm_exclus') || '{}');
+  } catch (e) {}
+  return a;
+}
+
+function texteRecap(r) {
+  var morceaux = [r.livres + ' livres', r.lectures + ' lectures', r.sessions + ' relevés et minuteurs', r.citations + ' citations'];
+  if (r.photos) {
+    morceaux.push(r.photos + ' photos');
+  }
+  morceaux.push(r.achats + ' achats', r.series + ' séries');
+  if (r.avis) {
+    morceaux.push(r.avis + ' notes de carnet');
+  }
+  return morceaux.join(' · ');
+}
+
+// Importe un export : renvoie le récapitulatif. Ne redessine rien (l'appelant décide).
+function importerBookmory(buf) {
+  return lireExportBookmory(buf).then(function (lu) {
+    var c = convertirBookmory(lu.stores, lu.images, ancienCarnet());
+    return ecrire(c.ops).then(function () {
+      return regler('dernierImport', {date: Date.now(), recap: c.recap});
+    }).then(function () {
+      return c.recap;
+    });
+  });
+}
+</script>
+
+<script>
+// ---------- Sauvegarde : tout le grimoire dans un zip (donnees.json + photos/) ----------
+var FORMAT_SAUVEGARDE = 'grimoire';
+// réglages qui ne quittent jamais le téléphone
+var REGLAGES_PRIVES = ['liaison'];
+
+function nomFichierPhoto(id, type) {
+  var ext = 'jpg';
+  if (/png/.test(type || '')) {
+    ext = 'png';
+  } else if (/webp/.test(type || '')) {
+    ext = 'webp';
+  }
+  return 'photos/' + id.replace(/^p:/, '').replace(/\.(jpe?g|png|webp)$/i, '').replace(/[^a-zA-Z0-9_-]/g, '_') + '.' + ext;
+}
+
+// → Promise<Blob> (zip)
+function fabriquerSauvegarde() {
+  return jszip().then(function (JSZip) {
+    var z = new JSZip();
+    var tables = {};
+    Object.keys(TABLES).forEach(function (t) {
+      if (t === 'photos') {
+        return;
+      }
+      tables[t] = valeurs(D[t]);
+      if (t === 'reglages') {
+        tables[t] = tables[t].filter(function (r) { return REGLAGES_PRIVES.indexOf(r.id) < 0; });
+      }
+    });
+    var photos = valeurs(D.photos).map(function (p) {
+      var f = nomFichierPhoto(p.id, p.type);
+      z.file(f, p.blob);
+      return {id: p.id, type: p.type, fichier: f, creeLe: p.creeLe, modifieLe: p.modifieLe, origine: p.origine};
+    });
+    z.file('donnees.json', JSON.stringify({format: FORMAT_SAUVEGARDE, version: BASE_VERSION, date: Date.now(), tables: tables, photos: photos}));
+    return z.generateAsync({type: 'blob', compression: 'DEFLATE', compressionOptions: {level: 6}});
+  });
+}
+
+// Le zip est-il une sauvegarde du grimoire ? → Promise<{donnees, zip}|null>
+function lireSauvegarde(buf) {
+  if (!estZip(new Uint8Array(buf))) {
+    return Promise.resolve(null);
+  }
+  return jszip().then(function (JSZip) {
+    return JSZip.loadAsync(buf);
+  }).then(function (z) {
+    var f = z.file('donnees.json');
+    if (!f) {
+      return null;
+    }
+    return f.async('string').then(function (t) {
+      var d = JSON.parse(t);
+      if (d.format !== FORMAT_SAUVEGARDE) {
+        return null;
+      }
+      return {donnees: d, zip: z};
+    });
+  });
+}
+function resumeSauvegarde(d) {
+  var t = d.tables || {};
+  function n(x) {
+    return (t[x] || []).length;
+  }
+  return n('livres') + ' livres · ' + n('lectures') + ' lectures · ' + n('citations') + ' citations · ' + (d.photos || []).length + ' photos · du ' + fdate(d.date);
+}
+
+// Remplace TOUTE la base par la sauvegarde (les réglages privés du téléphone sont gardés).
+function restaurerSauvegarde(lu) {
+  var d = lu.donnees;
+  var photos = d.photos || [];
+  return Promise.all(photos.map(function (p) {
+    var f = lu.zip.file(p.fichier);
+    if (!f) {
+      return null;
+    }
+    return f.async('blob').then(function (b) {
+      return {id: p.id, blob: new Blob([b], {type: p.type || 'image/jpeg'}), type: p.type, creeLe: p.creeLe, modifieLe: p.modifieLe, origine: p.origine};
+    });
+  })).then(function (ph) {
+    var tables = {};
+    Object.keys(TABLES).forEach(function (t) {
+      tables[t] = (d.tables || {})[t] || [];
+    });
+    tables.photos = ph.filter(Boolean);
+    REGLAGES_PRIVES.forEach(function (k) {
+      if (D.reglages[k]) {
+        tables.reglages = tables.reglages.filter(function (r) { return r.id !== k; }).concat([D.reglages[k]]);
+      }
+    });
+    return remplacerBase(tables);
+  });
+}
+function remplacerBase(tables) {
+  return ouvrirBase().then(function (db) {
+    var noms = Object.keys(TABLES);
+    return new Promise(function (ok, ko) {
+      var tx = db.transaction(noms, 'readwrite');
+      noms.forEach(function (t) {
+        var s = tx.objectStore(t);
+        s.clear();
+        (tables[t] || []).forEach(function (o) {
+          if (o && o.id !== undefined) {
+            s.put(o);
+          }
+        });
+      });
+      tx.oncomplete = ok;
+      tx.onerror = function () {
+        ko(tx.error);
+      };
+      tx.onabort = function () {
+        ko(tx.error || new Error('Restauration annulée'));
+      };
+    });
+  }).then(chargerBase);
+}
+
+function nomSauvegarde() {
+  return 'grimoire-' + dkey(new Date()) + '.zip';
+}
+ACTIONS.exporterSauvegarde = function () {
+  fabriquerSauvegarde().then(function (blob) {
+    var f = new File([blob], nomSauvegarde(), {type: 'application/zip'});
+    if (navigator.canShare && navigator.canShare({files: [f]})) {
+      return navigator.share({files: [f], title: 'Sauvegarde de mon grimoire'}).catch(function () {});
+    }
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(f);
+    a.download = f.name;
+    a.click();
+  }).catch(erreurEcriture);
+};
+
+function carteSauvegarde() {
+  var n = valeurs(D.livres).length;
+  return card('Sauvegarde', '<p class="small muted">Tout ton grimoire (' + n + ' livres, ton carnet, tes citations et leurs photos) est gardé sur ce téléphone. Exporte-le de temps en temps, par exemple dans ton Drive : « Restaurer » le remet tel quel.</p><div class="row"><button class="act" data-act="exporterSauvegarde">💾 Exporter</button><button class="act doux" data-act="choisirExport">↩️ Restaurer</button></div>');
+}
+</script>
+
 <style>
 .import-btn{left:16px;right:auto}
 .vide{text-align:center}
 .vide .etapes{text-align:left;margin:12px auto;max-width:320px;line-height:1.8}
-.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--card);font:700 14px Nunito,sans-serif;padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transition:all .3s;z-index:70;white-space:nowrap}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--card);font:700 14px Nunito,sans-serif;padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transition:all .3s;z-index:70;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
 .toast.vis{opacity:1;transform:translate(-50%,0)}
 </style>
 <script>
-// ---------- Version appli (PWA) : l'export et le carnet restent sur le téléphone ----------
+// ---------- Version appli (PWA) : démarrage, fichiers reçus (partage Android ou 📥) ----------
 var CACHE_PARTAGE = 'grimoire-partage';
 
+// ancienne base « grimoire » (version lecture seule) : on n'y lit plus que le dernier export reçu
 function idb() {
   return new Promise(function (ok, ko) {
     var r = indexedDB.open('grimoire', 1);
@@ -3248,20 +4165,6 @@ function idbGet(k) {
     });
   });
 }
-function idbSet(k, v) {
-  return idb().then(function (db) {
-    return new Promise(function (ok, ko) {
-      var t = db.transaction('fichiers', 'readwrite');
-      t.objectStore('fichiers').put(v, k);
-      t.oncomplete = function () {
-        ok();
-      };
-      t.onerror = function () {
-        ko(t.error);
-      };
-    });
-  });
-}
 
 function toast(texte) {
   var t = document.createElement('div');
@@ -3274,37 +4177,77 @@ function toast(texte) {
     setTimeout(function () { t.remove(); }, 400);
   }, 3500);
 }
+function erreurEcran(e) {
+  document.getElementById('app').innerHTML = '<div id="load" class="err">' + esc((e && e.message) || e) + '</div>';
+}
 
-// Reçoit un export Bookmory (.zip ou .db), le garde sur le téléphone et l'affiche.
-function importer(buf, nom) {
-  var u8 = new Uint8Array(buf);
-  var etape = Promise.resolve(u8);
-  if (u8[0] === 0x50 && u8[1] === 0x4b) {
-    etape = JSZip.loadAsync(buf).then(function (z) {
-      var f = Object.keys(z.files).find(function (n) { return /new_bookmory\.db$/.test(n); });
-      if (!f) {
-        throw new Error('Ce fichier ne contient pas de base Bookmory (new_bookmory.db).');
-      }
-      return z.file(f).async('uint8array');
-    });
+function majSource() {
+  var src = '';
+  var imp = reglage('dernierImport');
+  if (reglage('mode', 'miroir') === 'miroir' && imp) {
+    src = 'Copie de Bookmory du ' + fdate(imp.date);
   }
-  return etape.then(function (db) {
-    var quand = Date.now();
-    return idbSet('export', {octets: db, nom: nom, date: quand}).then(function () {
-      return charger(db, 'Export du ' + fdate(quand));
-    }).then(function () {
-      toast('✨ Grimoire mis à jour');
+  document.getElementById('src').textContent = src;
+}
+function afficherGrimoire() {
+  M = modeleDepuisBase();
+  majSource();
+  rendre();
+}
+
+// Fichier reçu : sauvegarde du grimoire (→ restaurer) ou export Bookmory (→ importer en miroir)
+function recevoirFichier(buf) {
+  document.getElementById('app').innerHTML = '<div id="load">J\'ouvre le fichier…</div>';
+  return lireSauvegarde(buf).then(function (lu) {
+    if (lu) {
+      return proposerRestauration(lu);
+    }
+    if (reglage('mode', 'miroir') !== 'miroir' && !confirm('Ton grimoire ne dépend plus de Bookmory. Réimporter cet export remplacera les livres venus de Bookmory par leur version de l\'export. Continuer ?')) {
+      return afficherSiPossible();
+    }
+    return importerBookmory(buf).then(function (recap) {
+      afficherGrimoire();
+      toast('✨ Grimoire mis à jour · ' + recap.livres + ' livres');
     });
   }).catch(function (e) {
-    document.getElementById('app').innerHTML = '<div id="load" class="err">' + esc(e.message) + '</div>';
+    erreurEcran(e);
   });
+}
+function afficherSiPossible() {
+  if (valeurs(D.livres).length) {
+    afficherGrimoire();
+  } else {
+    ecranVide();
+  }
+}
+function proposerRestauration(lu) {
+  afficherSiPossible();
+  ouvrirFeuille('<h3>Restaurer une sauvegarde</h3><p>' + esc(resumeSauvegarde(lu.donnees)) + '</p><p class="small muted">Tout ce qui est actuellement dans le grimoire sera remplacé par cette sauvegarde.</p><div class="row"><button class="act" data-act="confirmerRestauration">↩️ Restaurer</button><button class="act doux" data-act="fermer">Annuler</button></div>');
+  ACTIONS.confirmerRestauration = function () {
+    fermerFeuille();
+    restaurerSauvegarde(lu).then(function () {
+      afficherSiPossible();
+      toast('✨ Sauvegarde restaurée');
+    }).catch(erreurEcriture);
+  };
 }
 
 function ecranVide() {
-  document.getElementById('app').innerHTML = card('Bienvenue dans ton grimoire ✨', '<div class="vide"><p>Pour l\'ouvrir, envoie-lui ton export Bookmory :</p><div class="etapes">1. Dans Bookmory, <b>exporte tes données</b><br>2. Touche <b>Partager</b><br>3. Choisis <b>Grimoire</b></div><p class="small muted">ou choisis le fichier toi-même :</p><button class="act" data-act="choisirExport">📥 Choisir un export</button></div>');
+  M = null;
+  document.getElementById('src').textContent = '';
+  document.getElementById('app').innerHTML = card('Bienvenue dans ton grimoire ✨', '<div class="vide"><p>Pour le remplir avec tes lectures, envoie-lui un export Bookmory :</p><div class="etapes">1. Dans Bookmory, <b>exporte tes données</b><br>2. Touche <b>Partager</b><br>3. Choisis <b>Grimoire</b></div><p class="small muted">ou choisis le fichier toi-même (un export Bookmory ou une sauvegarde du grimoire) :</p><button class="act" data-act="choisirExport">📥 Choisir un fichier</button></div>');
+}
+// première ouverture de la nouvelle version : l'ancien export est déjà sur le téléphone
+function proposerImportAncien(e) {
+  M = null;
+  document.getElementById('app').innerHTML = card('Ton grimoire fait peau neuve ✨', '<div class="vide"><p>Il a maintenant sa propre base : tes lectures vont y être copiées, avec ton carnet, tes exclusions et ton objectif.</p><p class="small muted">Dernier export reçu : ' + fdate(e.date) + '. Pour avoir aussi les photos de tes citations, partage plutôt un nouvel export depuis Bookmory (ta macro le fait quand tu fermes Bookmory).</p><div class="row" style="justify-content:center"><button class="act" data-act="importerAncien">✨ Importer maintenant</button><button class="act doux" data-act="choisirExport">📥 Un autre fichier</button></div></div>');
+  ACTIONS.importerAncien = function () {
+    recevoirFichier(e.octets.buffer.slice(e.octets.byteOffset, e.octets.byteOffset + e.octets.byteLength));
+  };
 }
 
 ACTIONS.choisirExport = function () {
+  fermerFeuille();
   document.getElementById('fichierImport').click();
 };
 
@@ -3315,7 +4258,6 @@ function demarrer() {
     Object.keys(s).forEach(function (k) { sous[k] = s[k]; });
   } catch (e) {}
   onglet = lsGet('bm_onglet') || 'accueil';
-  chargerNotes();
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
@@ -3327,93 +4269,53 @@ function demarrer() {
   document.getElementById('fichierImport').addEventListener('change', function (e) {
     var f = e.target.files[0];
     if (f) {
-      f.arrayBuffer().then(function (b) { importer(b, f.name); });
+      f.arrayBuffer().then(recevoirFichier);
     }
     e.target.value = '';
   });
 
-  var params = new URLSearchParams(location.search);
-  if (params.has('partage') && 'caches' in window) {
-    history.replaceState(null, '', location.pathname);
-    caches.open(CACHE_PARTAGE).then(function (c) {
-      return c.match('partage-recu').then(function (rep) {
-        if (!rep) {
-          return ouvrirDernier();
-        }
-        var nom = decodeURIComponent(rep.headers.get('X-Nom') || 'export');
-        return rep.arrayBuffer().then(function (b) {
-          c.delete('partage-recu');
-          return importer(b, nom);
+  preparerBase().then(function () {
+    var params = new URLSearchParams(location.search);
+    if (params.has('partage') && 'caches' in window) {
+      history.replaceState(null, '', location.pathname);
+      return caches.open(CACHE_PARTAGE).then(function (c) {
+        return c.match('partage-recu').then(function (rep) {
+          if (!rep) {
+            return ouvrirGrimoire();
+          }
+          return rep.arrayBuffer().then(function (b) {
+            c.delete('partage-recu');
+            return recevoirFichier(b);
+          });
         });
       });
-    });
-    return;
-  }
-  if (params.get('db')) {
-    fetch(params.get('db')).then(function (r) { return r.arrayBuffer(); }).then(function (b) { importer(b, params.get('db')); });
-    return;
-  }
-  ouvrirDernier();
+    }
+    // test en local : ?db=fichier
+    if (params.get('db')) {
+      return fetch(params.get('db')).then(function (r) { return r.arrayBuffer(); }).then(recevoirFichier);
+    }
+    return ouvrirGrimoire();
+  }).catch(erreurEcran);
 }
 
-function ouvrirDernier() {
+function ouvrirGrimoire() {
+  if (valeurs(D.livres).length) {
+    afficherGrimoire();
+    return;
+  }
   return idbGet('export').then(function (e) {
     if (e && e.octets) {
-      return charger(e.octets, 'Export du ' + fdate(e.date));
+      proposerImportAncien(e);
+    } else {
+      ecranVide();
     }
-    ecranVide();
-  }).catch(function () {
-    ecranVide();
-  });
+  }).catch(ecranVide);
 }
 
-// ---------- sauvegarde du carnet (il ne vit que sur le téléphone) ----------
+// ---------- la carte « Sauvegarde » prend la place de l'ancienne sauvegarde du carnet ----------
 var vCarnetBase = vCarnet;
 vCarnet = function () {
-  var n = Object.keys(NOTES).length;
-  var x = Object.keys(EXCLUS).length;
-  return vCarnetBase() + card('Sauvegarde du carnet', '<p class="small muted">Ton carnet (' + n + ' livre(s) noté(s), ' + x + ' livre(s) exclu(s) de certaines stats) est gardé uniquement sur ce téléphone. Fais-en une copie de temps en temps, par exemple dans ton Drive.</p><div class="row"><button class="act" data-act="sauvegarderCarnet">💾 Sauvegarder</button><button class="act doux" data-act="restaurerCarnet">↩️ Restaurer</button></div><input type="file" id="fichierCarnet" accept=".json,application/json,text/plain" hidden>');
-};
-ACTIONS.sauvegarderCarnet = function () {
-  var nom = 'grimoire_notes.json';
-  var f = new File([JSON.stringify({notes: NOTES, exclus: EXCLUS})], nom, {type: 'application/json'});
-  if (navigator.canShare && navigator.canShare({files: [f]})) {
-    navigator.share({files: [f], title: 'Mon carnet de lectures'}).catch(function () {});
-    return;
-  }
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(f);
-  a.download = nom;
-  a.click();
-};
-ACTIONS.restaurerCarnet = function () {
-  var i = document.getElementById('fichierCarnet');
-  i.onchange = function () {
-    var f = i.files[0];
-    if (!f) {
-      return;
-    }
-    f.text().then(function (t) {
-      var n = JSON.parse(t);
-      var ex = {};
-      // ancien format (carnet Drive) : directement les notes
-      if (n.notes) {
-        ex = n.exclus || {};
-        n = n.notes;
-      }
-      if (!confirm('Remplacer ton carnet actuel par ce fichier (' + Object.keys(n).length + ' livre(s) noté(s)) ?')) {
-        return;
-      }
-      NOTES = n;
-      EXCLUS = ex;
-      lsSet('bm_exclus', JSON.stringify(EXCLUS));
-      sauverNotes();
-      rendre();
-    }).catch(function () {
-      alert('Ce fichier n\'est pas une sauvegarde du carnet.');
-    });
-  };
-  i.click();
+  return vCarnetBase() + carteSauvegarde();
 };
 </script>
 
