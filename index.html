@@ -9879,6 +9879,8 @@ var LISTES = [
   ['etageres', '' + ic('library-big') + ' Étagères', 'étagère', 'e:']
 ];
 var listeOuverte = 'humeurs';
+// la recherche tapée dans chaque liste (gardée quand la liste se redessine)
+var rechercheListes = {};
 
 function infoListe(t) {
   return LISTES.find(function (l) { return l[0] === t; });
@@ -9946,6 +9948,7 @@ ACTIONS.mesListes = function (el) {
     }
     return '<button class="' + cls + '" data-act="mesListes" data-t="' + l[0] + '">' + l[1] + '</button>';
   }).join('') + '</div>';
+  h += '<input class="champ" id="qListe" type="search" placeholder="🔎 Chercher dans les ' + info[2] + 's" autocomplete="off" value="' + esc(rechercheListes[t] || '') + '" style="margin-top:10px">';
   h += '<div class="liste-perso" style="margin-top:10px">' + elements.map(function (x) {
     var i = actifs.indexOf(x);
     var n = usages(t, x.id);
@@ -9963,11 +9966,43 @@ ACTIONS.mesListes = function (el) {
     if (t === 'genres' && x.couleur) {
       pastille = '<i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:' + esc(x.couleur) + ';margin-right:6px"></i>';
     }
-    return '<div class="ligne-ed' + (x.archive ? ' archive' : '') + '"><div class="nom small">' + pastille + '<b>' + esc(libelle(x)) + '</b> <span class="muted">· ' + n + unite + (x.archive ? ' · archivé' : '') + '</span></div><div class="boutons">' + haut + bas + '<button class="mini-btn" data-act="formElement" data-t="' + t + '" data-id="' + esc(x.id) + '">' + ic('pencil') + '</button></div></div>';
+    return '<div class="ligne-ed' + (x.archive ? ' archive' : '') + '" data-s="' + esc(slug(x.nom)) + '"><div class="nom small">' + pastille + '<b>' + esc(libelle(x)) + '</b> <span class="muted">· ' + n + unite + (x.archive ? ' · archivé' : '') + '</span></div><div class="boutons">' + haut + bas + '<button class="mini-btn" data-act="formElement" data-t="' + t + '" data-id="' + esc(x.id) + '">' + ic('pencil') + '</button></div></div>';
   }).join('') + '</div>';
-  h += '<button class="lien" data-act="formElement" data-t="' + t + '">' + ic('plus') + ' Ajouter un·e ' + info[2] + '</button>';
+  h += '<p class="small muted" id="listeRien" hidden></p><button class="lien" id="ajoutListe" data-act="formElement" data-t="' + t + '">' + ic('plus') + ' Ajouter un·e ' + info[2] + '</button>';
   ouvrirFeuille(h);
+  var q = document.getElementById('qListe');
+  q.addEventListener('input', function () {
+    rechercheListes[t] = q.value;
+    filtrerListe(t);
+  });
+  filtrerListe(t);
 };
+// n'affiche que les éléments dont le nom contient la recherche (sans accents) ; rien trouvé : l'ajout reprend ce qui est tapé
+function filtrerListe(t) {
+  var brut = (rechercheListes[t] || '').trim();
+  var q = slug(brut);
+  var vus = 0;
+  document.querySelectorAll('.liste-perso .ligne-ed').forEach(function (el) {
+    var montrer = !q || el.dataset.s.indexOf(q) >= 0;
+    el.style.display = montrer ? '' : 'none';
+    if (montrer) {
+      vus++;
+    }
+  });
+  var info = infoListe(t);
+  var rien = document.getElementById('listeRien');
+  var ajout = document.getElementById('ajoutListe');
+  if (q && !vus) {
+    rien.hidden = false;
+    rien.textContent = 'Aucun·e ' + info[2] + ' ne correspond à « ' + brut + ' ».';
+    ajout.dataset.nom = brut;
+    ajout.innerHTML = ic('plus') + ' Ajouter « ' + esc(brut) + ' »';
+  } else {
+    rien.hidden = true;
+    delete ajout.dataset.nom;
+    ajout.innerHTML = ic('plus') + ' Ajouter un·e ' + info[2];
+  }
+}
 ACTIONS.deplacerElement = function (el) {
   var t = listeOuverte;
   var actifs = listeTriee(t).filter(function (x) { return !x.archive; });
@@ -9992,7 +10027,7 @@ ACTIONS.formElement = function (el) {
   var info = infoListe(t);
   var n = x ? usages(t, x.id) : 0;
   var h = '<h3>' + (x ? 'Modifier' : 'Ajouter') + ' : ' + info[2] + '</h3><div class="form">' +
-    '<div class="avec-bouton">' + champ('elEmoji', x ? x.emoji : '', 'maxlength="4" placeholder="✨" style="width:64px;text-align:center"') + champ('elNom', x ? x.nom : '', 'placeholder="Nom" autocomplete="off"') + '</div>';
+    '<div class="avec-bouton">' + champ('elEmoji', x ? x.emoji : '', 'maxlength="4" placeholder="✨" style="width:64px;text-align:center"') + champ('elNom', x ? x.nom : (el.dataset.nom || ''), 'placeholder="Nom" autocomplete="off"') + '</div>';
   if (t === 'genres') {
     h += '<label>Couleur sur l\'étagère</label>' + champ('elCouleur', (x && x.couleur) || '#b9a3e8', 'type="color"') + '<label class="small" style="text-transform:none;letter-spacing:0"><input type="checkbox" id="elSansCouleur"' + (x && !x.couleur ? ' checked' : '') + (x ? '' : ' checked') + '> couleur automatique</label>';
   }
@@ -12068,7 +12103,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 17:49:28';
+var VERSION_APPLI = '2026-10-05 18:02:38';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
