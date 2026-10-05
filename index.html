@@ -10788,17 +10788,19 @@ ACTIONS.reglages = function () {
   }
   h += '</div>';
 
-  h += '<div class="reglage"><h4>💾 Fichier</h4><p class="small muted">Une copie complète (livres, carnet, citations et photos) à garder où tu veux. « Importer » accepte une sauvegarde du grimoire ou un export Bookmory.</p><div class="row"><button class="act doux" data-act="exporterSauvegarde">' + ic('share-2') + ' Exporter</button><button class="act doux" data-act="choisirExport">' + ic('folder-open') + ' Importer un fichier</button></div></div>';
+  h += '<div class="reglage"><h4>💾 Fichier</h4><p class="small muted">Une copie complète (livres, carnet, citations et photos) à garder où tu veux. « Importer » reprend une sauvegarde du grimoire.</p><div class="row"><button class="act doux" data-act="exporterSauvegarde">' + ic('share-2') + ' Exporter</button><button class="act doux" data-act="choisirExport">' + ic('folder-open') + ' Importer un fichier</button></div></div>';
 
   h += '<div class="reglage"><h4>✍️ Ma bibliothèque</h4><div class="row"><button class="act doux" data-act="mesListes">' + ic('list') + ' Mes listes</button><button class="act doux" data-act="auteurs">' + ic('users') + ' Auteur·ices</button><button class="act doux" data-act="objectifs">' + ic('target') + ' Objectifs</button></div><p class="small muted">Mes listes : genres, critères, humeurs, tropes et étagères, à ta façon.</p></div>';
   var ocr = '<button class="act doux" data-act="preparerOcr">' + ic('scan-text') + ' Préparer la lecture de texte</button><p class="small muted">Pour lire le texte des photos de citations, même hors connexion (≈ 5 Mo, une seule fois).</p>';
   if (reglage('ocrPret')) {
     ocr = '<p class="small">✅ Lecture de texte prête (téléchargée le ' + fdate(reglage('ocrPret')) + ').</p>';
   }
-  h += '<div class="reglage"><h4>🔤 Photos de citations</h4>' + ocr + '<button class="act doux" data-act="choisirExport" style="margin-top:10px">' + ic('image') + ' Récupérer les photos de Bookmory</button><p class="small muted">Choisis l\'export complet (.zip) de Bookmory : les photos manquantes sont ajoutées à tes citations, rien d\'autre ne change.</p></div>';
+  // (récupérer les photos d'un export Bookmory reste possible : « Importer un fichier » le propose quand on choisit cet export)
+  h += '<div class="reglage"><h4>🔤 Photos de citations</h4>' + ocr + '</div>';
 
+  // seulement pour un grimoire qui recopie vraiment Bookmory (un export a été reçu) : un grimoire neuf n'en parle pas
   var imp = reglage('dernierImport');
-  if (reglage('mode', 'miroir') === 'miroir') {
+  if (reglage('mode', 'miroir') === 'miroir' && imp) {
     h += '<div class="reglage"><h4>📚 Bookmory</h4>';
     var quand = 'aucun export reçu pour l\'instant';
     if (imp) {
@@ -11049,7 +11051,7 @@ function proposerRestauration(lu) {
 function ecranVide() {
   M = null;
   document.getElementById('src').textContent = '';
-  document.getElementById('app').innerHTML = card('Bienvenue dans ton grimoire ✨', '<div class="vide"><p><b>Nouveau téléphone ?</b> Retrouve ton grimoire depuis ton Drive : ⚙️ Réglages → colle ton code de liaison (fichier <i>Grimoire sauvegardes / code-de-liaison.txt</i>) → ' + ic('rotate-ccw') + ' Restaurer.</p><div class="row" style="justify-content:center"><button class="act" data-act="reglages">' + ic('cloud-download') + ' Restaurer depuis mon Drive</button></div><p class="small muted" style="margin-top:16px">Ou choisis un fichier : une sauvegarde du grimoire, ou un export Bookmory.</p><div class="row" style="justify-content:center"><button class="act doux" data-act="choisirExport">' + ic('folder-open') + ' Choisir un fichier</button><button class="act doux" data-act="grimoireVide">' + ic('sparkles') + ' Commencer à zéro</button></div><p class="small" style="margin-top:16px"><a href="aide.html" style="color:var(--accent)">📖 Le mode d\'emploi : installer, sauvegarder, mettre à jour</a></p></div>');
+  document.getElementById('app').innerHTML = card('Bienvenue dans ton grimoire ✨', '<div class="vide"><p><b>Nouveau téléphone ?</b> Retrouve ton grimoire depuis ton Drive : ⚙️ Réglages → colle ton code de liaison (fichier <i>Grimoire sauvegardes / code-de-liaison.txt</i>) → ' + ic('rotate-ccw') + ' Restaurer.</p><div class="row" style="justify-content:center"><button class="act" data-act="reglages">' + ic('cloud-download') + ' Restaurer depuis mon Drive</button></div><p class="small muted" style="margin-top:16px">Ou reprends une sauvegarde du grimoire (un fichier .zip).</p><div class="row" style="justify-content:center"><button class="act doux" data-act="choisirExport">' + ic('folder-open') + ' Choisir un fichier</button><button class="act doux" data-act="grimoireVide">' + ic('sparkles') + ' Commencer à zéro</button></div><p class="small" style="margin-top:16px"><a href="aide.html" style="color:var(--accent)">📖 Le mode d\'emploi : installer, sauvegarder, mettre à jour</a></p></div>');
 }
 ACTIONS.grimoireVide = function () {
   ecrire([{t: 'reglages', o: {id: 'mode', v: 'independant'}}, {t: 'reglages', o: {id: 'bascule', v: Date.now()}}]).then(function () {
@@ -11074,7 +11076,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 11:58:15';
+var VERSION_APPLI = '2026-10-05 12:03:57';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
