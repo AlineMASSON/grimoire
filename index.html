@@ -309,6 +309,9 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .story .st-lune small{font:700 11px Nunito,sans-serif;opacity:.9;margin-top:4px}
 @keyframes story-pop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}
 .story .st-prix{width:min(320px,84vw);padding:14px;border-radius:18px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3)}
+.story .st-pile{display:flex;justify-content:center;margin:10px 0 4px;height:112px}
+.story .st-pile img{width:70px;height:105px;object-fit:cover;border-radius:5px;margin:0 -16px;box-shadow:0 6px 16px rgba(0,0,0,.4);transform-origin:50% 100%;transform:rotate(var(--r));animation:story-eventail .6s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes story-eventail{from{opacity:0;transform:rotate(0) translateY(20px)}to{opacity:1;transform:rotate(var(--r))}}
 .story .st-cat{font:800 12px Nunito,sans-serif;letter-spacing:1.5px;text-transform:uppercase;opacity:.9}
 .story .st-traits{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(340px,88vw)}
 .story .st-trait{display:flex;flex-direction:column;gap:2px;padding:12px 8px;border-radius:16px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);animation:story-pop .5s cubic-bezier(.3,1.5,.5,1) both}
@@ -636,7 +639,7 @@ function saisir(message, valeur, options) {
 <div class="tete-n"><h1>Mon grimoire <span>de lectures</span></h1><button class="rond ajout-haut" data-act="ajouter" aria-label="Ajouter un livre"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button><button class="rond" id="reglagesBtn" data-act="reglages" aria-label="Réglages"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg></button></div>
 <div id="puceFete"></div>
 <div class="src" id="src"></div>
-<input type="file" id="fichierImport" accept="application/zip,application/x-zip-compressed,application/octet-stream,application/x-sqlite3,.zip,.db" hidden>
+<input type="file" id="fichierImport" accept="application/zip,application/x-zip-compressed,application/octet-stream,application/x-sqlite3,application/json,.zip,.db,.json" hidden>
 </header>
 <main id="app"><div id="load">J'ouvre ton grimoire…</div></main>
 <button class="fab-scan" id="fabAjout" data-act="ajouter" aria-label="Ajouter un livre" hidden><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button>
@@ -2350,6 +2353,17 @@ function listeCarnet(t, garder) {
 function libelle(x) {
   return (x.emoji ? x.emoji + ' ' : '') + x.nom;
 }
+// un livre est « noté » dans le carnet s'il a un critère, une humeur ou un mot : des tropes seuls ne suffisent pas
+function estNote(id) {
+  var n = NOTES[id];
+  if (!n) {
+    return false;
+  }
+  if ((n.humeurs || []).length || n.mot) {
+    return true;
+  }
+  return valeurs(D.criteres).some(function (c) { return n[c.id]; });
+}
 
 function resumeNote(n) {
   var parts = listeTriee('criteres').filter(function (c) { return n[c.id]; }).map(function (c) { return (c.emoji || '•') + ' <b>' + n[c.id] + '</b>'; });
@@ -2372,12 +2386,14 @@ function vCarnet() {
   var vus = {};
   var aNoter = [];
   fin.forEach(function (r) {
-    if (!vus[r.book.id] && !NOTES[r.book.id]) {
+    if (!vus[r.book.id] && !estNote(r.book.id)) {
       vus[r.book.id] = 1;
       aNoter.push(r);
     }
   });
-  var notes = Object.keys(NOTES).filter(function (id) { return M.parId[id]; });
+  // les tropes comptent dans « Ce que tu aimes vraiment » même sans le reste de la note
+  var avecCarnet = Object.keys(NOTES).filter(function (id) { return M.parId[id]; });
+  var notes = avecCarnet.filter(estNote);
 
   var liste = aNoter;
   if (!carnetTout) {
@@ -2395,8 +2411,10 @@ function vCarnet() {
     return ligneLivre(r.book, 'fini le ' + fdate(r.end) + ' · ' + etoiles(r.star), 'data-act="noter" data-id="' + r.book.id + '"');
   }).join('') + plus, 'touche un livre pour noter tes critères, humeurs, tropes…');
 
+  if (avecCarnet.length) {
+    h += statsCarnet(avecCarnet);
+  }
   if (notes.length) {
-    h += statsCarnet(notes);
     h += card('Mes livres notés (' + notes.length + ')', notes.sort(function (a, b) { return (NOTES[b].maj || 0) - (NOTES[a].maj || 0); }).map(function (id) {
       var b = M.parId[id];
       return '<div class="book noteligne" data-act="noter" data-id="' + id + '">' + cover(b) + '<div style="flex:1"><div class="t">' + esc(titre(b)) + '</div>' + resumeNote(NOTES[id]) + '</div></div>';
@@ -3387,7 +3405,7 @@ function donneesSceaux() {
     auteurs: Object.keys(au).length,
     marathon: Math.max.apply(null, Object.keys(ppj).map(function (k) { return ppj[k]; }).concat([0])),
     nuit: nuit,
-    carnet: Object.keys(NOTES).length,
+    carnet: Object.keys(NOTES).filter(estNote).length,
     citations: M.notes.filter(function (n) { return n.type !== 'NOTE' && (!n.book || compte(n.book)); }).length,
     series: seriesFinies,
     pave: Math.max.apply(null, fin.filter(function (r) { return r.fmt !== 'audioBook'; }).map(function (r) { return r.total_page || 0; }).concat([0])),
@@ -3575,7 +3593,7 @@ function rareteLecture(r, sp) {
     p = pagesLecture(r);
   }
   var id = r.book.id;
-  if (s >= 5 && (sp.relus[id] || sp.cit[id] || NOTES[id] || p >= 600 || h >= 15)) {
+  if (s >= 5 && (sp.relus[id] || sp.cit[id] || estNote(id) || p >= 600 || h >= 15)) {
     return 3;
   }
   if (s >= 4.5) {
@@ -4412,6 +4430,8 @@ ACTIONS.ouvrirLettre = function () {
 .bl-prix .gagnant{font:700 19px/1.15 "Cormorant Garamond",Georgia,serif;margin:2px 0}
 .bl-couv{position:relative;width:44px;height:66px;flex:none;border-radius:4px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,.35);background:linear-gradient(160deg,var(--accent),var(--lav));display:flex;align-items:center;justify-content:center;padding:3px;text-align:center;font:700 8px/1.1 Nunito,sans-serif;color:#fff}
 .bl-couv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bl-pile{position:relative;height:72px;flex:none}
+.bl-pile .bl-couv{position:absolute;top:3px;transform-origin:50% 100%}
 .bl-lunes{display:grid;grid-template-columns:repeat(6,1fr);gap:10px 4px;text-align:center}
 .bl-lune{border:0;background:none;padding:0;color:var(--ink);cursor:pointer;font-family:Nunito,sans-serif}
 .bl-lune .l{display:flex;align-items:flex-end;justify-content:center;height:46px;line-height:1}
@@ -4494,7 +4514,7 @@ function prixBilan(d, nouvelles) {
   var cit = {};
   M.notes.forEach(function (n) { if (n.bid) { cit[n.bid] = (cit[n.bid] || 0) + 1; } });
   var classes = fin.slice().sort(function (a, b) {
-    return (b.star || 0) - (a.star || 0) || ((cit[b.book.id] || 0) + (NOTES[b.book.id] ? 1 : 0)) - ((cit[a.book.id] || 0) + (NOTES[a.book.id] ? 1 : 0)) || pagesLecture(b) - pagesLecture(a);
+    return (b.star || 0) - (a.star || 0) || ((cit[b.book.id] || 0) + (estNote(b.book.id) ? 1 : 0)) - ((cit[a.book.id] || 0) + (estNote(a.book.id) ? 1 : 0)) || pagesLecture(b) - pagesLecture(a);
   });
   // chaque prix va de préférence à un livre (ou une plume) qui n'a encore rien gagné
   var livresPris = {};
@@ -4528,7 +4548,9 @@ function prixBilan(d, nouvelles) {
     if (se[s1].length >= tomes) {
       info = 'les ' + tomes + ' tomes en ' + d.y;
     }
-    prix.push(['🗝️', 'Série dévorée', (M.series[s1] || {}).name || 'Série', info, se[s1][0]]);
+    // les tomes lus cette année, dans l'ordre de la série (affichés en pile)
+    var tomesLus = se[s1].slice().sort(function (a, b) { return ((a.book.series_memberships[s1] || {}).number || 0) - ((b.book.series_memberships[s1] || {}).number || 0); });
+    prix.push(['🗝️', 'Série dévorée', (M.series[s1] || {}).name || 'Série', info, tomesLus[0], tomesLus]);
   }
   // révélation : une nouvelle plume, avec la meilleure note
   var revs = fin.filter(function (r) { return (r.star || 0) >= 4.5 && (r.book.authors || []).length && (r.book.authors || []).every(function (a) { return nouvelles[a]; }); }).sort(function (a, b) { return b.star - a.star; });
@@ -4624,6 +4646,15 @@ function phaseLune(n, max) {
   return Math.max(1, Math.round(4 * n / max));
 }
 
+// la petite couverture d'un prix (le titre reste visible si l'image ne charge pas)
+function couvPrix(b, style) {
+  var img = '';
+  if (b.image && /^(https?|blob):/.test(b.image)) {
+    img = '<img loading="lazy" src="' + esc(b.image) + '" alt="" onerror="this.remove()">';
+  }
+  return '<span class="bl-couv"' + (style ? ' style="' + style + '"' : '') + '>' + esc(titreTranche(b)) + img + '</span>';
+}
+
 // ---------- la page ----------
 function vBilan() {
   return avec('bilan', vBilanCorps);
@@ -4686,14 +4717,17 @@ function vBilanCorps() {
     h += card('Les Grimoires d\'or ' + y, d.prix.map(function (p) {
       var c = '';
       var attr = '';
-      if (p[4]) {
-        var b = p[4].book;
-        var img = '';
-        if (b.image && /^(https?|blob):/.test(b.image)) {
-          img = '<img loading="lazy" src="' + esc(b.image) + '" alt="" onerror="this.remove()">';
-        }
-        c = '<span class="bl-couv">' + esc(titreTranche(b)) + img + '</span>';
-        attr = ' data-act="livre" data-id="' + b.id + '"';
+      if (p[5] && p[5].length > 1) {
+        // une série : les tomes de l'année en pile, légèrement en éventail
+        var pile = p[5].slice(0, 5);
+        c = '<span class="bl-pile" style="width:' + (44 + (pile.length - 1) * 14) + 'px">' + pile.map(function (r, k) {
+          var angle = pile.length > 1 ? -6 + 12 * k / (pile.length - 1) : 0;
+          return couvPrix(r.book, 'left:' + (k * 14) + 'px;z-index:' + (k + 1) + ';transform:rotate(' + angle.toFixed(1) + 'deg)');
+        }).join('') + '</span>';
+        attr = ' data-act="livre" data-id="' + p[4].book.id + '"';
+      } else if (p[4]) {
+        c = couvPrix(p[4].book, '');
+        attr = ' data-act="livre" data-id="' + p[4].book.id + '"';
       }
       return '<button class="bl-prix"' + attr + '><span class="trophee">' + p[0] + '</span><span style="flex:1;min-width:0"><span class="cat">' + esc(p[1]) + '</span><span class="gagnant" style="display:block">' + esc(p[2]) + '</span><span class="small muted">' + esc(p[3]) + '</span></span>' + c + '</button>';
     }).join(''), 'les gagnants de ton année, catégorie par catégorie');
@@ -4822,7 +4856,16 @@ function slidesAnneeCorps(y) {
   var autres = prix.filter(function (p) { return p !== livre; });
   for (var i = 0; i < autres.length && i < 6; i += 2) {
     s.push('<div class="script">Les Grimoires d\'or</div>' + autres.slice(i, i + 2).map(function (p) {
-      return '<div class="st-prix"><div class="st-cat">' + p[0] + ' ' + esc(p[1]) + '</div><div class="titre" style="font-size:26px">' + esc(p[2]) + '</div><div class="sous">' + esc(p[3]) + '</div></div>';
+      // la série : ses tomes de l'année en éventail
+      var pile = '';
+      if (p[5] && p[5].length > 1) {
+        var l = p[5].filter(function (r) { return r.book.image; }).slice(0, 5);
+        pile = '<div class="st-pile">' + l.map(function (r, k) {
+          var angle = l.length > 1 ? -14 + 28 * k / (l.length - 1) : 0;
+          return '<img src="' + esc(r.book.image) + '" alt="" onerror="this.remove()" style="--r:' + angle.toFixed(1) + 'deg;animation-delay:' + (0.4 + k * 0.15).toFixed(2) + 's;z-index:' + (k + 1) + '">';
+        }).join('') + '</div>';
+      }
+      return '<div class="st-prix"><div class="st-cat">' + p[0] + ' ' + esc(p[1]) + '</div>' + pile + '<div class="titre" style="font-size:26px">' + esc(p[2]) + '</div><div class="sous">' + esc(p[3]) + '</div></div>';
     }).join(''));
   }
   // le portrait
@@ -9605,6 +9648,506 @@ ACTIONS.ocrTout = function () {
 </script>
 
 <style>
+/* ---------- propositions : genres, tropes et traductions à valider ---------- */
+.prop-livre{border-top:1px solid var(--line);padding:12px 0 8px}
+.sheet .prop-livre .tete{margin-bottom:2px}
+.sheet .prop-livre .tete img,.sheet .prop-livre .tete .ph{width:44px;height:66px}
+.prop-groupe>i{display:block;font:700 11px Nunito,sans-serif;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-top:8px}
+.prop-groupe a{font:600 11px Nunito,sans-serif;color:var(--muted);margin-left:6px}
+.chip.prop-non{opacity:.45}
+.chip.prop-retire{text-decoration:line-through;opacity:.45}
+.chip.prop-deja{cursor:default;background:transparent;border-style:dashed;color:var(--muted)}
+.prop-verifier{background:var(--gold-soft);border-radius:10px;padding:6px 10px;margin-top:6px;font-size:12px}
+.prop-note{margin-top:4px}
+.prop-note summary{cursor:pointer;font-weight:600}
+.prop-rien{background:none;border:0;padding:0;margin-top:8px;font:600 11px Nunito,sans-serif;color:var(--muted);text-decoration:underline;cursor:pointer}
+.prop-filtre .prop-livre:not(.prop-faible){display:none}
+.prop-barre{position:sticky;bottom:-34px;background:var(--card);padding:12px 0 10px;border-top:1px solid var(--line);margin-top:6px;z-index:2}
+</style>
+<script>
+// ---------- Propositions : genres, tropes et traductions trouvés en ligne, à valider livre par livre ----------
+// Fichier JSON reçu par 📥 ou par le partage :
+// {format: 'grimoire-propositions', date, livres: [{id, titre, genres[], tropes[], traducteurs[], roles[{nom, role}],
+//  langue, source, confiance, note}]}
+// Rien n'est écrit avant « Appliquer ». Les tropes vont dans le carnet (sans que le livre compte comme noté : estNote()).
+// Les genres déjà sur le livre mais pas proposés restent tant qu'on ne les décoche pas.
+var FORMAT_PROPOSITIONS = 'grimoire-propositions';
+var propEtat = null;
+
+// Le fichier est-il un fichier de propositions ? → l'objet lu, ou null
+function lirePropositions(buf) {
+  var u = new Uint8Array(buf);
+  var i = 0;
+  if (u[0] === 0xEF && u[1] === 0xBB && u[2] === 0xBF) {
+    i = 3;
+  }
+  while (i < u.length && (u[i] === 0x20 || u[i] === 0x0A || u[i] === 0x0D || u[i] === 0x09)) {
+    i++;
+  }
+  if (u[i] !== 0x7B) {
+    return null;
+  }
+  try {
+    var d = JSON.parse(new TextDecoder('utf-8').decode(u.subarray(i)));
+    if (d && d.format === FORMAT_PROPOSITIONS && Array.isArray(d.livres)) {
+      return d;
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
+}
+
+function propParNom(t, nom) {
+  var s = slug(nom);
+  return valeurs(D[t]).find(function (x) { return slug(x.nom) === s; }) || null;
+}
+function propLivre(p) {
+  if (p.id && D.livres[p.id]) {
+    return D.livres[p.id];
+  }
+  // repli : le même titre, s'il n'y en a qu'un
+  var s = slug(p.titre);
+  var l = valeurs(D.livres).filter(function (x) { return s && slug(x.titre) === s; });
+  if (l.length === 1) {
+    return l[0];
+  }
+  return null;
+}
+function libelleRole(r) {
+  var x = ROLES.find(function (y) { return y[0] === r; });
+  if (x) {
+    return x[1];
+  }
+  return r;
+}
+
+// ce qu'on propose pour un livre : [{type: genre|trope|role, etat: ajout|retrait|change|deja, nom, on…}]
+function propChoix(l, p) {
+  var choix = [];
+  var genres = (l.genreIds || []).filter(function (g) { return D.genres[g]; });
+  var proposes = {};
+  var vusG = {};
+  (p.genres || []).forEach(function (nom) {
+    var g = propParNom('genres', nom);
+    var s = slug(nom);
+    if (!s || vusG[s]) {
+      return;
+    }
+    vusG[s] = 1;
+    if (g) {
+      proposes[g.id] = 1;
+    }
+    if (g && genres.indexOf(g.id) >= 0) {
+      choix.push({type: 'genre', etat: 'deja', nom: g.nom});
+    } else {
+      choix.push({type: 'genre', etat: 'ajout', nom: (g && g.nom) || nom, on: true});
+    }
+  });
+  genres.forEach(function (gid) {
+    if (!proposes[gid]) {
+      choix.push({type: 'genre', etat: 'retrait', nom: D.genres[gid].nom, gid: gid, on: true});
+    }
+  });
+
+  var tropes = ((D.avis[l.id] || {}).tropeIds || []).filter(function (t) { return D.tropes[t]; });
+  var vusT = {};
+  (p.tropes || []).forEach(function (nom) {
+    var t = propParNom('tropes', nom);
+    var s = slug(nom);
+    if (!s || vusT[s]) {
+      return;
+    }
+    vusT[s] = 1;
+    if (t && tropes.indexOf(t.id) >= 0) {
+      choix.push({type: 'trope', etat: 'deja', nom: t.nom});
+    } else {
+      choix.push({type: 'trope', etat: 'ajout', nom: (t && t.nom) || nom, on: true});
+    }
+  });
+
+  // traduction et rôles : un nom déjà sur le livre change de rôle, un traducteur absent est ajouté
+  var contributeurs = (l.contributeurs || []).filter(function (c) { return D.auteurs[c.auteurId]; });
+  var nbAuteurs = contributeurs.filter(function (c) { return c.role === 'auteur'; }).length;
+  var vusR = {};
+  var roles = (p.traducteurs || []).map(function (nom) { return {nom: nom, role: 'traduction', ajout: true}; }).concat(p.roles || []);
+  roles.forEach(function (r) {
+    var s = slug(r.nom);
+    if (!s || vusR[s] || !ROLES.some(function (y) { return y[0] === r.role; })) {
+      return;
+    }
+    vusR[s] = 1;
+    var cs = contributeurs.filter(function (c) { return slug(D.auteurs[c.auteurId].nom) === s; });
+    if (cs.some(function (c) { return c.role === r.role; })) {
+      choix.push({type: 'role', etat: 'deja', nom: D.auteurs[cs[0].auteurId].nom, vers: r.role});
+    } else if (cs.length) {
+      // jamais le seul auteur·ice du livre
+      if (cs[0].role === 'auteur' && nbAuteurs < 2) {
+        return;
+      }
+      choix.push({type: 'role', etat: 'change', nom: D.auteurs[cs[0].auteurId].nom, auteurId: cs[0].auteurId, de: cs[0].role, vers: r.role, on: true});
+    } else if (r.ajout) {
+      choix.push({type: 'role', etat: 'ajout', nom: r.nom, vers: r.role, on: true});
+    }
+  });
+  return choix;
+}
+
+function proposerPropositions(d) {
+  var items = [];
+  var absents = [];
+  var aJour = 0;
+  d.livres.forEach(function (p) {
+    var l = propLivre(p);
+    if (!l) {
+      absents.push(p.titre || p.id);
+      return;
+    }
+    var choix = propChoix(l, p);
+    if (!choix.some(function (c) { return c.etat !== 'deja'; })) {
+      aJour++;
+      return;
+    }
+    items.push({id: l.id, p: p, choix: choix});
+  });
+  // les choix déjà faits sur ce fichier (si l'appli a été fermée au milieu de la relecture)
+  var cle = 'bm_propositions_' + (d.date || '');
+  var garde = {};
+  try {
+    garde = JSON.parse(lsGet(cle) || '{}') || {};
+  } catch (e) {
+    garde = {};
+  }
+  items.forEach(function (it) {
+    it.choix.forEach(function (c) {
+      var k = cleChoixProp(it, c);
+      if (Object.prototype.hasOwnProperty.call(garde, k)) {
+        c.on = !!garde[k];
+      }
+    });
+  });
+  propEtat = {items: items, cle: cle, filtre: false};
+
+  var faibles = items.filter(function (it) { return it.p.confiance === 'faible'; }).length;
+  var h = '<h3>Propositions pour tes livres</h3>';
+  h += '<p class="small muted">' + items.length + ' livres à enrichir : genres, tropes du carnet et traduction, trouvés en ligne. Touche une puce pour la décocher. <b>+</b> à ajouter · <b>✓</b> déjà là · <b>✕</b> déjà sur le livre mais pas proposé : touche-le pour le retirer.</p>';
+  if (aJour) {
+    h += '<p class="small muted">' + aJour + ' livres du fichier sont déjà à jour.</p>';
+  }
+  if (absents.length) {
+    h += '<p class="small muted">Pas dans ton grimoire : ' + esc(absents.join(', ')) + '.</p>';
+  }
+  if (faibles) {
+    h += '<div class="row"><button class="chip" data-act="propFiltre" id="propFiltre">' + ic('search') + ' Seulement les ' + faibles + ' à vérifier</button></div>';
+  }
+  h += '<div id="propListe">' + items.map(htmlPropLivre).join('') + '</div>';
+  h += '<div class="prop-barre row"><button class="act" data-act="propAppliquer" id="propAppliquer"></button><button class="act doux" data-act="fermer">Plus tard</button></div>';
+  ouvrirFeuille(h);
+  majCompteProp();
+}
+
+function htmlPropLivre(it, i) {
+  var b = M.parId[it.id];
+  var p = it.p;
+  var cls = 'prop-livre';
+  if (p.confiance === 'faible') {
+    cls += ' prop-faible';
+  }
+  var h = '<div class="' + cls + '"><div class="tete">' + cover(b) + '<div><b>' + esc(titre(b)) + '</b><div class="small muted">' + esc((b.authors || []).join(', ')) + '</div></div></div>';
+  if (p.confiance === 'faible') {
+    h += '<div class="prop-verifier">À vérifier' + (p.note ? ' : ' + esc(p.note) : '') + '</div>';
+  } else if (p.note) {
+    h += '<details class="prop-note small muted"><summary>pourquoi ?</summary>' + esc(p.note) + '</details>';
+  }
+  function groupe(type, titreG, apres) {
+    var puces = it.choix.map(function (c, j) { return [c, j]; }).filter(function (x) { return x[0].type === type; });
+    if (!puces.length) {
+      return '';
+    }
+    return '<div class="prop-groupe"><i>' + titreG + (apres || '') + '</i>' + puces.map(function (x) { return htmlPuceProp(i, x[1], x[0]); }).join('') + '</div>';
+  }
+  h += groupe('genre', 'Genres');
+  h += groupe('trope', 'Tropes');
+  var trad = 'Traduction et rôles';
+  if (p.langue) {
+    var de = 'du ';
+    if (/^[aeiouyéèh]/i.test(p.langue)) {
+      de = 'de l\'';
+    }
+    trad += ' · traduit ' + de + esc(p.langue);
+  }
+  var lien = '';
+  if (p.source && /^https?:\/\//.test(p.source)) {
+    lien = '<a href="' + esc(p.source) + '" target="_blank" rel="noopener">source</a>';
+  }
+  h += groupe('role', trad, lien);
+  h += '<button class="prop-rien" data-act="propRien" data-i="' + i + '">Rien pour ce livre</button></div>';
+  return h;
+}
+function textePuceProp(c) {
+  if (c.type === 'role') {
+    if (c.etat === 'change') {
+      return c.nom + ' : ' + libelleRole(c.de).toLowerCase() + ' → ' + libelleRole(c.vers).toLowerCase();
+    }
+    var r = '';
+    if (c.vers !== 'traduction') {
+      r = ' (' + libelleRole(c.vers).toLowerCase() + ')';
+    }
+    if (c.etat === 'deja') {
+      return '✓ ' + c.nom + r;
+    }
+    return '+ ' + c.nom + r;
+  }
+  if (c.etat === 'deja') {
+    return '✓ ' + c.nom;
+  }
+  if (c.etat === 'retrait' && c.on) {
+    return c.nom + ' ✕';
+  }
+  if (c.etat === 'retrait') {
+    return c.nom;
+  }
+  return '+ ' + c.nom;
+}
+function classePuceProp(c) {
+  if (c.etat === 'deja') {
+    return 'chip prop-deja';
+  }
+  if (c.etat === 'retrait') {
+    if (c.on) {
+      return 'chip';
+    }
+    return 'chip prop-retire';
+  }
+  if (c.on) {
+    return 'chip on';
+  }
+  return 'chip prop-non';
+}
+function htmlPuceProp(i, j, c) {
+  if (c.etat === 'deja') {
+    return '<span class="' + classePuceProp(c) + '">' + esc(textePuceProp(c)) + '</span>';
+  }
+  return '<button class="' + classePuceProp(c) + '" data-act="propPuce" data-i="' + i + '" data-j="' + j + '">' + esc(textePuceProp(c)) + '</button>';
+}
+// un choix se retrouve par son contenu (pas par sa place), même si le livre a changé entre-temps
+function cleChoixProp(it, c) {
+  return [it.id, c.type, c.etat, slug(c.nom), c.vers || ''].join('|');
+}
+// les puces décochées restent décochées si on rouvre le même fichier, même après « Appliquer »
+function garderChoixProp() {
+  var garde = {};
+  try {
+    garde = JSON.parse(lsGet(propEtat.cle) || '{}') || {};
+  } catch (e) {
+    garde = {};
+  }
+  propEtat.items.forEach(function (it) {
+    it.choix.forEach(function (c) {
+      if (c.etat !== 'deja') {
+        garde[cleChoixProp(it, c)] = c.on ? 1 : 0;
+      }
+    });
+  });
+  lsSet(propEtat.cle, JSON.stringify(garde));
+}
+function majCompteProp() {
+  var n = propOperations().changements;
+  var b = document.getElementById('propAppliquer');
+  if (b) {
+    b.innerHTML = ic('check') + ' Appliquer · ' + n + ' changement' + (n > 1 ? 's' : '');
+  }
+}
+ACTIONS.propPuce = function (el) {
+  var c = propEtat.items[+el.dataset.i].choix[+el.dataset.j];
+  c.on = !c.on;
+  el.className = classePuceProp(c);
+  el.textContent = textePuceProp(c);
+  garderChoixProp();
+  majCompteProp();
+};
+ACTIONS.propRien = function (el) {
+  var i = +el.dataset.i;
+  propEtat.items[i].choix.forEach(function (c, j) {
+    if (c.etat === 'deja') {
+      return;
+    }
+    // « rien » : aucun ajout, et les genres déjà là sont gardés
+    c.on = c.etat === 'retrait';
+    var puce = document.querySelector('[data-act="propPuce"][data-i="' + i + '"][data-j="' + j + '"]');
+    if (puce) {
+      puce.className = classePuceProp(c);
+      puce.textContent = textePuceProp(c);
+    }
+  });
+  garderChoixProp();
+  majCompteProp();
+};
+ACTIONS.propFiltre = function (el) {
+  propEtat.filtre = !propEtat.filtre;
+  document.getElementById('propListe').classList.toggle('prop-filtre', propEtat.filtre);
+  el.classList.toggle('on', propEtat.filtre);
+};
+
+// les écritures à faire, d'après les puces cochées → {ops, changements, livres, resume}
+function propOperations() {
+  var ops = [];
+  var crees = {genres: {}, tropes: {}, auteurs: {}};
+  var ordres = {};
+  ['genres', 'tropes'].forEach(function (t) {
+    ordres[t] = valeurs(D[t]).reduce(function (m, x) { return Math.max(m, x.ordre || 0); }, -1);
+  });
+  var n = {changements: 0, livres: 0, genres: 0, retraits: 0, tropes: 0, roles: 0};
+  function idListe(t, nom) {
+    var x = propParNom(t, nom);
+    if (x) {
+      return x.id;
+    }
+    var s = slug(nom);
+    if (crees[t][s]) {
+      return crees[t][s];
+    }
+    var id = idTrope(nom);
+    if (t === 'genres') {
+      id = idGenre(nom);
+    }
+    if (D[t][id]) {
+      id = nouvelId();
+    }
+    crees[t][s] = id;
+    ordres[t]++;
+    var o = {id: id, nom: nom, emoji: '', ordre: ordres[t]};
+    if (t === 'genres') {
+      o.couleur = '';
+    }
+    ops.push({t: t, o: o});
+    return id;
+  }
+  function idPersonne(nom) {
+    var a = auteurParNom(nom);
+    if (a) {
+      return a.id;
+    }
+    var s = slug(nom);
+    if (crees.auteurs[s]) {
+      return crees.auteurs[s];
+    }
+    var aid = 'a:' + s;
+    if (D.auteurs[aid]) {
+      aid = nouvelId();
+    }
+    crees.auteurs[s] = aid;
+    ops.push({t: 'auteurs', o: {id: aid, nom: nom, tri: slug(nom.split(' ').pop())}});
+    return aid;
+  }
+  ((propEtat && propEtat.items) || []).forEach(function (it) {
+    var l = D.livres[it.id];
+    if (!l) {
+      return;
+    }
+    var genreIds = (l.genreIds || []).slice();
+    var contributeurs = (l.contributeurs || []).map(function (c) { return {auteurId: c.auteurId, role: c.role}; });
+    var avis = D.avis[it.id];
+    var tropeIds = ((avis && avis.tropeIds) || []).slice();
+    var livreChange = false;
+    var avisChange = false;
+    it.choix.forEach(function (c) {
+      if (c.etat === 'deja') {
+        return;
+      }
+      if (c.type === 'genre' && c.etat === 'ajout' && c.on) {
+        var gid = idListe('genres', c.nom);
+        if (genreIds.indexOf(gid) < 0) {
+          genreIds.push(gid);
+          livreChange = true;
+          n.genres++;
+        }
+      } else if (c.type === 'genre' && c.etat === 'retrait' && !c.on) {
+        genreIds = genreIds.filter(function (g) { return g !== c.gid; });
+        livreChange = true;
+        n.retraits++;
+      } else if (c.type === 'trope' && c.on) {
+        var tid = idListe('tropes', c.nom);
+        if (tropeIds.indexOf(tid) < 0) {
+          tropeIds.push(tid);
+          avisChange = true;
+          n.tropes++;
+        }
+      } else if (c.type === 'role' && c.etat === 'ajout' && c.on) {
+        var aid = idPersonne(c.nom);
+        if (!contributeurs.some(function (x) { return x.auteurId === aid && x.role === c.vers; })) {
+          contributeurs.push({auteurId: aid, role: c.vers});
+          livreChange = true;
+          n.roles++;
+        }
+      } else if (c.type === 'role' && c.etat === 'change' && c.on) {
+        var nouveaux = [];
+        contributeurs.forEach(function (x) {
+          var y = x;
+          if (x.auteurId === c.auteurId && x.role === c.de) {
+            y = {auteurId: x.auteurId, role: c.vers};
+          }
+          if (!nouveaux.some(function (z) { return z.auteurId === y.auteurId && z.role === y.role; })) {
+            nouveaux.push(y);
+          }
+        });
+        contributeurs = nouveaux;
+        livreChange = true;
+        n.roles++;
+      }
+    });
+    if (livreChange) {
+      ops.push({t: 'livres', o: Object.assign({}, l, {genreIds: genreIds, contributeurs: contributeurs})});
+    }
+    if (avisChange) {
+      if (avis) {
+        ops.push({t: 'avis', o: Object.assign({}, avis, {tropeIds: tropeIds})});
+      } else {
+        ops.push({t: 'avis', o: {id: it.id, notes: {}, humeurIds: [], tropeIds: tropeIds, mot: ''}});
+      }
+    }
+    if (livreChange || avisChange) {
+      n.livres++;
+    }
+  });
+  n.changements = n.genres + n.retraits + n.tropes + n.roles;
+  var morceaux = [];
+  if (n.genres) {
+    morceaux.push(n.genres + ' genre' + (n.genres > 1 ? 's' : '') + ' ajouté' + (n.genres > 1 ? 's' : ''));
+  }
+  if (n.retraits) {
+    morceaux.push(n.retraits + ' retiré' + (n.retraits > 1 ? 's' : ''));
+  }
+  if (n.tropes) {
+    morceaux.push(n.tropes + ' trope' + (n.tropes > 1 ? 's' : ''));
+  }
+  if (n.roles) {
+    morceaux.push(n.roles + ' traduction' + (n.roles > 1 ? 's' : '') + ' ou rôle' + (n.roles > 1 ? 's' : ''));
+  }
+  return {ops: ops, changements: n.changements, livres: n.livres, resume: morceaux.join(', ')};
+}
+
+ACTIONS.propAppliquer = function () {
+  var r = propOperations();
+  if (!r.ops.length) {
+    avertir('Rien n\'est coché : ton grimoire ne change pas.', 'Propositions');
+    return;
+  }
+  demander(r.livres + ' livres vont être mis à jour (' + r.resume + '). Tu pourras tout retoucher ensuite, livre par livre.', {titre: 'Appliquer les propositions ?', oui: 'Appliquer'}).then(function (ok) {
+    if (!ok) {
+      return;
+    }
+    return ecrire(r.ops).then(function () {
+      propEtat = null;
+      fermerFeuille();
+      apresEcriture();
+      toast('✨ ' + r.livres + ' livres enrichis');
+    });
+  }).catch(erreurEcriture);
+};
+</script>
+
+<style>
 /* célébrations plein écran : livre terminé, case de bingo, défi, sceau, niveau */
 .fete-jeu{position:fixed;inset:0;z-index:95;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px 20px calc(24px + env(safe-area-inset-bottom));background:rgba(10,5,20,.86);color:#fff;overflow:hidden;animation:jeu-fondu .25s ease}
 .fete-jeu.sort{animation:jeu-sortie .25s ease forwards}
@@ -10228,9 +10771,15 @@ function afficherGrimoire() {
   setTimeout(verifierJeu, 1200);
 }
 
-// Fichier reçu : sauvegarde du grimoire (→ restaurer) ou export Bookmory (→ importer en miroir)
+// Fichier reçu : propositions (→ à valider), sauvegarde du grimoire (→ restaurer) ou export Bookmory (→ importer en miroir)
 function recevoirFichier(buf) {
   document.getElementById('app').innerHTML = '<div id="load">J\'ouvre le fichier…</div>';
+  var propositions = lirePropositions(buf);
+  if (propositions) {
+    afficherSiPossible();
+    proposerPropositions(propositions);
+    return Promise.resolve();
+  }
   return lireSauvegarde(buf).then(function (lu) {
     if (lu) {
       return proposerRestauration(lu);
@@ -10324,7 +10873,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 09:35:57';
+var VERSION_APPLI = '2026-10-05 09:46:08';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
