@@ -7043,7 +7043,12 @@ function texteSauvegarde() {
   }
   var d = reglage('derniereSauvegarde');
   if (d) {
-    return '☁️ ' + heure(d.date);
+    // heure() donne « 9 h 21 » aujourd'hui, une date sinon
+    var quand = heure(d.date);
+    if (dkey(new Date(d.date)) === dkey(new Date())) {
+      return '☁️ sauvegardé à ' + quand;
+    }
+    return '☁️ sauvegardé le ' + quand;
   }
   return '☁️ pas encore sauvegardé';
 }
@@ -11068,7 +11073,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 11:37:04';
+var VERSION_APPLI = '2026-10-05 11:44:12';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
