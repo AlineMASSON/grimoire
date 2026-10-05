@@ -1567,10 +1567,10 @@ ACTIONS.objectifs = function () {
     toast('🎯 Objectifs enregistrés');
   };
 };
-// ---------- Stats : rythme, goûts, argent ----------
+// ---------- Stats : rythme, goûts, coût ----------
 function vStats() {
   return avec('stats', function () {
-    var h = seg('stats', [['rythme', '' + ic('activity') + ' Rythme'], ['gouts', '' + ic('heart') + ' Goûts'], ['argent', '' + ic('wallet') + ' Argent']]) + noteExclus('stats');
+    var h = seg('stats', [['rythme', '' + ic('activity') + ' Rythme'], ['gouts', '' + ic('heart') + ' Goûts'], ['argent', '' + ic('wallet') + ' Coût']]) + noteExclus('stats');
     if (sous.stats === 'gouts') {
       h += vGouts();
     } else if (sous.stats === 'argent') {
@@ -2078,13 +2078,13 @@ function vArgent() {
     });
   });
   if (!achats.length) {
-    return card('Argent', '<p class="muted">Aucun prix saisi pour l\'instant.</p>' + blocEtatsAchats([], cadeaux));
+    return card('Coût', '<p class="muted">Aucun prix saisi pour l\'instant.</p>' + blocEtatsAchats([], cadeaux));
   }
   var total = achats.reduce(function (s, a) { return s + a.prix; }, 0);
   var parAn = {};
   achats.forEach(function (a) { parAn[annee(a.date)] = (parAn[annee(a.date)] || 0) + a.prix; });
   var lus = achats.filter(function (a) { return a.b.statut === 'DONE'; });
-  return card('Argent', kpis([
+  return card('Coût', kpis([
     [Math.round(total) + ' €', achats.length + ' livres achetés'],
     [round(total / achats.length, 2) + ' €', 'prix moyen'],
     [lus.length + '/' + achats.length, 'achats déjà lus']
@@ -4710,6 +4710,9 @@ ACTIONS.ouvrirLettre = function () {
 .bl-pastilles .or{border-color:color-mix(in srgb,var(--gold) 60%,transparent);background:color-mix(in srgb,var(--gold) 14%,transparent)}
 .bl-heros .act{margin-top:14px}
 .bl-chiffres{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bl-cout{text-align:center;margin-bottom:4px}
+.bl-cout b{display:block;font:700 38px/1.05 "Cormorant Garamond",Georgia,serif;color:var(--gold)}
+.bl-cout span{font:600 13px Nunito,sans-serif;color:var(--muted)}
 .bl-chiffre{border-radius:14px;padding:10px 6px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line);text-align:center}
 .bl-chiffre .e{font-size:20px}
 .bl-chiffre b{display:block;font:800 19px Nunito,sans-serif;margin-top:2px}
@@ -4794,6 +4797,7 @@ function donneesBilan(y) {
       }
     });
     d.heuresMax = Math.max.apply(null, d.heuresMois);
+    d.cout = coutBilan(y);
     d.prix = prixBilan(d, nouvelles);
     d.portrait = portraitBilan(d, sessions, joursAn);
     d.citation = M.notes.filter(function (n) { return n.type !== 'NOTE' && n.texte.length > 20 && annee(n.created_at) === y && (!n.book || compte(n.book)); })[0] || null;
@@ -4973,6 +4977,108 @@ function texteLune(d, i) {
 }
 
 // la petite couverture d'un prix (le titre reste visible si l'image ne charge pas)
+// ce que l'année a coûté : les achats datés de l'année (un cadeau n'est pas une dépense : compté à part)
+function coutBilan(y) {
+  var c = {total: 0, n: 0, avant: 0, nAvant: 0, neuf: {total: 0, n: 0}, occasion: {total: 0, n: 0}, cadeaux: {n: 0, valeur: 0}, achats: []};
+  M.livres.filter(compte).forEach(function (b) {
+    (b.purchases || []).forEach(function (p) {
+      var an = annee(p.purchased_at || p.created_at);
+      if (p.cadeau) {
+        if (an === y) {
+          c.cadeaux.n++;
+          c.cadeaux.valeur += p.price || 0;
+        }
+        return;
+      }
+      if (!p.price) {
+        return;
+      }
+      if (an === y - 1) {
+        c.avant += p.price;
+        c.nAvant++;
+      }
+      if (an !== y) {
+        return;
+      }
+      c.total += p.price;
+      c.n++;
+      c.achats.push({b: b, prix: p.price, etat: p.etat});
+      if (p.etat === 'neuf' || p.etat === 'occasion') {
+        c[p.etat].total += p.price;
+        c[p.etat].n++;
+      }
+    });
+  });
+  c.achats.sort(function (a, b) { return b.prix - a.prix; });
+  return c;
+}
+function euros(v) {
+  return nombre(Math.round(v)) + ' €';
+}
+// la carte « Ton coût » : le total, neuf / occasion / cadeaux, le plus cher et la bonne affaire
+function carteCoutBilan(co, y) {
+  if (!co.n && !co.cadeaux.n) {
+    return '';
+  }
+  var h = '';
+  if (co.n) {
+    var s = '';
+    if (co.n > 1) {
+      s = 's';
+    }
+    var ecart = '';
+    if (co.nAvant) {
+      var diff = Math.round(co.total - co.avant);
+      if (diff > 0) {
+        ecart = ' · ' + diff + ' € de plus qu\'en ' + (y - 1);
+      } else if (diff < 0) {
+        ecart = ' · ' + (-diff) + ' € de moins qu\'en ' + (y - 1);
+      } else {
+        ecart = ' · autant qu\'en ' + (y - 1);
+      }
+    }
+    h += '<div class="bl-cout"><b>' + euros(co.total) + '</b><span>pour ' + co.n + ' livre' + s + ' acheté' + s + ecart + '</span></div>';
+  }
+  var tuiles = [];
+  [['neuf', '✨', 'neuf', 'neufs'], ['occasion', '♻️', 'd\'occasion', 'd\'occasion']].forEach(function (e) {
+    var x = co[e[0]];
+    if (x.n) {
+      var nom = e[2];
+      if (x.n > 1) {
+        nom = e[3];
+      }
+      tuiles.push([e[1], euros(x.total), x.n + ' ' + nom + ' · ' + prix(x.total / x.n, 'EUR') + ' en moyenne']);
+    }
+  });
+  if (co.cadeaux.n) {
+    var offerts = 'offert';
+    if (co.cadeaux.n > 1) {
+      offerts = 'offerts';
+    }
+    if (co.cadeaux.valeur) {
+      offerts += ' · valeur ' + euros(co.cadeaux.valeur);
+    }
+    tuiles.push(['🎁', String(co.cadeaux.n), offerts]);
+  }
+  if (tuiles.length) {
+    h += '<div class="bl-chiffres" style="grid-template-columns:repeat(' + tuiles.length + ',1fr);margin:12px 0 4px">' + tuiles.map(function (k) {
+      return '<div class="bl-chiffre"><div class="e">' + k[0] + '</div><b>' + k[1] + '</b><span>' + k[2] + '</span></div>';
+    }).join('') + '</div>';
+  }
+  if (co.achats.length >= 2) {
+    var extremes = [['💎', 'Le plus cher', co.achats[0]], ['🍀', 'La bonne affaire', co.achats[co.achats.length - 1]]];
+    h += '<div style="margin-top:12px">' + extremes.map(function (x) {
+      var etat = '';
+      if (x[2].etat === 'occasion') {
+        etat = ' · d\'occasion';
+      } else if (x[2].etat === 'neuf') {
+        etat = ' · neuf';
+      }
+      return '<button class="bl-prix" data-act="livre" data-id="' + x[2].b.id + '"><span class="trophee">' + x[0] + '</span><span style="flex:1;min-width:0"><span class="cat">' + x[1] + '</span><span class="gagnant" style="display:block">' + esc(titre(x[2].b)) + '</span><span class="small muted">' + prix(x[2].prix, 'EUR') + etat + '</span></span>' + couvPrix(x[2].b) + '</button>';
+    }).join('') + '</div>';
+  }
+  return card('Ton coût ' + y, h, 'les cadeaux ne comptent pas dans les dépenses');
+}
 function couvPrix(b, style) {
   var img = '';
   if (b.image && /^(https?|blob):/.test(b.image)) {
@@ -5037,6 +5143,8 @@ function vBilanCorps() {
   h += card('Tes chiffres', '<div class="bl-chiffres">' + chiffres.map(function (k) {
     return '<div class="bl-chiffre"><div class="e">' + k[0] + '</div><b>' + k[1] + '</b><span>' + k[2] + '</span></div>';
   }).join('') + '</div>');
+
+  h += carteCoutBilan(d.cout, y);
 
   // les Grimoires d'or
   if (d.prix.length) {
@@ -11764,7 +11872,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 16:25:56';
+var VERSION_APPLI = '2026-10-05 16:35:55';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
