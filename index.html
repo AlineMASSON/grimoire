@@ -146,6 +146,24 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .heat-mois span{position:absolute;top:0}
 .heat-legende{display:flex;align-items:center;gap:3px;justify-content:flex-end;font-size:10px;color:var(--muted);margin-top:6px}
 .heat-legende i{width:11px;height:11px;border-radius:4px;background:var(--heat0)}
+/* jours de lecture : calendrier du mois avec la couverture du livre lu chaque jour */
+.cal-tete{display:flex;align-items:center;justify-content:space-between;margin:2px 0 10px}
+.cal-tete b{font:700 18px "Cormorant Garamond",Georgia,serif}
+.cal-tete button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.cal-tete button:disabled{opacity:.3;cursor:default}
+.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-t{text-align:center;font:700 10px Nunito,sans-serif;color:var(--muted)}
+.cal-j{position:relative;aspect-ratio:2/3;border-radius:7px;overflow:hidden;background:var(--heat0);box-shadow:var(--cover-shadow);padding:0;border:0;cursor:pointer;color:var(--ink)}
+.cal-j>img,.cal-j>.ph{width:100%;height:100%;object-fit:cover;display:block}
+.cal-j>.ph{display:flex;align-items:center;justify-content:center;font:600 8px/1.1 Nunito,sans-serif;text-align:center;padding:2px;color:var(--muted);overflow:hidden;word-break:break-word}
+.cal-j .b2{position:absolute;right:2px;bottom:2px;width:46%;height:46%;border-radius:4px;overflow:hidden;border:1.5px solid var(--card);background:var(--heat0)}
+.cal-j .b2 img,.cal-j .b2 .ph{width:100%;height:100%;object-fit:cover;display:block;font-size:0}
+.cal-j em{position:absolute;left:2px;bottom:2px;font:800 9px Nunito,sans-serif;background:var(--accent);color:#fff;border-radius:6px;padding:0 4px;font-style:normal}
+.cal-j span{position:absolute;left:3px;top:2px;font:800 10px Nunito,sans-serif;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.65)}
+.cal-j.vide,.cal-j.futur{box-shadow:none;background:transparent;border:1px dashed var(--line);cursor:default}
+.cal-j.futur{opacity:.4}
+.cal-j.vide span,.cal-j.futur span{color:var(--muted);text-shadow:none}
+.cal-j.auj{outline:2px solid var(--gold);outline-offset:1px}
 .heat-legende i.l1{background:var(--heat1)}.heat-legende i.l2{background:var(--heat2)}.heat-legende i.l3{background:var(--heat3)}
 .heat-legende span{margin:0 3px}
 /* bulle de valeur */
@@ -471,6 +489,7 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5" /></symbol>
 <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
 <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></symbol>
+<symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></symbol>
 <symbol id="i-chevron-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6" /></symbol>
 <symbol id="i-clipboard-paste" viewBox="0 0 24 24"><path d="M11 14h10" /><path d="M16 4h2a2 2 0 0 1 2 2v1.344" /><path d="m17 18 4-4-4-4" /><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 1.793-1.113" /><rect x="8" y="2" width="8" height="4" rx="1" /></symbol>
 <symbol id="i-cloud-download" viewBox="0 0 24 24"><path d="M12 13v8l-4-4" /> <path d="m12 21 4-4" /> <path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284" /></symbol>
@@ -1568,52 +1587,140 @@ vStats.apres = function () {
   }
 };
 
+// ---------- jours de lecture : calendrier d'un mois (couvertures), détail d'un jour ----------
+// mois affiché ('AAAA-MM'), null = le mois en cours ; gardé tant que l'appli reste ouverte
+var calMois = null;
+
+// les livres ouverts un jour donné (relevé, minuteur, début ou fin de lecture), sans les livres exclus
+function livresDuJour(k) {
+  return ((M.joursLivres || {})[k] || []).map(function (id) { return M.parId[id]; }).filter(function (b) { return b && compte(b); });
+}
+function bornesCalendrier() {
+  var actuel = dkey(new Date()).slice(0, 7);
+  var premier = (Object.keys(jours()).sort()[0] || actuel).slice(0, 7);
+  return {premier: premier, actuel: actuel};
+}
+function htmlCalendrier() {
+  var bornes = bornesCalendrier();
+  var cle = calMois || bornes.actuel;
+  if (cle > bornes.actuel) {
+    cle = bornes.actuel;
+  }
+  if (cle < bornes.premier) {
+    cle = bornes.premier;
+  }
+  var y = parseInt(cle.slice(0, 4), 10);
+  var m = parseInt(cle.slice(5, 7), 10) - 1;
+  var decalage = (new Date(y, m, 1).getDay() + 6) % 7;
+  var nbJours = new Date(y, m + 1, 0).getDate();
+  var aujourdhui = dkey(new Date());
+  var cases = JOURS.map(function (j) { return '<div class="cal-t">' + j.charAt(0) + '</div>'; }).join('');
+  for (var i = 0; i < decalage; i++) {
+    cases += '<div></div>';
+  }
+  var lus = 0;
+  var ouverts = {};
+  for (var d = 1; d <= nbJours; d++) {
+    var k = dkey(new Date(y, m, d));
+    var cls = 'cal-j';
+    if (k === aujourdhui) {
+      cls += ' auj';
+    }
+    if (k > aujourdhui) {
+      cases += '<div class="' + cls + ' futur"><span>' + d + '</span></div>';
+      continue;
+    }
+    var l = livresDuJour(k);
+    if (!l.length) {
+      cases += '<div class="' + cls + ' vide"><span>' + d + '</span></div>';
+      continue;
+    }
+    lus++;
+    l.forEach(function (b) { ouverts[b.id] = 1; });
+    // la couverture du premier livre, la deuxième en petit, « +n » au-delà
+    var plus = '';
+    if (l.length > 1) {
+      plus = '<div class="b2">' + cover(l[1]) + '</div>';
+    }
+    if (l.length > 2) {
+      plus += '<em>+' + (l.length - 2) + '</em>';
+    }
+    cases += '<button class="' + cls + '" data-act="jourLecture" data-k="' + k + '">' + cover(l[0]) + plus + '<span>' + d + '</span></button>';
+  }
+  var prec = '';
+  if (cle <= bornes.premier) {
+    prec = ' disabled';
+  }
+  var suiv = '';
+  if (cle >= bornes.actuel) {
+    suiv = ' disabled';
+  }
+  var titreMois = MOIS_LONGS[m].charAt(0).toUpperCase() + MOIS_LONGS[m].slice(1) + ' ' + y;
+  var nbLivres = Object.keys(ouverts).length;
+  var bilan = lus + ' jour' + (lus > 1 ? 's' : '') + ' de lecture en ' + MOIS_LONGS[m] + ' · ' + nbLivres + ' livre' + (nbLivres > 1 ? 's' : '') + ' ouvert' + (nbLivres > 1 ? 's' : '');
+  return '<div class="cal-tete"><button data-act="calMois" data-d="-1" aria-label="Mois précédent"' + prec + '>' + ic('chevron-left') + '</button><b>' + titreMois + '</b><button data-act="calMois" data-d="1" aria-label="Mois suivant"' + suiv + '>' + ic('chevron-right') + '</button></div>' +
+    '<div class="cal-g">' + cases + '</div><p class="small" style="margin:8px 0 0">' + bilan + '</p>';
+}
+ACTIONS.calMois = function (el) {
+  var bornes = avec('stats', bornesCalendrier);
+  var cle = calMois || bornes.actuel;
+  var d = new Date(parseInt(cle.slice(0, 4), 10), parseInt(cle.slice(5, 7), 10) - 1 + parseInt(el.dataset.d, 10), 1);
+  calMois = dkey(d).slice(0, 7);
+  var z = document.getElementById('calLecture');
+  if (z) {
+    z.innerHTML = avec('stats', htmlCalendrier);
+  }
+};
+// un jour : ses livres, le temps minuté, la page atteinte, les débuts et fins de lecture
+function detailJour(k) {
+  return livresDuJour(k).map(function (b) {
+    var ss = (M.sessions || []).filter(function (s) {
+      return s.book && s.book.id === b.id && (dkey(new Date(s.debut)) === k || (s.fin && dkey(new Date(s.fin)) === k));
+    });
+    var sec = ss.reduce(function (t, s) { return t + (s.dureeSec || 0); }, 0);
+    var pos = ss.map(function (s) { return s.position; }).filter(function (p) { return p !== null && p !== undefined; });
+    var morceaux = [];
+    if (sec) {
+      morceaux.push(dureeCourte(sec));
+    }
+    if (pos.length && b.page_type === 'PAGE') {
+      morceaux.push('jusqu\'à p. ' + Math.max.apply(null, pos));
+    } else if (pos.length && b.page_type === 'PERCENT') {
+      morceaux.push(Math.max.apply(null, pos) + ' %');
+    }
+    (b.reads || []).forEach(function (r) {
+      if (r.start && dkey(new Date(r.start)) === k) {
+        morceaux.push('commencé');
+      }
+      if (r.end && r.status === 'DONE' && dkey(new Date(r.end)) === k) {
+        morceaux.push('✨ fini');
+      }
+    });
+    if (!morceaux.length) {
+      morceaux.push('lu ce jour-là');
+    }
+    return {b: b, txt: morceaux.join(' · ')};
+  });
+}
+ACTIONS.jourLecture = function (el) {
+  var k = el.dataset.k;
+  var l = avec('stats', function () { return detailJour(k); });
+  var d = new Date(k + 'T12:00');
+  var jour = JOURS_LONGS[(d.getDay() + 6) % 7] + ' ' + fdate(d.getTime());
+  ouvrirFeuille('<h3>' + jour.charAt(0).toUpperCase() + jour.slice(1) + '</h3><p class="small muted">' + l.length + ' livre' + (l.length > 1 ? 's' : '') + ' ouvert' + (l.length > 1 ? 's' : '') + ' ce jour-là</p>' + l.map(function (x) {
+    return ligneLivre(x.b, esc(x.txt), 'data-act="livre" data-id="' + x.b.id + '"');
+  }).join(''));
+};
+
 function vRythme() {
   var h = '';
   var sj = series_jours();
   var now = new Date();
-  // calendrier des 53 dernières semaines, en commençant un lundi
-  var debut = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 52 * 7);
-  debut = new Date(debut.getTime() - ((debut.getDay() + 6) % 7) * DAY);
-  var J = jours();
-  var cells = '', nb = 0, d = debut, semaine = 0, mois = '';
-  while (d <= now || (d.getDay() + 6) % 7 !== 0) {
-    var k = dkey(d);
-    var v = J[k] || 0;
-    var cls = '';
-    if (d > now) {
-      cls = 'out';
-    } else if (v >= 3) {
-      cls = 'l3';
-    } else if (v === 2) {
-      cls = 'l2';
-    } else if (v === 1) {
-      cls = 'l1';
-    }
-    if (v >= 1 && d <= now) {
-      nb++;
-    }
-    if (d.getDate() === 1) {
-      mois += '<span style="left:' + (semaine * 14) + 'px">' + MOIS[d.getMonth()] + '</span>';
-    }
-    var quoi = 'pas de lecture';
-    if (v === 1) {
-      quoi = '1 livre lu';
-    } else if (v > 1) {
-      quoi = v + ' livres lus';
-    }
-    var tip = '';
-    if (d <= now) {
-      tip = ' data-tip="' + JOURS_LONGS[(d.getDay() + 6) % 7] + ' ' + fdate(d.getTime()) + ' · ' + quoi + '"';
-    }
-    cells += '<i class="' + cls + '"' + tip + '></i>';
-    if ((d.getDay() + 6) % 7 === 6) {
-      semaine++;
-    }
-    d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
-  }
-  var legende = '<div class="heat-legende"><span>moins</span><i></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><span>plus</span></div>';
-  h += card('Jours de lecture', '<div class="scroll"><div class="heat-mois" style="width:' + (semaine * 14) + 'px">' + mois + '</div><div class="heat">' + cells + '</div></div>' + legende + '<p class="small muted">' + nb + ' jours de lecture sur les 12 derniers mois · ' + sj.total + ' au total · record : ' + sj.best + ' jours d\'affilée (fin le ' + fdate(new Date(sj.bestFin + 'T12:00').getTime()) + ')</p>', 'touche une case pour voir le jour');
+  // jours de lecture : le calendrier d'un mois, avec la couverture du livre lu chaque jour
+  var dernierJour = dkey(now);
+  var ilYaUnAn = dkey(new Date(now.getFullYear() - 1, now.getMonth(), now.getDate() + 1));
+  var nb = Object.keys(jours()).filter(function (k) { return k >= ilYaUnAn && k <= dernierJour; }).length;
+  h += card('Jours de lecture', '<div id="calLecture">' + htmlCalendrier() + '</div><p class="small muted" style="margin-top:10px">' + nb + ' jours de lecture sur les 12 derniers mois · ' + sj.total + ' au total · record : ' + sj.best + ' jours d\'affilée (fin le ' + fdate(new Date(sj.bestFin + 'T12:00').getTime()) + ')</p>', 'touche un jour pour voir tes lectures');
 
   var parJour = [0, 0, 0, 0, 0, 0, 0];
   Object.keys(jours()).forEach(function (k) {
@@ -11290,7 +11397,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 14:57:45';
+var VERSION_APPLI = '2026-10-05 15:03:31';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
