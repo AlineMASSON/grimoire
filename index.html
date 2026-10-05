@@ -472,8 +472,10 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></symbol>
 <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" /></symbol>
 <symbol id="i-chevron-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6" /></symbol>
+<symbol id="i-clipboard-paste" viewBox="0 0 24 24"><path d="M11 14h10" /><path d="M16 4h2a2 2 0 0 1 2 2v1.344" /><path d="m17 18 4-4-4-4" /><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 1.793-1.113" /><rect x="8" y="2" width="8" height="4" rx="1" /></symbol>
 <symbol id="i-cloud-download" viewBox="0 0 24 24"><path d="M12 13v8l-4-4" /> <path d="m12 21 4-4" /> <path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284" /></symbol>
 <symbol id="i-cloud-upload" viewBox="0 0 24 24"><path d="M12 13v8" /> <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" /> <path d="m8 17 4-4 4 4" /></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></symbol>
 <symbol id="i-crown" viewBox="0 0 24 24"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /> <path d="M5 21h14" /></symbol>
 <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 15V3" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <path d="m7 10 5 5 5-5" /></symbol>
 <symbol id="i-eraser" viewBox="0 0 24 24"><path d="M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21" /> <path d="m5.082 11.09 8.828 8.828" /></symbol>
@@ -10343,6 +10345,152 @@ ACTIONS.propAppliquer = function () {
     });
   }).catch(erreurEcriture);
 };
+// ---------- Compléter avec Claude : la demande (prompt du dépôt + livres à compléter), puis sa réponse collée ----------
+// Le prompt est publié à côté de la page (prompt-propositions.md, sans données perso). La liste des livres ne quitte le
+// téléphone que quand on la partage soi-même ; la réponse de Claude repasse par l'écran des propositions.
+var propDemandeClaude = '';
+var FORMATS_CLAUDE = {paperBook: 'papier', eBook: 'numérique', audioBook: 'audio'};
+
+// livres de la PAL ou en cours (même en pause) à qui il manque les genres ou les tropes
+function livresACompleter() {
+  return M.livres.filter(function (b) {
+    var pal = b.statut === 'NOT_STARTED' && !b.wishlist;
+    var enCours = b.statut === 'READING' || b.statut === 'PAUSE';
+    if (!pal && !enCours) {
+      return false;
+    }
+    var tropes = ((D.avis[b.id] || {}).tropeIds || []).filter(function (t) { return D.tropes[t]; });
+    return !b.genreIds.length || !tropes.length;
+  });
+}
+function demandeClaude(prompt, livres, date) {
+  var l = livres.map(function (b) {
+    var x = D.livres[b.id] || {};
+    var statut = 'en cours';
+    if (b.statut === 'NOT_STARTED') {
+      statut = 'PAL';
+    }
+    var o = {id: b.id, titre: b.title, auteurs: b.authors, traducteurs: b.translators, editeur: b.publisher, isbn: b.isbn, annee: b.publication_date, format: FORMATS_CLAUDE[b.book_type] || '', statut: statut, genres: b.tagList, tropes: (NOTES[b.id] || {}).tropes || []};
+    if (x.serieId && D.series[x.serieId]) {
+      o.serie = D.series[x.serieId].nom;
+      o.tome = x.tome;
+    }
+    if (x.resume) {
+      o.resume = x.resume.slice(0, 300);
+    }
+    // champs vides retirés : la demande reste courte
+    Object.keys(o).forEach(function (k) {
+      if (o[k] === '' || o[k] === null || o[k] === undefined || (Array.isArray(o[k]) && !o[k].length)) {
+        delete o[k];
+      }
+    });
+    return o;
+  });
+  var genres = listeTriee('genres').filter(function (g) { return !g.archive; }).map(function (g) { return g.nom; });
+  var tropes = listeTriee('tropes').filter(function (t) { return !t.archive; }).map(function (t) { return t.nom; });
+  return prompt.trim() + '\n\n---\n\n## Date à recopier dans ta réponse\n\n' + date + '\n\n## Mes genres\n\n' + genres.join(', ') + '\n\n## Mes tropes\n\n' + tropes.join(', ') + '\n\n## Livres à compléter (' + l.length + ')\n\n```json\n' + JSON.stringify(l, null, 1) + '\n```\n';
+}
+ACTIONS.preparerClaude = function () {
+  var livres = livresACompleter();
+  if (!livres.length) {
+    avertir('Tous les livres de ta PAL et en cours ont déjà leurs genres et leurs tropes.', 'Compléter avec Claude');
+    return;
+  }
+  fetch('prompt-propositions.md', {cache: 'no-store'}).then(function (rep) {
+    if (!rep.ok) {
+      throw new Error(rep.status);
+    }
+    return rep.text();
+  }).then(function (prompt) {
+    propDemandeClaude = demandeClaude(prompt, livres, Date.now());
+    var s = '';
+    if (livres.length > 1) {
+      s = 's';
+    }
+    ouvrirFeuille('<h3>Compléter avec Claude</h3><p>' + livres.length + ' livre' + s + ' de ta PAL ou en cours n\'' + (livres.length > 1 ? 'ont' : 'a') + ' pas encore ' + (livres.length > 1 ? 'leurs' : 'ses') + ' genres ou ' + (livres.length > 1 ? 'leurs' : 'ses') + ' tropes.</p>' +
+      '<ol class="small"><li>Envoie la demande à Claude : <b>Partager</b> vers l\'appli Claude, ou <b>Copier</b> puis colle-la dans une nouvelle conversation (recherche sur le web activée).</li><li>Quand Claude a répondu, copie son bloc JSON.</li><li>Reviens ici : ⚙️ → <b>Coller la réponse de Claude</b>.</li></ol>' +
+      '<div class="row"><button class="act" data-act="partagerClaude">' + ic('share-2') + ' Partager</button><button class="act doux" data-act="copierClaude">' + ic('copy') + ' Copier</button></div>');
+  }).catch(function () {
+    avertir('Je n\'arrive pas à lire la consigne pour Claude : vérifie ta connexion internet.', 'Compléter avec Claude');
+  });
+};
+ACTIONS.partagerClaude = function () {
+  var f = new File([propDemandeClaude], 'grimoire-a-completer.md', {type: 'text/markdown'});
+  if (navigator.canShare && navigator.canShare({files: [f]})) {
+    navigator.share({files: [f], title: 'Mon grimoire : livres à compléter', text: 'Suis les consignes du fichier joint.'}).catch(function () {});
+  } else if (navigator.share) {
+    navigator.share({title: 'Mon grimoire : livres à compléter', text: propDemandeClaude}).catch(function () {});
+  } else {
+    ACTIONS.copierClaude();
+  }
+};
+ACTIONS.copierClaude = function () {
+  navigator.clipboard.writeText(propDemandeClaude).then(function () {
+    toast('📋 Copié : colle-le dans une conversation avec Claude');
+  }).catch(function () {
+    avertir('La copie n\'a pas marché : essaie plutôt « Partager ».', 'Compléter avec Claude');
+  });
+};
+
+// la réponse de Claude : le bloc ```json``` s'il y en a un, sinon du premier « { » au dernier « } »
+function propositionsDansTexte(t) {
+  var blocs = [];
+  var re = /```(?:json)?\s*([\s\S]*?)```/g;
+  var m;
+  while ((m = re.exec(t))) {
+    blocs.push(m[1]);
+  }
+  blocs.push(t);
+  for (var i = 0; i < blocs.length; i++) {
+    var s = blocs[i];
+    var debut = s.indexOf('{');
+    var fin = s.lastIndexOf('}');
+    if (debut < 0 || fin <= debut) {
+      continue;
+    }
+    try {
+      var d = JSON.parse(s.slice(debut, fin + 1).replace(/[“”]/g, '"'));
+      if (d && Array.isArray(d.livres) && (!d.format || d.format === FORMAT_PROPOSITIONS)) {
+        d.format = FORMAT_PROPOSITIONS;
+        if (!d.date) {
+          d.date = Date.now();
+        }
+        return d;
+      }
+    } catch (e) {
+      // bloc suivant
+    }
+  }
+  return null;
+}
+ACTIONS.collerClaude = function () {
+  ouvrirFeuille('<h3>Coller la réponse de Claude</h3><p class="small muted">Colle ici son bloc JSON, ou toute sa réponse : le bloc sera retrouvé.</p><textarea id="reponseClaude" rows="8" placeholder="{&quot;format&quot;: &quot;grimoire-propositions&quot;, …}"></textarea>' +
+    '<div class="row" style="margin-top:10px"><button class="act" data-act="lireReponseClaude">' + ic('check') + ' Voir les propositions</button><button class="act doux" data-act="collerPressePapiers">' + ic('clipboard-paste') + ' Coller</button></div>');
+};
+ACTIONS.collerPressePapiers = function () {
+  if (!navigator.clipboard || !navigator.clipboard.readText) {
+    avertir('Appuie longuement dans la zone de texte, puis « Coller ».', 'Coller la réponse de Claude');
+    return;
+  }
+  navigator.clipboard.readText().then(function (t) {
+    var z = document.getElementById('reponseClaude');
+    if (z) {
+      z.value = t;
+    }
+  }).catch(function () {
+    avertir('Appuie longuement dans la zone de texte, puis « Coller ».', 'Coller la réponse de Claude');
+  });
+};
+ACTIONS.lireReponseClaude = function () {
+  var z = document.getElementById('reponseClaude');
+  var d = propositionsDansTexte((z && z.value) || '');
+  if (!d) {
+    avertir('Je ne trouve pas de propositions dans ce texte. Copie bien le bloc de Claude qui commence par {"format": "grimoire-propositions".', 'Coller la réponse de Claude');
+    return;
+  }
+  fermerFeuille();
+  proposerPropositions(d);
+};
 </script>
 
 <style>
@@ -10791,6 +10939,7 @@ ACTIONS.reglages = function () {
   h += '<div class="reglage"><h4>💾 Fichier</h4><p class="small muted">Une copie complète (livres, carnet, citations et photos) à garder où tu veux. « Importer » reprend une sauvegarde du grimoire.</p><div class="row"><button class="act doux" data-act="exporterSauvegarde">' + ic('share-2') + ' Exporter</button><button class="act doux" data-act="choisirExport">' + ic('folder-open') + ' Importer un fichier</button></div></div>';
 
   h += '<div class="reglage"><h4>✍️ Ma bibliothèque</h4><div class="row"><button class="act doux" data-act="mesListes">' + ic('list') + ' Mes listes</button><button class="act doux" data-act="auteurs">' + ic('users') + ' Auteur·ices</button><button class="act doux" data-act="objectifs">' + ic('target') + ' Objectifs</button></div><p class="small muted">Mes listes : genres, critères, humeurs, tropes et étagères, à ta façon.</p></div>';
+  h += '<div class="reglage"><h4>✨ Compléter avec Claude</h4><p class="small muted">Genres, tropes et traducteurs des livres de ta PAL et en cours qui n\'en ont pas encore : tu envoies la demande à Claude, puis tu colles sa réponse et tu valides livre par livre.</p><div class="row"><button class="act doux" data-act="preparerClaude">' + ic('share-2') + ' Préparer la demande</button><button class="act doux" data-act="collerClaude">' + ic('clipboard-paste') + ' Coller la réponse de Claude</button></div></div>';
   var ocr = '<button class="act doux" data-act="preparerOcr">' + ic('scan-text') + ' Préparer la lecture de texte</button><p class="small muted">Pour lire le texte des photos de citations, même hors connexion (≈ 5 Mo, une seule fois).</p>';
   if (reglage('ocrPret')) {
     ocr = '<p class="small">✅ Lecture de texte prête (téléchargée le ' + fdate(reglage('ocrPret')) + ').</p>';
@@ -11076,7 +11225,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 12:03:57';
+var VERSION_APPLI = '2026-10-05 12:36:58';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
