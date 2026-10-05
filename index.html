@@ -285,6 +285,12 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .tr-l .audio{position:absolute;left:0;right:0;bottom:13px;display:flex;justify-content:center}
 .tr-l .audio .ic{width:10px;height:10px;stroke-width:2.4}
 .tr-l.ecoute .t{bottom:27px}
+/* revendu : une marque discrète (le livre a eu une seconde vie) */
+.tr-l.revendu{opacity:.78}
+.tr-l .revendu-l{position:absolute;left:0;right:0;top:-15px;display:flex;justify-content:center;color:var(--muted)}
+.tr-l .revendu-l .ic{width:10px;height:10px;stroke-width:2.4}
+.revendu-v{position:absolute;right:4px;bottom:4px;z-index:3;width:18px;height:18px;border-radius:50%;background:rgba(14,31,29,.85);color:#fff;display:flex;align-items:center;justify-content:center}
+.revendu-v .ic{width:11px;height:11px;stroke-width:2.4}
 .penche .tr-l{transform:rotate(13deg);transform-origin:100% 100%}
 .vitrine{--haut:112px;--per:126px;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:112px;column-gap:10px;row-gap:14px;padding:0 12px 14px}
 .case-v{display:flex;align-items:flex-end;justify-content:center;cursor:pointer}
@@ -525,6 +531,7 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 <symbol id="i-play" viewBox="0 0 24 24"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" /></symbol>
 <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></symbol>
 <symbol id="i-quote" viewBox="0 0 24 24"><path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" /> <path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" /></symbol>
+<symbol id="i-recycle" viewBox="0 0 24 24"><path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5" /> <path d="M11 19h8.203a1.83 1.83 0 0 0 1.556-.89 1.784 1.784 0 0 0 0-1.775l-1.226-2.12" /> <path d="m14 16-3 3 3 3" /> <path d="M8.293 13.596 7.196 9.5 3.1 10.598" /> <path d="m9.344 5.811 1.093-1.892A1.83 1.83 0 0 1 11.985 3a1.784 1.784 0 0 1 1.546.888l3.943 6.843" /> <path d="m13.378 9.633 4.096 1.098 1.097-4.096" /></symbol>
 <symbol id="i-refresh-cw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" /></symbol>
 <symbol id="i-rose" viewBox="0 0 24 24"><path d="M17 10h-1a4 4 0 1 1 4-4v.534" /> <path d="M17 6h1a4 4 0 0 1 1.42 7.74l-2.29.87a6 6 0 0 1-5.339-10.68l2.069-1.31" /> <path d="M4.5 17c2.8-.5 4.4 0 5.5.8s1.8 2.2 2.3 3.7c-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2" /> <path d="M9.77 12C4 15 2 22 2 22" /> <circle cx="17" cy="8" r="2" /></symbol>
 <symbol id="i-rotate-ccw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /></symbol>
@@ -2026,6 +2033,17 @@ function vGouts() {
   return h;
 }
 
+// dépensé, récupéré par les reventes, coût réel
+function blocReventes(total, reventes) {
+  if (!reventes.n) {
+    return '';
+  }
+  var s = '';
+  if (reventes.n > 1) {
+    s = 's';
+  }
+  return '<p class="small" style="margin:10px 0 0">💸 <b>' + Math.round(reventes.total) + ' €</b> récupérés en revendant ' + reventes.n + ' livre' + s + ' · coût réel <b>' + Math.round(total - reventes.total) + ' €</b></p>';
+}
 // neuf, occasion et cadeaux : ce qu'on a dépensé de chaque côté
 function blocEtatsAchats(achats, cadeaux) {
   var neuf = achats.filter(function (a) { return a.etat === 'neuf'; });
@@ -2067,6 +2085,15 @@ function vArgent() {
       }
     });
   });
+  // les reventes : ce qui a été récupéré (un cadeau revendu compte aussi)
+  var reventes = {n: 0, total: 0, par: {}};
+  M.livres.filter(compte).forEach(function (b) {
+    if (b.revente) {
+      reventes.n++;
+      reventes.total += b.revente.prix || 0;
+      reventes.par[b.id] = b.revente.prix || 0;
+    }
+  });
   // les cadeaux : combien, et ce qu'ils valent quand un prix est noté
   var cadeaux = {n: 0, valeur: 0};
   M.livres.filter(compte).forEach(function (b) {
@@ -2088,7 +2115,7 @@ function vArgent() {
     [Math.round(total) + ' €', achats.length + ' livres achetés'],
     [round(total / achats.length, 2) + ' €', 'prix moyen'],
     [lus.length + '/' + achats.length, 'achats déjà lus']
-  ]) + blocEtatsAchats(achats, cadeaux) + '<p class="small muted" style="margin:12px 0 4px">Dépenses par année</p>' + bars(Object.keys(parAn).sort().reverse().map(function (y) { return {l: y, v: parAn[y], txt: Math.round(parAn[y]) + ' €'}; }), {unite: ' €'}) +
+  ]) + blocEtatsAchats(achats, cadeaux) + blocReventes(total, reventes) + '<p class="small muted" style="margin:12px 0 4px">Dépenses par année</p>' + bars(Object.keys(parAn).sort().reverse().map(function (y) { return {l: y, v: parAn[y], txt: Math.round(parAn[y]) + ' €'}; }), {unite: ' €'}) +
     '<table style="margin-top:10px"><tr><th>Livre</th><th class="n">Prix</th><th class="n">€/★</th><th class="n">cts/page</th></tr>' + achats.sort(function (a, b) { return b.prix - a.prix; }).map(function (a) {
       var parEt = '–';
       if (a.star) {
@@ -2102,7 +2129,11 @@ function vArgent() {
       if (a.etat === 'occasion') {
         marque = '♻️ ';
       }
-      return '<tr><td>' + marque + esc(titre(a.b)) + '</td><td class="n">' + a.prix + '</td><td class="n">' + parEt + '</td><td class="n">' + parPage + '</td></tr>';
+      var revendu = '';
+      if (reventes.par[a.b.id] !== undefined) {
+        revendu = ' <span class="small muted">· revendu ' + nombre(reventes.par[a.b.id]) + ' €</span>';
+      }
+      return '<tr><td>' + marque + esc(titre(a.b)) + revendu + '</td><td class="n">' + a.prix + '</td><td class="n">' + parEt + '</td><td class="n">' + parPage + '</td></tr>';
     }).join('') + '</table>', 'livres avec un prix saisi');
 }
 
@@ -2173,6 +2204,10 @@ function tranche(b, star, penche) {
     cls += ' ecoute';
     plus = '<span class="audio">' + ic('headphones') + '</span>';
   }
+  if (b.revendu) {
+    cls += ' revendu';
+    plus += '<span class="revendu-l">' + ic('recycle') + '</span>';
+  }
   if (p > 450) {
     cls += ' relie';
   }
@@ -2195,6 +2230,9 @@ function couvertureVitrine(b, star) {
   }
   if (b.book_type === 'audioBook') {
     img += '<span class="audio-v">' + ic('headphones') + '</span>';
+  }
+  if (b.revendu) {
+    img += '<span class="revendu-v" title="revendu">' + ic('recycle') + '</span>';
   }
   return '<div class="case-v" data-act="livre" data-id="' + b.id + '" title="' + esc(titre(b)) + '"><div class="cadre-v">' + badges + '<div class="couv-v" style="--c:' + couleurLivre(b) + '"><div class="ph">' + esc(titreTranche(b)) + '</div>' + img + '</div></div></div>';
 }
@@ -2265,7 +2303,7 @@ vEtagere.apres = function () {
 
 // ---------- tous mes livres : recherche, filtres, tris ----------
 var tous = {q: '', etat: '', fmt: '', tri: 'ajout', etagere: ''};
-var ETATS_LIVRE = [['', 'Tous'], ['encours', '' + ic('book-open') + ' En cours'], ['lus', '' + ic('check') + ' Lus'], ['pal', '' + ic('layers') + ' Pile à lire'], ['envies', '' + ic('heart') + ' Envies'], ['abandons', '' + ic('flag') + ' Abandonnés'], ['plusenvie', ic('rose') + ' Plus envie']];
+var ETATS_LIVRE = [['', 'Tous'], ['encours', '' + ic('book-open') + ' En cours'], ['lus', '' + ic('check') + ' Lus'], ['pal', '' + ic('layers') + ' Pile à lire'], ['envies', '' + ic('heart') + ' Envies'], ['abandons', '' + ic('flag') + ' Abandonnés'], ['plusenvie', ic('rose') + ' Plus envie'], ['revendus', ic('recycle') + ' Revendus']];
 var TRIS = [['ajout', 'Ajoutés récemment'], ['titre', 'Titre'], ['auteur', 'Auteur·ice'], ['note', 'Note'], ['lecture', 'Lus récemment']];
 function etatLivre(b) {
   if (b.reads.some(function (r) { return r.status === 'READING' || r.status === 'PAUSE'; })) {
@@ -2297,7 +2335,12 @@ function derniereLecture(b) {
 function listeTous() {
   var q = sansAccents(tous.q).trim();
   var l = M.livres.filter(function (b) {
-    if (tous.etat && etatLivre(b) !== tous.etat) {
+    // « Revendus » : un livre revendu garde son état (lu, plus envie…), on le filtre à part
+    if (tous.etat === 'revendus') {
+      if (!b.revendu) {
+        return false;
+      }
+    } else if (tous.etat && etatLivre(b) !== tous.etat) {
       return false;
     }
     if (tous.fmt && b.book_type !== tous.fmt) {
@@ -3582,6 +3625,7 @@ function donneesSceaux() {
     carnet: Object.keys(NOTES).filter(estNote).length,
     citations: M.notes.filter(function (n) { return n.type !== 'NOTE' && (!n.book || compte(n.book)); }).length,
     series: seriesFinies,
+    secondevie: M.livres.filter(function (b) { return b.revendu && compte(b); }).length,
     pave: Math.max.apply(null, fin.filter(function (r) { return r.fmt !== 'audioBook'; }).map(function (r) { return r.total_page || 0; }).concat([0])),
     fidele: Math.max.apply(null, Object.keys(au).map(function (k) { return au[k]; }).concat([0])),
     formats: Object.keys(fmtAn).some(function (y) { return Object.keys(fmtAn[y]).length >= 3; }),
@@ -3598,10 +3642,18 @@ var FAMILLES_SCEAUX = [
   ['auteurs', '🧭', 'Exploratrice', [25, 75, 150, 300], 'auteur·ices'],
   ['marathon', '🏃', 'Marathonienne', [100, 150, 250, 400], 'pages en un jour'],
   ['nuit', '🦉', 'Noctambule', [5, 20, 50, 100], 'relevés après 23 h'],
-  ['carnet', '✒️', 'Plume du carnet', [1, 10, 25, 50], 'livres dans le carnet'],
+  ['carnet', '✒️', 'Plume du carnet', [1, 10, 25, 50], 'livres dans le carnet', 'livre dans le carnet'],
   ['citations', '✍️', 'Cueilleuse de mots', [5, 15, 50, 100], 'citations et pensées'],
-  ['series', '🗝️', 'Gardienne des séries', [1, 3, 5, 10], 'séries terminées']
+  ['series', '🗝️', 'Gardienne des séries', [1, 3, 5, 10], 'séries terminées', 'série terminée'],
+  ['secondevie', '♻️', 'Seconde vie', [1, 5, 15, 30], 'livres revendus', 'livre revendu']
 ];
+// l'unité d'un sceau, au singulier pour 1 quand la famille en donne un (6e élément)
+function uniteSceau(f, n) {
+  if (n === 1 && f[5]) {
+    return f[5];
+  }
+  return f[4];
+}
 var SCEAUX_UNIQUES = [
   ['pave', '🧱', 'Pavé de 700 p.', function (d) { return d.pave >= 700; }, function (d) { return 'le plus gros : ' + d.pave + ' p.'; }, function (d) { return d.pave / 700; }],
   ['fidele', '💞', 'Fidèle', function (d) { return d.fidele >= 10; }, function (d) { return d.fidele + ' livres d\'un même auteur'; }, function (d) { return d.fidele / 10; }],
@@ -3662,9 +3714,9 @@ function vSceaux() {
     if (prochain) {
       var pct = v / prochain;
       retenir(f[1] + ' ' + f[2] + ' ' + CHIFFRES_ROMAINS[palier + 1], pct, nombreFr(v) + ' / ' + nombreFr(prochain));
-      info += '<div class="prog"><div style="width:' + Math.min(100, 100 * pct) + '%"></div></div><span class="muted">' + nombreFr(v) + ' / ' + nombreFr(prochain) + ' ' + f[4] + '</span>';
+      info += '<div class="prog"><div style="width:' + Math.min(100, 100 * pct) + '%"></div></div><span class="muted">' + nombreFr(v) + ' / ' + nombreFr(prochain) + ' ' + uniteSceau(f, prochain) + '</span>';
     } else {
-      info += '<span class="muted">' + nombreFr(v) + ' ' + f[4] + ' · tous les paliers ✨</span>';
+      info += '<span class="muted">' + nombreFr(v) + ' ' + uniteSceau(f, v) + ' · tous les paliers ✨</span>';
     }
     return '<div class="sceau">' + cire + '<b>' + f[2] + '</b>' + info + '</div>';
   });
@@ -4979,8 +5031,13 @@ function texteLune(d, i) {
 // la petite couverture d'un prix (le titre reste visible si l'image ne charge pas)
 // ce que l'année a coûté : les achats datés de l'année (un cadeau n'est pas une dépense : compté à part)
 function coutBilan(y) {
-  var c = {total: 0, n: 0, avant: 0, nAvant: 0, neuf: {total: 0, n: 0}, occasion: {total: 0, n: 0}, cadeaux: {n: 0, valeur: 0}, achats: []};
+  var c = {total: 0, n: 0, avant: 0, nAvant: 0, neuf: {total: 0, n: 0}, occasion: {total: 0, n: 0}, cadeaux: {n: 0, valeur: 0}, achats: [], reventes: {n: 0, total: 0}};
   M.livres.filter(compte).forEach(function (b) {
+    // les reventes de l'année (datées du jour de la revente)
+    if (b.revente && annee(b.revente.date || b.created_at) === y) {
+      c.reventes.n++;
+      c.reventes.total += b.revente.prix || 0;
+    }
     (b.purchases || []).forEach(function (p) {
       var an = annee(p.purchased_at || p.created_at);
       if (p.cadeau) {
@@ -5017,7 +5074,7 @@ function euros(v) {
 }
 // la carte « Ton coût » : le total, neuf / occasion / cadeaux, le plus cher et la bonne affaire
 function carteCoutBilan(co, y) {
-  if (!co.n && !co.cadeaux.n) {
+  if (!co.n && !co.cadeaux.n && !co.reventes.n) {
     return '';
   }
   var h = '';
@@ -5038,6 +5095,13 @@ function carteCoutBilan(co, y) {
       }
     }
     h += '<div class="bl-cout"><b>' + euros(co.total) + '</b><span>pour ' + co.n + ' livre' + s + ' acheté' + s + ecart + '</span></div>';
+  }
+  if (co.reventes.n) {
+    var sr = '';
+    if (co.reventes.n > 1) {
+      sr = 's';
+    }
+    h += '<p class="small" style="text-align:center;margin:6px 0 0">💸 ' + co.reventes.n + ' livre' + sr + ' revendu' + sr + ' · <b>' + euros(co.reventes.total) + '</b> récupérés · coût réel <b>' + euros(co.total - co.reventes.total) + '</b></p>';
   }
   var tuiles = [];
   [['neuf', '✨', 'neuf', 'neufs'], ['occasion', '♻️', 'd\'occasion', 'd\'occasion']].forEach(function (e) {
@@ -6615,6 +6679,9 @@ function modeleDepuisBase() {
       created_at: l.creeLe,
       wishlist: l.possession === 'envie',
       possession: l.possession || '',
+      // revendu : {prix, devise, date, lieu} (champ revente du livre, possession « revendu »)
+      revendu: l.possession === 'revendu',
+      revente: (l.possession === 'revendu' && l.revente) || null,
       isbn: (l.isbns || [])[0] || '',
       isbns: l.isbns || [],
       publication_date: l.parution || (l.annee ? String(l.annee) : ''),
@@ -6665,6 +6732,10 @@ function modeleDepuisBase() {
       b.statut = 'DONE';
     } else if (b.reads.length) {
       b.statut = b.reads[b.reads.length - 1].status;
+    }
+    // revendu sans l'avoir lu : il sort de la pile à lire, comme « plus envie »
+    if (b.revendu && b.statut === 'NOT_STARTED') {
+      b.statut = 'DROPPED';
     }
     parId[b.id] = b;
     return b;
@@ -7611,7 +7682,7 @@ textarea.champ{min-height:90px;font-weight:400}
 // ---------- Formulaires : livres, lectures, sessions, achats, séries, auteurs ----------
 var FORMATS_FR = [['papier', '📖 Papier'], ['numerique', '📱 Numérique'], ['audio', '🎧 Audio']];
 var UNITES = [['pages', 'Pages'], ['secondes', 'Durée (audio)'], ['pourcent', 'Pourcentage'], ['episodes', 'Épisodes']];
-var POSSESSIONS = [['possede', '📚 Dans ma bibliothèque'], ['envie', '💫 Dans mes envies'], ['emprunte', '🤝 Emprunté'], ['', 'Non précisé']];
+var POSSESSIONS = [['possede', '📚 Dans ma bibliothèque'], ['envie', '💫 Dans mes envies'], ['emprunte', '🤝 Emprunté'], ['revendu', '💸 Revendu'], ['', 'Non précisé']];
 var STATUTS = [['en_cours', '📖 En cours'], ['pause', '⏸️ En pause'], ['terminee', '✅ Terminée'], ['abandonnee', '🏳️ Abandonnée'], ['plusenvie', '🥀 Plus envie']];
 var DEVISES = [['EUR', '€'], ['USD', '$'], ['GBP', '£'], ['CHF', 'CHF'], ['CAD', 'CA$']];
 
@@ -7945,6 +8016,23 @@ function ouvrirFiche(id) {
     }
     return '<div class="ligne-ed"><div class="small">' + montant + details.join(' · ') + '</div><div class="boutons"><button class="mini-btn" data-act="formAchat" data-id="' + a.id + '">' + ic('pencil') + '</button></div></div>';
   }).join('') + '<button class="lien" data-act="formAchat" data-livre="' + id + '">' + ic('plus') + ' Ajouter un achat</button>';
+  // la revente : une ligne si le livre est revendu, sinon un bouton (pour un livre qu'on a eu chez soi)
+  if (l.possession === 'revendu' && l.revente) {
+    var rv = [];
+    if (l.revente.lieu) {
+      rv.push(esc(l.revente.lieu));
+    }
+    if (l.revente.date) {
+      rv.push(fdate(l.revente.date));
+    }
+    var rvPrix = '';
+    if (l.revente.prix) {
+      rvPrix = '<b>' + prix(l.revente.prix, l.revente.devise) + '</b> · ';
+    }
+    h += '<div class="ligne-ed"><div class="small">💸 Revendu · ' + rvPrix + rv.join(' · ') + '</div><div class="boutons"><button class="mini-btn" data-act="formRevente" data-livre="' + id + '">' + ic('pencil') + '</button></div></div>';
+  } else if (achats.length || l.possession === 'possede') {
+    h += '<button class="lien" data-act="formRevente" data-livre="' + id + '">💸 Je l\'ai revendu</button>';
+  }
 
   h += blocCitationsLivre(id);
   if (b.tagList.length) {
@@ -8836,6 +8924,47 @@ ACTIONS.formSession = function (el) {
 };
 
 // ---------- achats ----------
+// ---------- revente d'un livre : prix, date, lieu ; le livre passe « revendu » ----------
+ACTIONS.formRevente = function (el) {
+  var livreId = el.dataset.livre;
+  siIndependant(function () {
+    ouvrirFormRevente(livreId);
+  });
+};
+// le dernier lieu de revente, pour le proposer
+function dernierLieuRevente() {
+  var l = valeurs(D.livres).filter(function (x) { return x.revente && x.revente.lieu; }).sort(function (a, b) { return (b.revente.date || 0) - (a.revente.date || 0); })[0];
+  return (l && l.revente.lieu) || '';
+}
+function ouvrirFormRevente(livreId) {
+  var l = D.livres[livreId];
+  var deja = l.possession === 'revendu' && l.revente;
+  var v = deja || {prix: null, devise: 'EUR', date: Date.now(), lieu: dernierLieuRevente()};
+  var lieux = valeurs(D.livres).map(function (x) { return x.revente && x.revente.lieu; }).concat(valeurs(D.achats).map(function (x) { return x.boutique; }), ['Vinted', 'La bourse aux livres']);
+  var h = '<h3>' + (deja ? 'Modifier la revente' : 'Revendu') + '</h3><p class="small muted">' + esc(l.titre) + ' · le livre quitte ta bibliothèque, ses lectures et son carnet restent</p><div class="form">' +
+    '<div class="deux"><div><label>Prix de revente</label>' + champ('rvPrix', v.prix === null || v.prix === undefined ? '' : String(v.prix).replace('.', ','), 'inputmode="decimal" placeholder="0,00"') + '</div><div><label>Devise</label>' + choix('rvDevise', DEVISES, v.devise) + '</div></div>' +
+    '<div class="deux"><div><label>Date</label>' + champ('rvDate', dateVersChamp(v.date), 'type="date"') + '</div><div><label>Où</label>' + champ('rvLieu', v.lieu, 'list="dlLieux" autocomplete="off" placeholder="Vinted…"') + '</div></div>' + listeDeChoix('dlLieux', lieux) +
+    '<div class="row" style="margin-top:16px"><button class="act" data-act="rvEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
+  if (deja) {
+    h += '<button class="lien danger" data-act="rvAnnuler" style="margin-top:14px">' + ic('rotate-ccw') + ' Finalement, je l\'ai encore</button>';
+  }
+  ouvrirFeuille(h + '</div>');
+  ACTIONS.rvEnregistrer = function () {
+    var revente = {prix: valNombre('rvPrix') || 0, devise: val('rvDevise') || 'EUR', date: champVersDate(val('rvDate'), deja && deja.date), lieu: val('rvLieu')};
+    ecrire([{t: 'livres', o: Object.assign({}, l, {possession: 'revendu', revente: revente})}]).then(function () {
+      apresEcriture();
+      ouvrirFiche(l.id);
+    }).catch(erreurEcriture);
+  };
+  ACTIONS.rvAnnuler = function () {
+    var o = Object.assign({}, l, {possession: 'possede'});
+    delete o.revente;
+    ecrire([{t: 'livres', o: o}]).then(function () {
+      apresEcriture();
+      ouvrirFiche(l.id);
+    }).catch(erreurEcriture);
+  };
+}
 ACTIONS.formAchat = function (el) {
   var aid = el.dataset.id;
   var livreId = el.dataset.livre;
@@ -11489,7 +11618,7 @@ function contenuFete(f) {
     if (fam) {
       em = fam[1];
       nom = fam[2] + ' · palier ' + CHIFFRES_ROMAINS[f.palier];
-      desc = nombreFr(fam[3][f.palier - 1]) + ' ' + fam[4] + '. Bravo !';
+      desc = nombreFr(fam[3][f.palier - 1]) + ' ' + uniteSceau(fam, fam[3][f.palier - 1]) + '. Bravo !';
       cls = 'p' + f.palier;
     } else if (uni) {
       em = uni[1];
@@ -11872,7 +12001,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 16:35:55';
+var VERSION_APPLI = '2026-10-05 16:43:13';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
