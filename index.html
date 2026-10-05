@@ -6282,6 +6282,32 @@ function opsEtatAchats() {
   }
   return ops;
 }
+// Plusieurs migrations peuvent modifier le même enregistrement au même démarrage : chacune part de la base
+// d'avant et renvoie l'objet entier. On ne garde de chacune que ce qu'elle change, dans l'ordre, pour
+// qu'une migration n'efface pas ce qu'une autre a fait juste avant (ex. la langue puis la revente d'un livre).
+function fusionnerMigrations(ops) {
+  var res = [];
+  var parCle = {};
+  ops.forEach(function (op) {
+    if (!op.o || !op.o.id || !D[op.t] || !D[op.t][op.o.id]) {
+      res.push(op);
+      return;
+    }
+    var cle = op.t + '|' + op.o.id;
+    var avant = D[op.t][op.o.id];
+    if (!parCle[cle]) {
+      parCle[cle] = {t: op.t, o: Object.assign({}, avant), garderDate: op.garderDate};
+      res.push(parCle[cle]);
+    }
+    Object.keys(op.o).forEach(function (k) {
+      if (op.o[k] !== avant[k]) {
+        parCle[cle].o[k] = op.o[k];
+      }
+    });
+    parCle[cle].garderDate = parCle[cle].garderDate && op.garderDate;
+  });
+  return res;
+}
 // la langue écrite à l'anglaise ou en code (« French », « fr »…) devient « Français »
 var LANGUES_FRANCAIS = ['french', 'fr', 'fre', 'fra', 'francais', 'français'];
 function normaliserLangue(v) {
@@ -6527,7 +6553,7 @@ function opsListesDeDepart() {
 // au démarrage : base chargée, listes de départ créées si besoin, migrations faites une seule fois
 function preparerBase() {
   return chargerBase().then(function () {
-    var migration = opsFusionSessions().concat(opsPlusEnvie(), opsEmojisCriteres(), opsLangueFrancais(), opsEtatAchats());
+    var migration = fusionnerMigrations(opsFusionSessions().concat(opsPlusEnvie(), opsEmojisCriteres(), opsLangueFrancais(), opsEtatAchats()));
     if (migration.length) {
       // la base a changé : une sauvegarde partira au démarrage
       lsSet('bm_sauv_attente', '1');
@@ -12001,7 +12027,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 16:43:13';
+var VERSION_APPLI = '2026-10-05 16:50:11';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
