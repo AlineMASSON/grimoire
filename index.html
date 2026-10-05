@@ -10804,7 +10804,7 @@ ACTIONS.reglages = function () {
   }
 
   var v = VERSION_APPLI;
-  h += '<div class="reglage"><h4>📱 Stockage sur le téléphone</h4><p class="small" id="etatStockage">…</p><p class="small muted">Version de l\'appli : ' + esc(v.slice(8, 10) + '/' + v.slice(5, 7) + '/' + v.slice(0, 4) + ' à ' + v.slice(11, 16)) + '</p></div>';
+  h += '<div class="reglage"><h4>📱 Stockage sur le téléphone</h4><p class="small" id="etatStockage">…</p><p class="small muted">Version de l\'appli : ' + esc(v.slice(8, 10) + '/' + v.slice(5, 7) + '/' + v.slice(0, 4) + ' à ' + v.slice(11, 16)) + ' · <a href="reparer.html">bloquée sur une ancienne version ? Réparer</a></p></div>';
   ouvrirFeuille(h);
   afficherStockage();
 };
@@ -11068,11 +11068,31 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 11:06:38';
+var VERSION_APPLI = '2026-10-05 11:37:04';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
-function proposerMiseAJour() {
+// recharge sans aucune copie gardée : désinstalle le service worker et vide ses caches (sauf un fichier partagé
+// en attente), puis rouvre la page à une adresse neuve. La base (les livres) et les réglages ne sont pas touchés.
+function rechargerSansCopie() {
+  var sw = Promise.resolve();
+  if (navigator.serviceWorker) {
+    sw = navigator.serviceWorker.getRegistrations().then(function (l) {
+      return Promise.all(l.map(function (r) { return r.unregister(); }));
+    });
+  }
+  var cs = Promise.resolve();
+  if (window.caches) {
+    cs = caches.keys().then(function (l) {
+      return Promise.all(l.filter(function (k) { return k !== CACHE_PARTAGE; }).map(function (k) { return caches.delete(k); }));
+    });
+  }
+  Promise.all([sw, cs]).catch(function () {}).then(function () {
+    location.replace(location.pathname + '?maj=' + Date.now());
+  });
+}
+// déjà rechargée une fois pour cette version mais toujours l'ancienne : le bouton recharge sans copie
+function proposerMiseAJour(sansCopie) {
   if (document.getElementById('majDispo')) {
     return;
   }
@@ -11081,7 +11101,11 @@ function proposerMiseAJour() {
   b.className = 'maj-dispo';
   b.innerHTML = ic('refresh-cw') + ' Nouvelle version : toucher pour l\'avoir';
   b.addEventListener('click', function () {
-    location.reload();
+    if (sansCopie) {
+      rechargerSansCopie();
+    } else {
+      location.reload();
+    }
   });
   document.body.appendChild(b);
 }
@@ -11096,7 +11120,8 @@ function verifierMiseAJour() {
       }
     }).catch(function () {});
   }
-  fetch('version.txt', {cache: 'no-store'}).then(function (r) {
+  // adresse unique : un ancien service worker qui garderait version.txt en cache ne peut pas répondre à sa place
+  fetch('version.txt?t=' + Date.now(), {cache: 'no-store'}).then(function (r) {
     if (!r.ok) {
       return '';
     }
@@ -11111,8 +11136,12 @@ function verifierMiseAJour() {
     try {
       deja = sessionStorage.getItem('bm_maj') || '';
     } catch (e) {}
-    if (appliOccupee() || deja === v) {
-      proposerMiseAJour();
+    if (deja === v) {
+      proposerMiseAJour(true);
+      return;
+    }
+    if (appliOccupee()) {
+      proposerMiseAJour(false);
       return;
     }
     try {
@@ -11137,7 +11166,17 @@ function demarrer() {
   onglet = 'accueil';
 
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
+    // service worker en place mais sans ses fichiers hors ligne (après une réparation) : on les lui fait recharger
+    navigator.serviceWorker.register('sw.js').then(function () {
+      return navigator.serviceWorker.ready;
+    }).then(function (r) {
+      return caches.keys().then(function (l) {
+        var aucun = !l.some(function (k) { return k.indexOf('grimoire-v') === 0; });
+        if (aucun && r.active) {
+          r.active.postMessage('precharger');
+        }
+      });
+    }).catch(function () {});
   }
   if (navigator.storage && navigator.storage.persist) {
     navigator.storage.persist();
@@ -11153,6 +11192,10 @@ function demarrer() {
   preparerBase().then(function () {
     reprendreSauvegarde();
     var params = new URLSearchParams(location.search);
+    // ?maj=… : adresse neuve après une réparation de la mise à jour, on la retire de la barre d'adresse
+    if (params.has('maj')) {
+      history.replaceState(null, '', location.pathname);
+    }
     if (params.has('partage') && 'caches' in window) {
       history.replaceState(null, '', location.pathname);
       return caches.open(CACHE_PARTAGE).then(function (c) {

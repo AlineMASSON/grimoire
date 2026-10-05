@@ -1,5 +1,5 @@
 // Service worker du grimoire : fonctionnement hors ligne + réception des fichiers partagés (sauvegarde, export Bookmory).
-var VERSION = 'grimoire-v8';
+var VERSION = 'grimoire-v9';
 var PARTAGE = 'grimoire-partage';
 var FICHIERS = [
   './',
@@ -12,14 +12,25 @@ var FICHIERS = [
   'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
 ];
 
-self.addEventListener('install', function (e) {
-  // cache: 'reload' : on prend les fichiers sur le serveur, pas une copie gardée par le navigateur
-  e.waitUntil(caches.open(VERSION).then(function (c) {
-    return c.addAll(FICHIERS.map(function (f) {
-      return new Request(f, {cache: 'reload'});
+// cache: 'reload' : on prend les fichiers sur le serveur, pas une copie gardée par le navigateur ;
+// fichier par fichier : si une bibliothèque ne répond pas, l'installation réussit quand même (sinon l'ancien
+// service worker resterait en place et l'appli ne se mettrait plus à jour) ; elle sera mise en cache au premier usage
+function precharger() {
+  return caches.open(VERSION).then(function (c) {
+    return Promise.all(FICHIERS.map(function (f) {
+      return c.add(new Request(f, {cache: 'reload'})).catch(function () {});
     }));
-  }));
+  });
+}
+self.addEventListener('install', function (e) {
+  e.waitUntil(precharger());
   self.skipWaiting();
+});
+// après une réparation (caches vidés, service worker conservé), l'appli redemande les fichiers hors ligne
+self.addEventListener('message', function (e) {
+  if (e.data === 'precharger') {
+    e.waitUntil(precharger());
+  }
 });
 
 self.addEventListener('activate', function (e) {
@@ -69,12 +80,17 @@ self.addEventListener('fetch', function (e) {
 
   // La page : réseau d'abord (pour recevoir les mises à jour), cache si hors ligne.
   // cache: 'no-cache' : le navigateur redemande toujours au serveur (sinon il garde la page 10 min).
+  // Seule la page de l'appli est gardée comme copie hors ligne (pas version.txt ni reparer.html ouverts dans Chrome).
   if (e.request.mode === 'navigate') {
+    var page = new URL('./', self.registration.scope).pathname;
+    var estAppli = url.pathname === page || url.pathname === page + 'index.html';
     e.respondWith(fetch(e.request.url, {cache: 'no-cache', credentials: 'same-origin'}).then(function (rep) {
-      var copie = rep.clone();
-      caches.open(VERSION).then(function (c) {
-        c.put('./index.html', copie);
-      });
+      if (estAppli && rep.ok) {
+        var copie = rep.clone();
+        caches.open(VERSION).then(function (c) {
+          c.put('./index.html', copie);
+        });
+      }
       return rep;
     }).catch(function () {
       return caches.match('./index.html');

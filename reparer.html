@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1a1230">
+<title>Réparer le grimoire</title>
+<style>
+body{margin:0;min-height:100vh;background:#1a1230;color:#f7e9f3;font:16px/1.45 system-ui,sans-serif;display:flex;align-items:center;justify-content:center}
+main{box-sizing:border-box;max-width:440px;width:100%;padding:28px 16px;text-align:center}
+h1{font-size:24px;margin:0 0 10px}
+p{color:#d8c6e2;margin:0 0 14px}
+b{color:#f7e9f3}
+button{border:0;border-radius:999px;padding:14px 22px;font:700 16px system-ui,sans-serif;background:#e9a3c9;color:#3a1a35;cursor:pointer}
+button:disabled{opacity:.6}
+#etat{font-size:13px;color:#bba5c8;text-align:left;background:#281c3d;border-radius:14px;padding:12px 14px;margin:16px 0 20px;white-space:pre-line;word-break:break-word}
+</style>
+</head>
+<body>
+<main>
+<h1>📖 Réparer la mise à jour</h1>
+<p>Si le grimoire reste bloqué sur une ancienne version, ce bouton efface la copie de l'appli gardée par le téléphone, puis ouvre la dernière version.</p>
+<p><b>Tes livres, ton carnet, tes citations et tes réglages ne sont pas touchés.</b></p>
+<div id="etat">Je regarde ce que garde le téléphone…</div>
+<button id="reparer">Réparer et ouvrir le grimoire</button>
+</main>
+<script>
+// Page autonome (hors de l'appli) : on peut l'ouvrir même quand l'appli est bloquée sur une vieille copie.
+// Elle désinstalle le service worker et vide ses caches (sauf un fichier partagé en attente) ;
+// la base IndexedDB (les livres) et le localStorage (les réglages) ne sont pas touchés.
+var lignes = [];
+function afficher() {
+  document.getElementById('etat').textContent = lignes.join('\n');
+}
+function versionDans(texte) {
+  var m = /VERSION_APPLI = '(\d{4}-[^']*)'/.exec(texte);
+  if (m) {
+    return m[1];
+  }
+  return 'inconnue';
+}
+function enregistrements() {
+  if (!navigator.serviceWorker) {
+    return Promise.resolve([]);
+  }
+  return navigator.serviceWorker.getRegistrations();
+}
+function nomsCaches() {
+  if (!window.caches) {
+    return Promise.resolve([]);
+  }
+  return caches.keys();
+}
+Promise.all([
+  enregistrements(),
+  nomsCaches(),
+  fetch('version.txt?t=' + Date.now(), {cache: 'no-store'}).then(function (r) { return r.text(); }).catch(function () { return 'injoignable'; }),
+  navigator.storage && navigator.storage.estimate ? navigator.storage.estimate().catch(function () { return {}; }) : Promise.resolve({})
+]).then(function (r) {
+  lignes.push('Dernière version en ligne : ' + r[2].trim());
+  if (!r[0].length) {
+    lignes.push('Service worker : aucun');
+  }
+  r[0].forEach(function (reg) {
+    var t = 'Service worker : ';
+    if (reg.active) {
+      t += 'actif';
+    } else {
+      t += 'pas actif';
+    }
+    if (reg.waiting) {
+      t += ', un nouveau attend';
+    }
+    if (reg.installing) {
+      t += ', un nouveau s\'installe';
+    }
+    lignes.push(t);
+  });
+  lignes.push('Caches : ' + (r[1].join(', ') || 'aucun'));
+  if (r[3].quota) {
+    lignes.push('Stockage : ' + Math.round(r[3].usage / 1048576) + ' Mo utilisés sur ' + Math.round(r[3].quota / 1048576) + ' Mo');
+  }
+  afficher();
+  return Promise.all(r[1].filter(function (k) { return k.indexOf('grimoire-v') === 0; }).map(function (k) {
+    return caches.open(k).then(function (c) {
+      return c.match('./index.html');
+    }).then(function (rep) {
+      if (!rep) {
+        return null;
+      }
+      return rep.text().then(function (t) {
+        // un ancien service worker garde aussi cette page-ci à la place de l'appli : rien à en dire
+        var v = versionDans(t);
+        if (v === 'inconnue') {
+          return null;
+        }
+        return 'Copie gardée dans ' + k + ' : version ' + v;
+      });
+    });
+  }));
+}).then(function (l) {
+  l.filter(Boolean).forEach(function (x) { lignes.push(x); });
+  afficher();
+}).catch(function (e) {
+  lignes.push('(' + e + ')');
+  afficher();
+});
+
+document.getElementById('reparer').addEventListener('click', function () {
+  var b = this;
+  b.disabled = true;
+  b.textContent = 'Je répare…';
+  var sw = enregistrements().then(function (l) {
+    return Promise.all(l.map(function (reg) { return reg.unregister(); }));
+  });
+  var cs = nomsCaches().then(function (l) {
+    return Promise.all(l.filter(function (k) { return k !== 'grimoire-partage'; }).map(function (k) { return caches.delete(k); }));
+  });
+  Promise.all([sw, cs]).catch(function () {}).then(function () {
+    setTimeout(function () {
+      location.replace('./?maj=' + Date.now());
+    }, 400);
+  });
+});
+</script>
+</body>
+</html>
