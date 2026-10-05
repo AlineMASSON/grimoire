@@ -1647,11 +1647,16 @@ function vRythme() {
       }
       sem.push(tot);
     }
+    // une date (début de semaine) une colonne sur deux, comme une échelle de temps
     var ls = sem.map(function (x, i) {
       if (i === 11) {
         return 'cette';
       }
-      return '';
+      if ((11 - i) % 2 === 1) {
+        return '';
+      }
+      var debutSem = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (11 - i) * 7 - 6);
+      return debutSem.getDate() + '/' + (debutSem.getMonth() + 1);
     });
     var noms = sem.map(function (x, i) {
       var fin = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i * 7);
@@ -1757,7 +1762,9 @@ function statsTemps() {
       max = Math.max(max, s.position);
     });
   });
-  var tuiles = [[nombre(heuresAnnee(y)) + ' h', 'lues en ' + y], [Math.round(moyJour) + ' min', 'par jour de lecture minutée']];
+  // moyenne sur tous les jours de l'année écoulés, y compris ceux sans lecture
+  var joursAnnee = Math.floor((now - new Date(y, 0, 1)) / DAY) + 1;
+  var tuiles = [[nombre(heuresAnnee(y)) + ' h', 'lues en ' + y], [Math.round(moyJour) + ' min', 'par jour de lecture minutée'], [Math.round(heuresAnnee(y) * 60 / joursAnnee) + ' min', 'par jour en ' + y + ', tous les jours comptés']];
   if (vitesses.length >= 3) {
     tuiles.push([Math.round(mediane(vitesses)) + ' p./h', 'ta vitesse (papier, numérique)']);
   }
@@ -4563,6 +4570,7 @@ ACTIONS.ouvrirLettre = function () {
 .bl-lune .l{display:flex;align-items:flex-end;justify-content:center;height:46px;line-height:1}
 .bl-lune small{display:block;font:700 10px Nunito,sans-serif;color:var(--muted);margin-top:3px}
 .bl-lune.top small{color:var(--gold)}
+.bl-lune small+small{margin-top:1px;font-weight:600;white-space:nowrap}
 .bl-portrait{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .bl-trait{border-radius:14px;padding:10px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line)}
 .bl-trait .e{font-size:22px}
@@ -4621,6 +4629,14 @@ function donneesBilan(y) {
     fin.forEach(function (r) { d.livresMois[new Date(r.end).getMonth()].push(r); });
     d.mois = d.livresMois.map(function (l) { return l.length; });
     d.moisMax = Math.max.apply(null, d.mois);
+    // heures minutées par mois : les lunes suivent le temps passé à lire (d.mois reste le nombre de livres finis)
+    d.heuresMois = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    sessions.forEach(function (s) {
+      if (s.dureeSec) {
+        d.heuresMois[new Date(s.debut).getMonth()] += s.dureeSec / 3600;
+      }
+    });
+    d.heuresMax = Math.max.apply(null, d.heuresMois);
     d.prix = prixBilan(d, nouvelles);
     d.portrait = portraitBilan(d, sessions, joursAn);
     d.citation = M.notes.filter(function (n) { return n.type !== 'NOTE' && n.texte.length > 20 && annee(n.created_at) === y && (!n.book || compte(n.book)); })[0] || null;
@@ -4771,6 +4787,33 @@ function phaseLune(n, max) {
   }
   return Math.max(1, Math.round(4 * n / max));
 }
+// la lune d'un mois : d'après les heures de lecture minutées, ou les livres finis si l'année n'a aucune session
+function phaseLuneMois(d, i) {
+  if (d.heuresMax > 0) {
+    return {ph: phaseLune(d.heuresMois[i], d.heuresMax), top: d.heuresMois[i] > 0 && d.heuresMois[i] === d.heuresMax};
+  }
+  return {ph: phaseLune(d.mois[i], d.moisMax), top: d.mois[i] > 0 && d.mois[i] === d.moisMax};
+}
+// 12 h, 3,5 h : une décimale seulement sous 10 h
+function heuresCourtes(h) {
+  return nombre(h >= 10 ? Math.round(h) : round(h, 1));
+}
+// « 12 h · 3 📚 » sous la lune
+function texteLune(d, i) {
+  var h = d.heuresMois[i];
+  var n = d.mois[i];
+  if (!h && !n) {
+    return '—';
+  }
+  var t = [];
+  if (d.heuresMax > 0) {
+    t.push(heuresCourtes(h) + ' h');
+  }
+  if (n) {
+    t.push(n + ' 📚');
+  }
+  return t.join(' · ');
+}
 
 // la petite couverture d'un prix (le titre reste visible si l'image ne charge pas)
 function couvPrix(b, style) {
@@ -4860,14 +4903,18 @@ function vBilanCorps() {
   }
 
   // les lunes de lecture
+  var sousLunes = 'plus la lune est pleine, plus le mois a été livresque · touche un mois';
+  if (d.heuresMax > 0) {
+    sousLunes = 'plus la lune est pleine, plus tu as lu longtemps · 📚 livres finis · touche un mois';
+  }
   h += card('Tes lunes de lecture', '<div class="bl-lunes">' + d.mois.map(function (n, i) {
-    var ph = phaseLune(n, d.moisMax);
+    var lune = phaseLuneMois(d, i);
     var cls = 'bl-lune';
-    if (n && n === d.moisMax) {
+    if (lune.top) {
       cls += ' top';
     }
-    return '<button class="' + cls + '" data-act="moisBilan" data-m="' + i + '"><span class="l" style="font-size:' + (22 + ph * 5) + 'px">' + LUNES[ph] + '</span><small>' + MOIS[i] + ' · ' + n + '</small></button>';
-  }).join('') + '</div>', 'plus la lune est pleine, plus le mois a été livresque · touche un mois');
+    return '<button class="' + cls + '" data-act="moisBilan" data-m="' + i + '"><span class="l" style="font-size:' + (22 + lune.ph * 5) + 'px">' + LUNES[lune.ph] + '</span><small>' + MOIS[i] + '</small><small>' + texteLune(d, i) + '</small></button>';
+  }).join('') + '</div>', sousLunes);
 
   // portrait
   if (d.portrait.length) {
@@ -4918,7 +4965,11 @@ ACTIONS.moisBilan = function (el) {
   if (l.length) {
     corps = l.map(function (r) { return ligneLivre(r.book, 'fini le ' + fdate(r.end), 'data-act="livre" data-id="' + r.book.id + '"'); }).join('');
   }
-  ouvrirFeuille('<h3>' + LUNES[phaseLune(l.length, d.moisMax)] + ' ' + MOIS_LONGS[m].charAt(0).toUpperCase() + MOIS_LONGS[m].slice(1) + ' ' + d.y + '</h3>' + corps);
+  var resume = l.length + ' livre' + (l.length > 1 ? 's' : '') + ' fini' + (l.length > 1 ? 's' : '');
+  if (d.heuresMax > 0) {
+    resume = heuresCourtes(d.heuresMois[m]) + ' h de lecture minutée · ' + resume;
+  }
+  ouvrirFeuille('<h3>' + LUNES[phaseLuneMois(d, m).ph] + ' ' + MOIS_LONGS[m].charAt(0).toUpperCase() + MOIS_LONGS[m].slice(1) + ' ' + d.y + '</h3><p class="small muted">' + resume + '</p>' + corps);
 };
 </script>
 
@@ -4964,8 +5015,12 @@ function slidesAnneeCorps(y) {
   s.push('<div class="sous">Tu as refermé</div><div class="gros">' + d.n + '</div><div class="titre">livres</div>' + record + '<div class="sous">' + detail + '</div>');
   // les lunes
   var lunes = d.mois.map(function (n, i) {
-    var ph = phaseLune(n, d.moisMax);
-    return '<div class="st-lune" style="animation-delay:' + (0.3 + i * 0.12).toFixed(2) + 's"><span style="font-size:' + (24 + ph * 6) + 'px">' + LUNES[ph] + '</span><small>' + MOIS[i] + '</small></div>';
+    var ph = phaseLuneMois(d, i).ph;
+    var lib = MOIS[i];
+    if (d.heuresMax > 0 && d.heuresMois[i]) {
+      lib += ' · ' + heuresCourtes(d.heuresMois[i]) + ' h';
+    }
+    return '<div class="st-lune" style="animation-delay:' + (0.3 + i * 0.12).toFixed(2) + 's"><span style="font-size:' + (24 + ph * 6) + 'px">' + LUNES[ph] + '</span><small>' + lib + '</small></div>';
   }).join('');
   var prixMois = d.prix.filter(function (p) { return p[1] === 'Mois le plus livresque'; })[0];
   s.push('<div class="script">Tes lunes de lecture</div><div class="st-lunes">' + lunes + '</div>' + (prixMois ? '<div class="sous">👑 ' + esc(prixMois[2]) + ' : ' + esc(prixMois[3]) + '</div>' : ''));
@@ -11235,7 +11290,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 13:09:31';
+var VERSION_APPLI = '2026-10-05 14:57:45';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
