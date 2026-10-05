@@ -300,6 +300,27 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .story img.cv{width:150px;aspect-ratio:2/3;object-fit:cover;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);transform:rotate(-3deg)}
 .story .mosaique{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:min(340px,86vw)}
 .story .mosaique img{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:5px}
+.story .slide>*{animation:story-monte .6s ease both}
+.story .slide>*:nth-child(2){animation-delay:.15s}.story .slide>*:nth-child(3){animation-delay:.3s}.story .slide>*:nth-child(4){animation-delay:.45s}.story .slide>*:nth-child(5){animation-delay:.6s}.story .slide>*:nth-child(6){animation-delay:.75s}
+@keyframes story-monte{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.story .st-badge{font:800 14px Nunito,sans-serif;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.4)}
+.story .st-lunes{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 18px;margin:8px 0}
+.story .st-lune{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:68px;animation:story-pop .5s cubic-bezier(.3,1.5,.5,1) both}
+.story .st-lune small{font:700 11px Nunito,sans-serif;opacity:.9;margin-top:4px}
+@keyframes story-pop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}
+.story .st-prix{width:min(320px,84vw);padding:14px;border-radius:18px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3)}
+.story .st-cat{font:800 12px Nunito,sans-serif;letter-spacing:1.5px;text-transform:uppercase;opacity:.9}
+.story .st-traits{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(340px,88vw)}
+.story .st-trait{display:flex;flex-direction:column;gap:2px;padding:12px 8px;border-radius:16px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);animation:story-pop .5s cubic-bezier(.3,1.5,.5,1) both}
+.story .st-trait span{font-size:30px}
+.story .st-trait b{font:700 18px/1.15 "Cormorant Garamond",Georgia,serif}
+.story .st-trait small{font-size:12px;opacity:.9}
+.story .st-annees{display:flex;align-items:flex-end;gap:6px;height:190px;width:min(340px,88vw)}
+.story .st-an{flex:1;font:700 11px Nunito,sans-serif;opacity:.85}
+.story .st-an i{display:block;border-radius:6px 6px 2px 2px;background:rgba(255,255,255,.55);margin-bottom:4px;transform-origin:bottom;animation:story-pousse .8s ease both}
+.story .st-an.rec i{background:linear-gradient(#fff6cc,#f2c14e);box-shadow:0 0 16px rgba(255,230,150,.8)}
+.story .st-an.ici{opacity:1}
+@keyframes story-pousse{from{transform:scaleY(0)}to{transform:none}}
 .story .paillettes{position:absolute;inset:0;z-index:1;pointer-events:none}
 .story .paillettes i{position:absolute;font-style:normal;animation:scintille 2.4s ease-in-out infinite}
 @keyframes remplir{from{width:0}to{width:100%}}
@@ -342,7 +363,7 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
   nav button span{font-size:18px}
   .card{margin:10px 0}
 }
-@media (prefers-reduced-motion:reduce){.etoiles i,header .moon,#load::before,.story .paillettes i{animation:none}}
+@media (prefers-reduced-motion:reduce){.etoiles i,header .moon,#load::before,.story .paillettes i,.story .slide>*,.story .st-lune,.story .st-trait,.story .st-an i{animation:none}}
 
 /* ---------- accueil ---------- */
 .titre-section{font:700 21px/1.2 "Cormorant Garamond",Georgia,serif;margin:20px 2px 10px}
@@ -1912,88 +1933,6 @@ function vArgent() {
 
 // ---------- Bilan annuel ----------
 var anBilan = null;
-function vBilan() {
-  return avec('bilan', vBilanCorps);
-}
-function vBilanCorps() {
-  var ans = {};
-  finies().forEach(function (r) { ans[annee(r.end)] = 1; });
-  var liste = Object.keys(ans).sort().reverse();
-  if (!anBilan) {
-    anBilan = liste[0];
-  }
-  var y = parseInt(anBilan, 10);
-  var h = '<div class="row" style="margin-top:14px"><select data-chg="anBilan">' + liste.map(function (a) {
-    var sel = '';
-    if (String(a) === String(anBilan)) {
-      sel = ' selected';
-    }
-    return '<option' + sel + '>' + a + '</option>';
-  }).join('') + '</select><button class="act" data-act="wrapped" data-an="' + y + '">' + ic('sparkles') + ' Revivre mon année en stories</button></div>' + noteExclus('bilan');
-
-  var fin = finies().filter(function (r) { return annee(r.end) === y; });
-  var ab = lect().filter(function (r) { return r.status === 'GIVE_UP' && r.date && annee(r.date) === y; });
-  var pages = 0, sec = 0, audioSansDuree = 0;
-  fin.forEach(function (r) {
-    if (r.page_type === 'TIME') {
-      sec += r.total_page;
-    } else if (r.fmt === 'audioBook') {
-      audioSansDuree++;
-    } else {
-      pages += r.total_page || r.book.total_page || 0;
-    }
-  });
-  var notes = fin.filter(function (r) { return r.star; }).map(function (r) { return r.star; });
-  var joursAn = Object.keys(jours()).filter(function (k) { return k.slice(0, 4) === String(y); }).length;
-  var mois = new Array(12).fill(0);
-  fin.forEach(function (r) { mois[new Date(r.end).getMonth()]++; });
-  var au = {}, tg = {};
-  fin.forEach(function (r) {
-    (r.book.authors || []).forEach(function (a) { au[a] = (au[a] || 0) + 1; });
-    r.book.tagList.forEach(function (t) {
-      if (t !== 'Fiction') {
-        tg[t] = (tg[t] || 0) + 1;
-      }
-    });
-  });
-  var audioTxt = hm(sec);
-  if (audioSansDuree) {
-    audioTxt += ' <span class="small">+ ' + audioSansDuree + ' sans durée</span>';
-  }
-  var tuiles = [
-    [fin.length, 'livres finis'],
-    [pages.toLocaleString('fr-FR'), 'pages (papier + ebook)']
-  ];
-  if (sec || audioSansDuree) {
-    tuiles.push([audioTxt, 'd\'écoute']);
-  }
-  tuiles.push([etoiles(moy(notes)), 'note moyenne'], [joursAn, 'jours de lecture'], [ab.length, 'abandons']);
-  h += card('Ton année ' + y, kpis(tuiles) + '<p style="margin:12px 0 0">✍️ Auteur de l\'année : <b>' + esc(premierDe(au)) + '</b><br>🏷️ Genre de l\'année : <b>' + esc(premierDe(tg)) + '</b></p>');
-  h += card('Livres finis par mois', colonnes(mois, MOIS.map(function (m) { return m.slice(0, 1).toUpperCase(); }), {noms: MOIS_LONGS, unite: ' livres'}));
-
-  var coeur = fin.filter(function (r) { return r.star >= 5; });
-  if (coeur.length) {
-    h += card('Coups de cœur ★★★★★', '<div class="covers">' + coeur.map(function (r) { return '<div title="' + esc(titre(r.book)) + '" data-act="livre" data-id="' + r.book.id + '">' + cover(r.book) + '</div>'; }).join('') + '</div>');
-  }
-  var parTaille = fin.filter(function (r) { return r.fmt !== 'audioBook' && r.total_page; }).sort(function (a, b) { return b.total_page - a.total_page; });
-  if (parTaille.length > 1) {
-    var g = parTaille[0], p = parTaille[parTaille.length - 1];
-    h += card('Le plus gros et le plus court', ligneLivre(g.book, g.total_page + ' pages') + ligneLivre(p.book, p.total_page + ' pages'));
-  }
-  h += card('Ton étagère ' + y, '<div class="covers">' + fin.sort(function (a, b) { return a.end - b.end; }).map(function (r) { return '<div title="' + esc(titre(r.book)) + ' · ' + fdate(r.end) + '" data-act="livre" data-id="' + r.book.id + '">' + cover(r.book) + '</div>'; }).join('') + '</div>', 'dans l\'ordre de lecture');
-  return h;
-}
-ACTIONS.anBilan = function (el) {
-  anBilan = el.value;
-  rendre();
-};
-function premierDe(o) {
-  var k = Object.keys(o).sort(function (a, b) { return o[b] - o[a]; })[0];
-  if (!k) {
-    return '–';
-  }
-  return k + ' (' + o[k] + ')';
-}
 </script>
 
 <script>
@@ -4450,6 +4389,379 @@ ACTIONS.ouvrirLettre = function () {
 };
 </script>
 
+<style>
+/* Bilan : héros, chiffres, Grimoires d'or, lunes, portrait, années */
+.bl-heros{text-align:center;padding:20px 14px 18px;border-radius:24px;margin:14px 0 4px;background:radial-gradient(120% 90% at 50% 0%,color-mix(in srgb,var(--accent) 35%,transparent),transparent 70%),radial-gradient(80% 60% at 80% 100%,color-mix(in srgb,var(--lav) 25%,transparent),transparent 70%),var(--card);border:1px solid color-mix(in srgb,var(--gold) 45%,transparent);box-shadow:var(--shadow)}
+.bl-heros select{margin-bottom:6px}
+.bl-heros .script{font:700 26px "Dancing Script",cursive;color:var(--accent)}
+.bl-heros .an{font:700 62px/1 "Cormorant Garamond",Georgia,serif;letter-spacing:2px}
+.bl-heros .gros{font:900 44px/1 Nunito,sans-serif;margin-top:10px}
+.bl-heros .gros small{font:700 15px Nunito,sans-serif;color:var(--muted)}
+.bl-pastilles{margin-top:8px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.bl-pastilles span{font:800 12px Nunito,sans-serif;padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.bl-pastilles .or{border-color:color-mix(in srgb,var(--gold) 60%,transparent);background:color-mix(in srgb,var(--gold) 14%,transparent)}
+.bl-heros .act{margin-top:14px}
+.bl-chiffres{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.bl-chiffre{border-radius:14px;padding:10px 6px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line);text-align:center}
+.bl-chiffre .e{font-size:20px}
+.bl-chiffre b{display:block;font:800 19px Nunito,sans-serif;margin-top:2px}
+.bl-chiffre span{font-size:11px;color:var(--muted)}
+.bl-prix{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:12px;border-radius:16px;margin-bottom:10px;color:var(--ink);font-family:Nunito,sans-serif;background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 16%,var(--card)),var(--card));border:1.5px solid color-mix(in srgb,var(--gold) 45%,transparent);cursor:pointer}
+.bl-prix .trophee{font-size:28px;flex:none;width:40px;text-align:center}
+.bl-prix .cat{font:800 11px Nunito,sans-serif;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold)}
+.bl-prix .gagnant{font:700 19px/1.15 "Cormorant Garamond",Georgia,serif;margin:2px 0}
+.bl-couv{position:relative;width:44px;height:66px;flex:none;border-radius:4px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,.35);background:linear-gradient(160deg,var(--accent),var(--lav));display:flex;align-items:center;justify-content:center;padding:3px;text-align:center;font:700 8px/1.1 Nunito,sans-serif;color:#fff}
+.bl-couv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.bl-lunes{display:grid;grid-template-columns:repeat(6,1fr);gap:10px 4px;text-align:center}
+.bl-lune{border:0;background:none;padding:0;color:var(--ink);cursor:pointer;font-family:Nunito,sans-serif}
+.bl-lune .l{display:flex;align-items:flex-end;justify-content:center;height:46px;line-height:1}
+.bl-lune small{display:block;font:700 10px Nunito,sans-serif;color:var(--muted);margin-top:3px}
+.bl-lune.top small{color:var(--gold)}
+.bl-portrait{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bl-trait{border-radius:14px;padding:10px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line)}
+.bl-trait .e{font-size:22px}
+.bl-trait b{display:block;font-size:13px;margin-top:2px}
+.bl-trait span{font-size:11.5px;color:var(--muted)}
+.bl-annees{display:flex;align-items:flex-end;gap:5px;height:130px;margin-top:6px}
+.bl-annee{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;border:0;background:none;padding:0;cursor:pointer;font:700 10px Nunito,sans-serif;color:var(--muted)}
+.bl-annee i{display:block;width:100%;border-radius:6px 6px 2px 2px;background:linear-gradient(var(--accent),var(--lav));margin-bottom:4px;opacity:.55}
+.bl-annee.choisie i{opacity:1;box-shadow:0 0 0 2px var(--accent)}
+.bl-annee.choisie{color:var(--ink)}
+.bl-annee.record i{background:linear-gradient(#fff0b8,#d9a338);opacity:1;box-shadow:0 0 10px color-mix(in srgb,var(--gold) 60%,transparent)}
+.bl-annee.record{color:var(--gold)}
+</style>
+<script>
+// ---------- Bilan de l'année : tout est calculé une fois ici, pour la page et pour les stories ----------
+var LUNES = ['🌑', '🌘', '🌗', '🌖', '🌕'];
+var JOURS_SEMAINE = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+// profil de lectrice selon le genre dominant (groupes de GENRES_COULEURS)
+var PROFILS_GENRE = {
+  'Fantasy & magie': ['🐉', 'Exploratrice de mondes', 'de fantasy'],
+  'Romance': ['💌', 'Cœur d\'artichaut', 'de romance'],
+  'Frissons': ['👻', 'Amatrice de frissons', 'qui font frissonner'],
+  'Thriller & polar': ['🔍', 'Âme de détective', 'de thriller ou de polar'],
+  'Jeunesse & YA': ['🧸', 'Âme d\'enfant', 'jeunesse ou young adult'],
+  'Historique': ['⏳', 'Voyageuse du temps', 'historiques'],
+  'SF & dystopie': ['🚀', 'Exploratrice des étoiles', 'de SF']
+};
+function donneesBilan(y) {
+  return avec('bilan', function () {
+    var toutes = finies();
+    var fin = toutes.filter(function (r) { return annee(r.end) === y; }).sort(function (a, b) { return a.end - b.end; });
+    var d = {y: y, fin: fin, n: fin.length};
+    d.pages = fin.reduce(function (s, r) { return s + pagesLecture(r); }, 0);
+    d.secAudio = fin.filter(function (r) { return r.page_type === 'TIME'; }).reduce(function (s, r) { return s + r.total_page; }, 0);
+    var sessions = (M.sessions || []).filter(function (s) { return compte(s.book) && annee(s.debut) === y; });
+    d.secMinuteur = sessions.reduce(function (s, x) { return s + x.dureeSec; }, 0);
+    var joursAn = Object.keys(jours()).filter(function (k) { return k.slice(0, 4) === String(y); });
+    d.jours = joursAn.length;
+    d.serie = series_jours(function (k) { return k.slice(0, 4) === String(y); }).best;
+    d.noteMoy = moy(fin.filter(function (r) { return r.star; }).map(function (r) { return r.star; }));
+    // nouvelles plumes : auteur·ices jamais lu·es avant cette année
+    var vus = {};
+    toutes.filter(function (r) { return annee(r.end) < y; }).forEach(function (r) { (r.book.authors || []).forEach(function (a) { vus[a] = 1; }); });
+    var nouvelles = {};
+    fin.forEach(function (r) { (r.book.authors || []).forEach(function (a) { if (!vus[a]) { nouvelles[a] = 1; } }); });
+    d.nouvellesPlumes = Object.keys(nouvelles).length;
+    // toutes les années
+    d.parAn = {};
+    toutes.forEach(function (r) { var a = annee(r.end); d.parAn[a] = (d.parAn[a] || 0) + 1; });
+    var autres = Object.keys(d.parAn).filter(function (a) { return Number(a) !== y; }).map(function (a) { return d.parAn[a]; });
+    d.meilleurAutre = Math.max.apply(null, autres.concat([0]));
+    d.record = d.n > 0 && d.n > d.meilleurAutre;
+    d.precedent = d.parAn[y - 1] || 0;
+    // mois
+    d.livresMois = [[], [], [], [], [], [], [], [], [], [], [], []];
+    fin.forEach(function (r) { d.livresMois[new Date(r.end).getMonth()].push(r); });
+    d.mois = d.livresMois.map(function (l) { return l.length; });
+    d.moisMax = Math.max.apply(null, d.mois);
+    d.prix = prixBilan(d, nouvelles);
+    d.portrait = portraitBilan(d, sessions, joursAn);
+    d.citation = M.notes.filter(function (n) { return n.type !== 'NOTE' && n.texte.length > 20 && annee(n.created_at) === y && (!n.book || compte(n.book)); })[0] || null;
+    return d;
+  });
+}
+function etoilesCourtes(s) {
+  return String(s).replace('.', ',') + '★';
+}
+// les Grimoires d'or : [emoji, catégorie, gagnant·e, précision, lecture (pour la couverture)]
+function prixBilan(d, nouvelles) {
+  var fin = d.fin;
+  var prix = [];
+  if (!fin.length) {
+    return prix;
+  }
+  var cit = {};
+  M.notes.forEach(function (n) { if (n.bid) { cit[n.bid] = (cit[n.bid] || 0) + 1; } });
+  var classes = fin.slice().sort(function (a, b) {
+    return (b.star || 0) - (a.star || 0) || ((cit[b.book.id] || 0) + (NOTES[b.book.id] ? 1 : 0)) - ((cit[a.book.id] || 0) + (NOTES[a.book.id] ? 1 : 0)) || pagesLecture(b) - pagesLecture(a);
+  });
+  // chaque prix va de préférence à un livre (ou une plume) qui n'a encore rien gagné
+  var livresPris = {};
+  var plumesPrises = {};
+  function libre(r) {
+    return !livresPris[r.book.id];
+  }
+  function prendre(r) {
+    livresPris[r.book.id] = 1;
+  }
+  var top = classes[0];
+  if (top.star) {
+    prix.push(['🏆', 'Livre de l\'année', titreTranche(top.book), (top.book.authors || []).join(', ') + ' · ' + etoilesCourtes(top.star), top]);
+    prendre(top);
+  }
+  // plume de l'année : l'auteur·ice la plus lue (au moins 2 livres)
+  var au = {};
+  fin.forEach(function (r) { (r.book.authors || []).forEach(function (a) { (au[a] = au[a] || []).push(r); }); });
+  var a1 = Object.keys(au).sort(function (a, b) { return au[b].length - au[a].length || moy(au[b].map(function (r) { return r.star || 0; })) - moy(au[a].map(function (r) { return r.star || 0; })); })[0];
+  if (a1 && au[a1].length >= 2) {
+    prix.push(['✒️', 'Plume de l\'année', a1, au[a1].length + ' livres lus', au[a1].filter(libre)[0] || au[a1][0]]);
+    plumesPrises[a1] = 1;
+  }
+  // série dévorée : la série dont le plus de tomes ont été finis cette année
+  var se = {};
+  fin.forEach(function (r) { Object.keys(r.book.series_memberships || {}).forEach(function (k) { (se[k] = se[k] || []).push(r); }); });
+  var s1 = Object.keys(se).sort(function (a, b) { return se[b].length - se[a].length; })[0];
+  if (s1 && se[s1].length >= 2) {
+    var tomes = M.livres.filter(function (b) { return (b.series_memberships || {})[s1]; }).length;
+    var info = se[s1].length + ' tomes lus en ' + d.y;
+    if (se[s1].length >= tomes) {
+      info = 'les ' + tomes + ' tomes en ' + d.y;
+    }
+    prix.push(['🗝️', 'Série dévorée', (M.series[s1] || {}).name || 'Série', info, se[s1][0]]);
+  }
+  // révélation : une nouvelle plume, avec la meilleure note
+  var revs = fin.filter(function (r) { return (r.star || 0) >= 4.5 && (r.book.authors || []).length && (r.book.authors || []).every(function (a) { return nouvelles[a]; }); }).sort(function (a, b) { return b.star - a.star; });
+  var rev = revs.filter(function (r) { return libre(r) && !(r.book.authors || []).some(function (a) { return plumesPrises[a]; }); })[0];
+  if (rev) {
+    prix.push(['🌱', 'Révélation', rev.book.authors.join(', '), titreTranche(rev.book) + ', une nouvelle plume à ' + etoilesCourtes(rev.star), rev]);
+    prendre(rev);
+  }
+  // lecture éclair : le livre (150 p. ou plus) fini le plus vite
+  var eclairs = fin.filter(function (r) { return r.start && r.end > r.start && pagesLecture(r) >= 150; }).map(function (r) { return {r: r, j: Math.max(1, Math.round((r.end - r.start) / DAY))}; }).sort(function (a, b) { return a.j - b.j; });
+  var eclair = eclairs.filter(function (x) { return libre(x.r); })[0] || eclairs[0];
+  if (eclair && eclair.j <= 7) {
+    prix.push(['⚡', 'Lecture éclair', titreTranche(eclair.r.book), pagesLecture(eclair.r) + ' pages en ' + eclair.j + ' jour' + (eclair.j > 1 ? 's' : ''), eclair.r]);
+    prendre(eclair.r);
+  }
+  var avecPages = fin.filter(function (r) { return pagesLecture(r); }).sort(function (a, b) { return pagesLecture(b) - pagesLecture(a); });
+  var pave = avecPages.filter(function (r) { return libre(r) && pagesLecture(r) >= 350; })[0] || (avecPages[0] && pagesLecture(avecPages[0]) >= 350 ? avecPages[0] : null);
+  if (pave) {
+    prix.push(['🧱', 'Le pavé', titreTranche(pave.book), pagesLecture(pave) + ' pages', pave]);
+    prendre(pave);
+  }
+  var bijou = avecPages.filter(function (r) { return (r.star || 0) >= 4 && libre(r); }).slice(-1)[0];
+  if (bijou) {
+    prix.push(['🍬', 'Le petit bijou', titreTranche(bijou.book), pagesLecture(bijou) + ' pages · ' + etoilesCourtes(bijou.star), bijou]);
+    prendre(bijou);
+  }
+  var audio = fin.filter(function (r) { return r.fmt === 'audioBook' && (r.star || 0) >= 4 && libre(r); }).sort(function (a, b) { return b.star - a.star; })[0];
+  if (audio) {
+    prix.push(['🎧', 'Écoute de l\'année', titreTranche(audio.book), (audio.book.authors || []).join(', ') + ' · ' + etoilesCourtes(audio.star), audio]);
+  }
+  if (d.moisMax > 0) {
+    var ms = [];
+    d.mois.forEach(function (n, i) { if (n === d.moisMax) { ms.push(MOIS_LONGS[i]); } });
+    var nom = ms.length > 1 ? ms.slice(0, -1).join(', ') + ' et ' + ms[ms.length - 1] : ms[0];
+    prix.push(['👑', 'Mois le plus livresque', nom.charAt(0).toUpperCase() + nom.slice(1), d.moisMax + ' livre' + (d.moisMax > 1 ? 's' : '') + (ms.length > 1 ? ' chacun' : ''), null]);
+  }
+  return prix;
+}
+// le portrait de lectrice : [emoji, trait, précision]
+function portraitBilan(d, sessions, joursAn) {
+  var traits = [];
+  if (!d.n) {
+    return traits;
+  }
+  // heure préférée : le temps au minuteur, sinon le nombre de relevés
+  var heures = new Array(24).fill(0);
+  sessions.forEach(function (s) { heures[new Date(s.debut).getHours()] += s.dureeSec || 60; });
+  var h = heures.indexOf(Math.max.apply(null, heures));
+  if (Math.max.apply(null, heures) > 0) {
+    var moment = ['🦉', 'Lectrice de minuit'];
+    if (h >= 5 && h < 12) {
+      moment = ['☀️', 'Lectrice du matin'];
+    } else if (h >= 12 && h < 18) {
+      moment = ['🍵', 'Lectrice de l\'après-midi'];
+    } else if (h >= 18 && h < 23) {
+      moment = ['🌙', 'Lectrice du soir'];
+    }
+    traits.push([moment[0], moment[1], 'ton heure préférée : ' + h + ' h']);
+  }
+  var js = new Array(7).fill(0);
+  joursAn.forEach(function (k) { js[new Date(k + 'T12:00:00').getDay()]++; });
+  if (joursAn.length) {
+    var j = js.indexOf(Math.max.apply(null, js));
+    traits.push(['💫', 'Le ' + JOURS_SEMAINE[j], 'ton jour de lecture favori']);
+  }
+  var gr = {};
+  d.fin.forEach(function (r) {
+    var t = tagsDe(r.book);
+    GENRES_COULEURS.forEach(function (g) { if (g[0].test(t)) { gr[g[2]] = (gr[g[2]] || 0) + 1; } });
+  });
+  var g1 = Object.keys(gr).sort(function (a, b) { return gr[b] - gr[a]; })[0];
+  if (g1 && PROFILS_GENRE[g1]) {
+    traits.push([PROFILS_GENRE[g1][0], PROFILS_GENRE[g1][1], gr[g1] + ' livre' + (gr[g1] > 1 ? 's' : '') + ' ' + PROFILS_GENRE[g1][2]]);
+  } else {
+    traits.push(['🌈', 'Curieuse de tout', 'des livres de tous les genres']);
+  }
+  var eclair = d.prix.filter(function (p) { return p[1] === 'Lecture éclair'; })[0];
+  if (eclair && /en [1-3] jours?$/.test(eclair[3])) {
+    traits.push(['⚡', 'Dévoreuse', eclair[2] + ' ' + eclair[3].replace(/^\d+ pages /, '')]);
+  } else if (d.serie >= 14) {
+    traits.push(['🔥', 'Fidèle au poste', d.serie + ' jours d\'affilée']);
+  } else if (d.nouvellesPlumes >= 5) {
+    traits.push(['🧭', 'Curieuse', d.nouvellesPlumes + ' nouvelles plumes']);
+  } else {
+    traits.push(['🍵', 'Lectrice tranquille', d.jours + ' jours de lecture']);
+  }
+  return traits;
+}
+function phaseLune(n, max) {
+  if (!n) {
+    return 0;
+  }
+  return Math.max(1, Math.round(4 * n / max));
+}
+
+// ---------- la page ----------
+function vBilan() {
+  return avec('bilan', vBilanCorps);
+}
+function vBilanCorps() {
+  var ans = {};
+  finies().forEach(function (r) { ans[annee(r.end)] = 1; });
+  ans[new Date().getFullYear()] = 1;
+  var liste = Object.keys(ans).sort().reverse();
+  if (!anBilan || !ans[anBilan]) {
+    anBilan = liste[0];
+  }
+  var y = parseInt(anBilan, 10);
+  var d = donneesBilan(y);
+  var choix = '<select data-chg="anBilan">' + liste.map(function (a) {
+    return '<option' + (String(a) === String(anBilan) ? ' selected' : '') + '>' + a + '</option>';
+  }).join('') + '</select>';
+
+  // héros : l'année, le nombre de livres, des pastilles positives
+  var pastilles = [];
+  if (d.record) {
+    pastilles.push('<span class="or">🏆 ton record</span>');
+  }
+  if (d.n > d.precedent && d.precedent) {
+    pastilles.push('<span>+' + (d.n - d.precedent) + ' par rapport à ' + (y - 1) + '</span>');
+  }
+  var obj = objectifAnnee(y);
+  if (obj.livres && d.n >= obj.livres) {
+    pastilles.push('<span class="or">🎯 objectif atteint</span>');
+  }
+  if (!pastilles.length && d.jours) {
+    pastilles.push('<span>' + d.jours + ' jours de lecture</span>');
+  }
+  var gros = '<div class="gros">' + d.n + ' <small>livre' + (d.n > 1 ? 's' : '') + '</small></div>';
+  if (!d.n) {
+    gros = '<div class="sous" style="margin-top:10px">Pas encore de livre fini cette année : la suite s\'écrit maintenant 💫</div>';
+  }
+  var h = '<div class="bl-heros">' + choix + '<div class="script">Ton année</div><div class="an">' + y + '</div>' + gros + '<div class="bl-pastilles">' + pastilles.join('') + '</div>' +
+    (d.n ? '<button class="act" data-act="wrapped" data-an="' + y + '">' + ic('sparkles') + ' Revivre mon année en stories</button>' : '') + '</div>' + noteExclus('bilan');
+  if (!d.n) {
+    return h;
+  }
+
+  // chiffres clés
+  var heures = d.secMinuteur || d.secAudio;
+  var chiffres = [['📖', nombreFr(d.pages), 'pages']];
+  if (heures) {
+    chiffres.push(['⏱️', Math.round(heures / 3600) + ' h', d.secMinuteur ? 'au minuteur' : 'd\'écoute']);
+  }
+  chiffres.push(['📅', d.jours, 'jours de lecture'], ['🔥', d.serie + ' j', 'plus belle série'], ['✒️', d.nouvellesPlumes, 'nouvelles plumes']);
+  if (d.noteMoy) {
+    chiffres.push(['⭐', String(round(d.noteMoy, 1)).replace('.', ','), 'note moyenne']);
+  }
+  h += card('Tes chiffres', '<div class="bl-chiffres">' + chiffres.map(function (k) {
+    return '<div class="bl-chiffre"><div class="e">' + k[0] + '</div><b>' + k[1] + '</b><span>' + k[2] + '</span></div>';
+  }).join('') + '</div>');
+
+  // les Grimoires d'or
+  if (d.prix.length) {
+    h += card('Les Grimoires d\'or ' + y, d.prix.map(function (p) {
+      var c = '';
+      var attr = '';
+      if (p[4]) {
+        var b = p[4].book;
+        var img = '';
+        if (b.image && /^(https?|blob):/.test(b.image)) {
+          img = '<img loading="lazy" src="' + esc(b.image) + '" alt="" onerror="this.remove()">';
+        }
+        c = '<span class="bl-couv">' + esc(titreTranche(b)) + img + '</span>';
+        attr = ' data-act="livre" data-id="' + b.id + '"';
+      }
+      return '<button class="bl-prix"' + attr + '><span class="trophee">' + p[0] + '</span><span style="flex:1;min-width:0"><span class="cat">' + esc(p[1]) + '</span><span class="gagnant" style="display:block">' + esc(p[2]) + '</span><span class="small muted">' + esc(p[3]) + '</span></span>' + c + '</button>';
+    }).join(''), 'les gagnants de ton année, catégorie par catégorie');
+  }
+
+  // les lunes de lecture
+  h += card('Tes lunes de lecture', '<div class="bl-lunes">' + d.mois.map(function (n, i) {
+    var ph = phaseLune(n, d.moisMax);
+    var cls = 'bl-lune';
+    if (n && n === d.moisMax) {
+      cls += ' top';
+    }
+    return '<button class="' + cls + '" data-act="moisBilan" data-m="' + i + '"><span class="l" style="font-size:' + (22 + ph * 5) + 'px">' + LUNES[ph] + '</span><small>' + MOIS[i] + ' · ' + n + '</small></button>';
+  }).join('') + '</div>', 'plus la lune est pleine, plus le mois a été livresque · touche un mois');
+
+  // portrait
+  if (d.portrait.length) {
+    h += card('Toi, lectrice', '<div class="bl-portrait">' + d.portrait.map(function (t) {
+      return '<div class="bl-trait"><div class="e">' + t[0] + '</div><b>' + esc(t[1]) + '</b><span>' + esc(t[2]) + '</span></div>';
+    }).join('') + '</div>');
+  }
+
+  // toutes tes années
+  var annees = Object.keys(d.parAn).map(Number).sort();
+  var max = Math.max.apply(null, annees.map(function (a) { return d.parAn[a]; }));
+  var recordAn = annees.filter(function (a) { return d.parAn[a] === max; })[0];
+  var phrase = '';
+  if (d.record) {
+    phrase = '🏆 <b>' + y + ', ton record</b> : ' + (d.n - d.meilleurAutre) + ' livre' + (d.n - d.meilleurAutre > 1 ? 's' : '') + ' de plus que ton meilleur score d\'avant.';
+  } else {
+    phrase = '🏆 Ton record : <b>' + max + ' livres</b> en ' + recordAn + '.';
+  }
+  h += card('Toutes tes années', '<div class="bl-annees">' + annees.map(function (a) {
+    var cls = 'bl-annee';
+    if (a === y) {
+      cls += ' choisie';
+    }
+    if (d.parAn[a] === max) {
+      cls += ' record';
+    }
+    return '<button class="' + cls + '" data-act="anneeBilan" data-an="' + a + '"><i style="height:' + Math.max(4, Math.round(100 * d.parAn[a] / max)) + 'px"></i>' + String(a).slice(2) + '<br>' + d.parAn[a] + '</button>';
+  }).join('') + '</div><p class="small" style="margin:8px 0 0">' + phrase + '</p>', 'touche une année pour la revoir');
+
+  // l'étagère de l'année
+  h += card('Ton étagère ' + y, '<div class="covers">' + d.fin.map(function (r) { return '<div title="' + esc(titre(r.book)) + ' · ' + fdate(r.end) + '" data-act="livre" data-id="' + r.book.id + '">' + cover(r.book) + '</div>'; }).join('') + '</div>', 'dans l\'ordre de lecture');
+  return h;
+}
+ACTIONS.anBilan = function (el) {
+  anBilan = el.value;
+  rendre();
+};
+ACTIONS.anneeBilan = function (el) {
+  anBilan = el.dataset.an;
+  rendre();
+  window.scrollTo(0, 0);
+};
+ACTIONS.moisBilan = function (el) {
+  var d = donneesBilan(parseInt(anBilan, 10));
+  var m = parseInt(el.dataset.m, 10);
+  var l = d.livresMois[m];
+  var corps = '<p class="muted">Pas de livre fini ce mois-là.</p>';
+  if (l.length) {
+    corps = l.map(function (r) { return ligneLivre(r.book, 'fini le ' + fdate(r.end), 'data-act="livre" data-id="' + r.book.id + '"'); }).join('');
+  }
+  ouvrirFeuille('<h3>' + LUNES[phaseLune(l.length, d.moisMax)] + ' ' + MOIS_LONGS[m].charAt(0).toUpperCase() + MOIS_LONGS[m].slice(1) + ' ' + d.y + '</h3>' + corps);
+};
+</script>
+
 <script>
 // ---------- Bilan façon « Wrapped » : stories plein écran ----------
 var story = {slides: [], i: 0, minuteur: null};
@@ -4472,75 +4784,79 @@ function slidesAnnee(y) {
   });
 }
 function slidesAnneeCorps(y) {
-  var fin = finies().filter(function (r) { return annee(r.end) === y; }).sort(function (a, b) { return a.end - b.end; });
+  var d = donneesBilan(y);
   var s = [];
   s.push('<div class="moon" style="font-size:54px">☾</div><div class="script">Ton année</div><div class="gros">' + y + '</div><div class="sous">en lecture ✨</div>');
-  if (!fin.length) {
+  if (!d.n) {
     s.push('<div class="titre">Pas encore de livre fini cette année…</div><div class="sous">La suite s\'écrit maintenant 💫</div>');
     return s;
   }
-  var pages = 0, sec = 0;
-  fin.forEach(function (r) {
-    if (r.page_type === 'TIME') {
-      sec += r.total_page;
-    } else {
-      pages += pagesLecture(r);
-    }
-  });
-  var extra = '';
-  if (sec) {
-    extra = '<br>et ' + hm(sec) + ' d\'écoute';
+  // le grand chiffre
+  var record = '';
+  if (d.record) {
+    record = '<div class="st-badge">🏆 ton record !</div>';
   }
-  s.push('<div class="sous">Tu as refermé</div><div class="gros">' + fin.length + '</div><div class="titre">livres</div><div class="sous">soit ' + pages.toLocaleString('fr-FR') + ' pages tournées' + extra + '</div>');
-
-  var mois = new Array(12).fill(0);
-  fin.forEach(function (r) { mois[new Date(r.end).getMonth()]++; });
-  var mMax = mois.indexOf(Math.max.apply(null, mois));
-  var joursAn = Object.keys(jours()).filter(function (k) { return k.slice(0, 4) === String(y); }).length;
-  s.push('<div class="sous">Ton mois le plus livresque</div><div class="titre" style="font-size:44px">' + MOIS_LONGS[mMax] + '</div><div class="sous">' + mois[mMax] + ' livres terminés · ' + joursAn + ' jours de lecture dans l\'année</div>');
-
-  var au = {}, tg = {};
-  fin.forEach(function (r) {
-    (r.book.authors || []).forEach(function (a) { au[a] = (au[a] || 0) + 1; });
-    r.book.tagList.forEach(function (t) {
-      if (t !== 'Fiction') {
-        tg[t] = (tg[t] || 0) + 1;
-      }
-    });
-  });
-  var a1 = Object.keys(au).sort(function (a, b) { return au[b] - au[a]; })[0];
-  var g1 = Object.keys(tg).sort(function (a, b) { return tg[b] - tg[a]; })[0];
-  s.push('<div class="sous">Ton auteur de l\'année</div><div class="titre">' + esc(a1) + '</div><div class="sous">' + au[a1] + ' livre(s) lu(s)</div><div style="height:16px"></div><div class="sous">Ton genre fétiche</div><div class="script">' + esc(g1 || '—') + '</div>');
-
-  var coeur = fin.filter(function (r) { return r.star >= 5; });
-  var top = coeur[coeur.length - 1] || fin.slice().sort(function (a, b) { return b.star - a.star; })[0];
-  if (top) {
+  var heures = d.secMinuteur || d.secAudio;
+  var detail = nombreFr(d.pages) + ' pages tournées';
+  if (heures) {
+    detail += '<br>' + Math.round(heures / 3600) + ' h de lecture';
+  }
+  s.push('<div class="sous">Tu as refermé</div><div class="gros">' + d.n + '</div><div class="titre">livres</div>' + record + '<div class="sous">' + detail + '</div>');
+  // les lunes
+  var lunes = d.mois.map(function (n, i) {
+    var ph = phaseLune(n, d.moisMax);
+    return '<div class="st-lune" style="animation-delay:' + (0.3 + i * 0.12).toFixed(2) + 's"><span style="font-size:' + (24 + ph * 6) + 'px">' + LUNES[ph] + '</span><small>' + MOIS[i] + '</small></div>';
+  }).join('');
+  var prixMois = d.prix.filter(function (p) { return p[1] === 'Mois le plus livresque'; })[0];
+  s.push('<div class="script">Tes lunes de lecture</div><div class="st-lunes">' + lunes + '</div>' + (prixMois ? '<div class="sous">👑 ' + esc(prixMois[2]) + ' : ' + esc(prixMois[3]) + '</div>' : ''));
+  // les Grimoires d'or : le livre de l'année en grand, puis les autres prix deux par deux
+  var prix = d.prix.filter(function (p) { return p[1] !== 'Mois le plus livresque'; });
+  var livre = prix.filter(function (p) { return p[1] === 'Livre de l\'année'; })[0];
+  if (livre) {
     var img = '';
-    if (top.book.image) {
-      img = '<img class="cv" src="' + esc(top.book.image) + '" alt="">';
+    if (livre[4].book.image) {
+      img = '<img class="cv" src="' + esc(livre[4].book.image) + '" alt="">';
     }
-    s.push('<div class="sous">Ton coup de cœur</div>' + img + '<div class="titre">' + esc(titre(top.book)) + '</div><div class="sous">' + esc((top.book.authors || []).join(', ')) + ' · ' + coeur.length + ' livre(s) à 5★ cette année</div>');
+    s.push('<div class="st-badge">🏆 Grimoire d\'or</div><div class="sous">Ton livre de l\'année</div>' + img + '<div class="titre">' + esc(livre[2]) + '</div><div class="sous">' + esc(livre[3]) + '</div>');
   }
-
-  var gros = fin.filter(function (r) { return pagesLecture(r); }).sort(function (a, b) { return pagesLecture(b) - pagesLecture(a); })[0];
-  if (gros) {
-    s.push('<div class="sous">Ton plus gros pavé</div><div class="gros">' + pagesLecture(gros) + '</div><div class="sous">pages</div><div class="titre">' + esc(titre(gros.book)) + '</div>');
+  var autres = prix.filter(function (p) { return p !== livre; });
+  for (var i = 0; i < autres.length && i < 6; i += 2) {
+    s.push('<div class="script">Les Grimoires d\'or</div>' + autres.slice(i, i + 2).map(function (p) {
+      return '<div class="st-prix"><div class="st-cat">' + p[0] + ' ' + esc(p[1]) + '</div><div class="titre" style="font-size:26px">' + esc(p[2]) + '</div><div class="sous">' + esc(p[3]) + '</div></div>';
+    }).join(''));
   }
-
-  var sj = series_jours(function (k) { return k.slice(0, 4) === String(y); });
-  s.push('<div class="sous">Ta plus belle série</div><div class="gros">' + sj.best + '</div><div class="titre">jours d\'affilée</div><div class="sous">sans lâcher ton livre 🔥</div>');
-
-  var cits = M.notes.filter(function (n) { return n.type !== 'NOTE' && n.texte.length > 20 && annee(n.created_at) === y; });
-  if (cits.length) {
-    var c = cits[0];
+  // le portrait
+  if (d.portrait.length) {
+    s.push('<div class="script">Toi, lectrice</div><div class="st-traits">' + d.portrait.map(function (t, k) {
+      return '<div class="st-trait" style="animation-delay:' + (0.3 + k * 0.35).toFixed(2) + 's"><span>' + t[0] + '</span><b>' + esc(t[1]) + '</b><small>' + esc(t[2]) + '</small></div>';
+    }).join('') + '</div>');
+  }
+  // toutes les années
+  var annees = Object.keys(d.parAn).map(Number).sort();
+  if (annees.length > 1) {
+    var max = Math.max.apply(null, annees.map(function (a) { return d.parAn[a]; }));
+    var barres = annees.map(function (a, k) {
+      var cls = 'st-an';
+      if (d.parAn[a] === max) {
+        cls += ' rec';
+      }
+      if (a === y) {
+        cls += ' ici';
+      }
+      return '<div class="' + cls + '"><i style="height:' + Math.max(6, Math.round(150 * d.parAn[a] / max)) + 'px;animation-delay:' + (0.3 + k * 0.1).toFixed(2) + 's"></i>' + String(a).slice(2) + '<br><b>' + d.parAn[a] + '</b></div>';
+    }).join('');
+    var mot = d.record ? '🏆 ' + y + ', ton record !' : 'ton record reste ' + max + ' livres';
+    s.push('<div class="script">Toutes tes années</div><div class="st-annees">' + barres + '</div><div class="sous">' + mot + '</div>');
+  }
+  if (d.citation) {
+    var c = d.citation;
     var src = '';
     if (c.book) {
       src = '— ' + esc(titre(c.book));
     }
     s.push('<div class="sous">Une phrase que tu as gardée</div><div class="quote" style="color:#fff;font-size:22px;max-width:340px">' + esc(c.texte.slice(0, 280)) + '</div><div class="sous">' + src + '</div>');
   }
-
-  var couv = fin.filter(function (r) { return r.book.image; }).slice(-20).map(function (r) { return '<img src="' + esc(r.book.image) + '" alt="">'; }).join('');
+  var couv = d.fin.filter(function (r) { return r.book.image; }).slice(-20).map(function (r) { return '<img src="' + esc(r.book.image) + '" alt="">'; }).join('');
   var n = niveau();
   s.push('<div class="script">Ton étagère ' + y + '</div><div class="mosaique">' + couv + '</div><div class="sous">Tu es ' + n.n[1] + ' <b>' + n.n[2] + '</b><br>À l\'année prochaine, belle lectrice ✨</div>');
   return s;
@@ -10008,7 +10324,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 09:22:38';
+var VERSION_APPLI = '2026-10-05 09:35:57';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
