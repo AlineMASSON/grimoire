@@ -7830,7 +7830,12 @@ function ouvrirFiche(id) {
     if (a.date) {
       details.push(fdate(a.date));
     }
-    return '<div class="ligne-ed"><div class="small"><b>' + prix(a.prix, a.devise) + '</b> · ' + details.join(' · ') + '</div><div class="boutons"><button class="mini-btn" data-act="formAchat" data-id="' + a.id + '">' + ic('pencil') + '</button></div></div>';
+    // sans prix noté (un cadeau, souvent) : pas de « 0,00 € »
+    var montant = '';
+    if (a.prix) {
+      montant = '<b>' + prix(a.prix, a.devise) + '</b> · ';
+    }
+    return '<div class="ligne-ed"><div class="small">' + montant + details.join(' · ') + '</div><div class="boutons"><button class="mini-btn" data-act="formAchat" data-id="' + a.id + '">' + ic('pencil') + '</button></div></div>';
   }).join('') + '<button class="lien" data-act="formAchat" data-livre="' + id + '">' + ic('plus') + ' Ajouter un achat</button>';
 
   h += blocCitationsLivre(id);
@@ -11759,7 +11764,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 16:11:10';
+var VERSION_APPLI = '2026-10-05 16:19:07';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
