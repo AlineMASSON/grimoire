@@ -214,6 +214,7 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 
 /* puces (humeurs, tropes, thèmes, filtres) */
 .chip{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:5px 11px;margin:4px 4px 0 0;font:600 12px Nunito,sans-serif;background:var(--card);color:var(--ink);cursor:pointer}
+.chip[hidden]{display:none}
 .chip.on{background:var(--accent-soft);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
 
 /* feuille (fenêtre du bas) */
@@ -2767,13 +2768,17 @@ function rendreEditeur() {
     }
     return '<button class="' + cls + '" data-act="puce" data-l="humeurIds" data-v="' + esc(x.id) + '">' + esc(libelle(x)) + '</button>';
   }).join('') + zoneNouveau('humeurs') + '</div>';
-  h += '<h4>Tropes</h4><div>' + listeCarnet('tropes', function (x) { return b.tropeIds.indexOf(x.id) >= 0; }).map(function (x) {
+  // les tropes : une recherche (beaucoup de puces), ceux déjà choisis en premier
+  var tropes = listeCarnet('tropes', function (x) { return b.tropeIds.indexOf(x.id) >= 0; });
+  var choisis = tropes.filter(function (x) { return b.tropeIds.indexOf(x.id) >= 0; });
+  var autres = tropes.filter(function (x) { return b.tropeIds.indexOf(x.id) < 0; });
+  h += '<h4>Tropes</h4><input class="champ" id="qTrope" type="search" placeholder="🔎 Chercher un trope" autocomplete="off" value="' + esc(b.qTrope || '') + '" style="margin-bottom:6px"><div id="zTropes">' + choisis.concat(autres).map(function (x) {
     var cls = 'chip';
     if (b.tropeIds.indexOf(x.id) >= 0) {
       cls += ' on';
     }
-    return '<button class="' + cls + '" data-act="puce" data-l="tropeIds" data-v="' + esc(x.id) + '">' + esc(libelle(x)) + '</button>';
-  }).join('') + zoneNouveau('tropes') + '</div>';
+    return '<button class="' + cls + '" data-act="puce" data-l="tropeIds" data-v="' + esc(x.id) + '" data-s="' + esc(slug(x.nom)) + '">' + esc(libelle(x)) + '</button>';
+  }).join('') + '<button class="chip" id="tropeCreer" data-act="creerTropeRecherche" hidden></button>' + zoneNouveau('tropes') + '</div>';
   h += '<h4>Mon petit mot</h4><textarea id="mot" placeholder="Ce que je veux me rappeler de ce livre…">' + esc(b.mot) + '</textarea>';
   h += '<div class="row" style="margin-top:16px"><button class="act" data-act="enregistrerNote">' + ic('check') + ' Enregistrer</button>';
   if (D.avis[b.id]) {
@@ -2781,6 +2786,12 @@ function rendreEditeur() {
   }
   h += '</div>';
   document.getElementById('editeur').innerHTML = h;
+  var q = document.getElementById('qTrope');
+  q.addEventListener('input', function () {
+    brouillon.qTrope = q.value;
+    filtrerTropes();
+  });
+  filtrerTropes();
   var nom = document.getElementById('neNom');
   if (nom) {
     nom.focus();
@@ -2792,6 +2803,33 @@ function rendreEditeur() {
     });
   }
 }
+// n'affiche que les tropes qui contiennent la recherche (sans accents) ; les tropes choisis restent visibles
+function filtrerTropes() {
+  var q = slug(brouillon.qTrope || '');
+  var vus = 0;
+  document.querySelectorAll('#zTropes [data-l="tropeIds"]').forEach(function (el) {
+    var montrer = !q || el.dataset.s.indexOf(q) >= 0 || el.classList.contains('on');
+    el.hidden = !montrer;
+    if (montrer && q && !el.classList.contains('on')) {
+      vus++;
+    }
+  });
+  // rien ne correspond : proposer de créer le trope tapé
+  var creer = document.getElementById('tropeCreer');
+  if (creer) {
+    creer.hidden = !q || vus > 0;
+    creer.innerHTML = ic('plus') + ' Créer le trope « ' + esc(brouillon.qTrope || '') + ' »';
+  }
+}
+ACTIONS.creerTropeRecherche = function () {
+  garderMot();
+  brouillon.nouveau = 'tropes';
+  rendreEditeur();
+  var nom = document.getElementById('neNom');
+  if (nom) {
+    nom.value = (brouillon.qTrope || '').trim();
+  }
+};
 function garderMot() {
   var t = document.getElementById('mot');
   if (t) {
@@ -2839,6 +2877,9 @@ ACTIONS.creerElement = function (el) {
       brouillon.humeurIds.push(x.id);
     } else if (t === 'tropes' && brouillon.tropeIds.indexOf(x.id) < 0) {
       brouillon.tropeIds.push(x.id);
+    }
+    if (t === 'tropes') {
+      brouillon.qTrope = '';
     }
     brouillon.nouveau = '';
     rendreEditeur();
@@ -12027,7 +12068,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 16:50:11';
+var VERSION_APPLI = '2026-10-05 17:49:28';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
