@@ -6024,6 +6024,24 @@ function normaliserParution(v) {
   }
   return y + '-' + mm + '-' + String(d).padStart(2, '0');
 }
+// la langue écrite à l'anglaise ou en code (« French », « fr »…) devient « Français »
+var LANGUES_FRANCAIS = ['french', 'fr', 'fre', 'fra', 'francais', 'français'];
+function normaliserLangue(v) {
+  var s = String(v || '').trim();
+  if (LANGUES_FRANCAIS.indexOf(s.toLowerCase()) >= 0) {
+    return 'Français';
+  }
+  return s;
+}
+function opsLangueFrancais() {
+  var ops = [];
+  valeurs(D.livres).forEach(function (l) {
+    if (l.langue && normaliserLangue(l.langue) !== l.langue) {
+      ops.push({t: 'livres', o: Object.assign({}, l, {langue: normaliserLangue(l.langue)}), garderDate: true});
+    }
+  });
+  return ops;
+}
 function anneeParution(p) {
   return parseInt(String(p || '').slice(0, 4), 10) || null;
 }
@@ -6251,7 +6269,7 @@ function opsListesDeDepart() {
 // au démarrage : base chargée, listes de départ créées si besoin, migrations faites une seule fois
 function preparerBase() {
   return chargerBase().then(function () {
-    var migration = opsFusionSessions().concat(opsPlusEnvie(), opsEmojisCriteres());
+    var migration = opsFusionSessions().concat(opsPlusEnvie(), opsEmojisCriteres(), opsLangueFrancais());
     if (migration.length) {
       // la base a changé : une sauvegarde partira au démarrage
       lsSet('bm_sauv_attente', '1');
@@ -6808,7 +6826,7 @@ function convertirBookmory(S, images, ancien) {
       editeur: b.publisher || '',
       parution: parution,
       annee: annee,
-      langue: b.language || '',
+      langue: normaliserLangue(b.language),
       resume: b.description || '',
       couverture: b.image || '',
       lien: b.link || '',
@@ -8193,7 +8211,7 @@ function opsLivre(f) {
     editeur: f.editeur || '',
     parution: f.parution || (f.annee ? String(f.annee) : ''),
     annee: anneeParution(f.parution) || f.annee || null,
-    langue: f.langue || '',
+    langue: normaliserLangue(f.langue),
     genreIds: genreIds,
     etagereIds: f.etagereIds || [],
     couverture: couverture,
@@ -11614,7 +11632,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 15:27:06';
+var VERSION_APPLI = '2026-10-05 15:55:43';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
