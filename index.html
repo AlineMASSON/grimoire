@@ -526,6 +526,7 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="M12 5v14" /></symbol>
 <symbol id="i-quote" viewBox="0 0 24 24"><path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" /> <path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" /></symbol>
 <symbol id="i-refresh-cw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" /></symbol>
+<symbol id="i-rose" viewBox="0 0 24 24"><path d="M17 10h-1a4 4 0 1 1 4-4v.534" /> <path d="M17 6h1a4 4 0 0 1 1.42 7.74l-2.29.87a6 6 0 0 1-5.339-10.68l2.069-1.31" /> <path d="M4.5 17c2.8-.5 4.4 0 5.5.8s1.8 2.2 2.3 3.7c-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2" /> <path d="M9.77 12C4 15 2 22 2 22" /> <circle cx="17" cy="8" r="2" /></symbol>
 <symbol id="i-rotate-ccw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /></symbol>
 <symbol id="i-scan-barcode" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2" /> <path d="M17 3h2a2 2 0 0 1 2 2v2" /> <path d="M21 17v2a2 2 0 0 1-2 2h-2" /> <path d="M7 21H5a2 2 0 0 1-2-2v-2" /> <path d="M8 7v10" /> <path d="M12 7v10" /> <path d="M17 7v10" /></symbol>
 <symbol id="i-scan-text" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2" /> <path d="M17 3h2a2 2 0 0 1 2 2v2" /> <path d="M21 17v2a2 2 0 0 1-2 2h-2" /> <path d="M7 21H5a2 2 0 0 1-2-2v-2" /> <path d="M7 8h8" /> <path d="M7 12h10" /> <path d="M7 16h6" /></symbol>
@@ -1689,11 +1690,19 @@ function detailJour(k) {
       morceaux.push(Math.max.apply(null, pos) + ' %');
     }
     (b.reads || []).forEach(function (r) {
-      if (r.start && dkey(new Date(r.start)) === k) {
+      var debutCeJour = r.start && dkey(new Date(r.start)) === k;
+      var finCeJour = r.end && dkey(new Date(r.end)) === k;
+      // laissée sans avoir été vraiment commencée (« plus envie », ou abandonnée sans aucune page notée) : pas de « commencé »
+      var jamaisCommencee = r.status === 'DROPPED' || (r.status === 'GIVE_UP' && !(r.logs || []).length);
+      if (debutCeJour && !jamaisCommencee) {
         morceaux.push('commencé');
       }
-      if (r.end && r.status === 'DONE' && dkey(new Date(r.end)) === k) {
+      if (finCeJour && r.status === 'DONE') {
         morceaux.push('✨ fini');
+      } else if ((finCeJour || (debutCeJour && jamaisCommencee)) && r.status === 'GIVE_UP') {
+        morceaux.push('🏳️ abandonné');
+      } else if ((finCeJour || debutCeJour) && r.status === 'DROPPED') {
+        morceaux.push('🥀 plus envie');
       }
     });
     if (!morceaux.length) {
@@ -2011,7 +2020,7 @@ function vGouts() {
   }
   var laissesTxt = '';
   if (laisses) {
-    laissesTxt = '<p class="small" style="margin:12px 0 0">🍃 <b>' + laisses + ' livre' + (laisses > 1 ? 's' : '') + '</b> laissé' + (laisses > 1 ? 's' : '') + ' avant de commencer (plus envie) : pas comptés comme abandons.</p>';
+    laissesTxt = '<p class="small" style="margin:12px 0 0">🥀 <b>' + laisses + ' livre' + (laisses > 1 ? 's' : '') + '</b> laissé' + (laisses > 1 ? 's' : '') + ' avant de commencer (plus envie) : pas comptés comme abandons.</p>';
   }
   h += card('Quand tu abandonnes', bars(tranches.map(function (t) { return {l: t[0], v: t[1], txt: t[1] + ' abandon' + (t[1] > 1 ? 's' : '')}; })) + laissesTxt, 'à quel moment du livre');
   return h;
@@ -2215,7 +2224,7 @@ vEtagere.apres = function () {
 
 // ---------- tous mes livres : recherche, filtres, tris ----------
 var tous = {q: '', etat: '', fmt: '', tri: 'ajout', etagere: ''};
-var ETATS_LIVRE = [['', 'Tous'], ['encours', '' + ic('book-open') + ' En cours'], ['lus', '' + ic('check') + ' Lus'], ['pal', '' + ic('layers') + ' Pile à lire'], ['envies', '' + ic('heart') + ' Envies'], ['abandons', '' + ic('flag') + ' Abandonnés'], ['plusenvie', ic('leaf') + ' Plus envie']];
+var ETATS_LIVRE = [['', 'Tous'], ['encours', '' + ic('book-open') + ' En cours'], ['lus', '' + ic('check') + ' Lus'], ['pal', '' + ic('layers') + ' Pile à lire'], ['envies', '' + ic('heart') + ' Envies'], ['abandons', '' + ic('flag') + ' Abandonnés'], ['plusenvie', ic('rose') + ' Plus envie']];
 var TRIS = [['ajout', 'Ajoutés récemment'], ['titre', 'Titre'], ['auteur', 'Auteur·ice'], ['note', 'Note'], ['lecture', 'Lus récemment']];
 function etatLivre(b) {
   if (b.reads.some(function (r) { return r.status === 'READING' || r.status === 'PAUSE'; })) {
@@ -5889,7 +5898,7 @@ function resultatScan(isbn) {
       } else if (b.statut === 'READING' || b.statut === 'PAUSE') {
         verdict = '📖 Tu es en train de le lire<small>il est déjà chez toi</small>';
       } else if (b.statut === 'DROPPED') {
-        verdict = '🍃 Tu n\'en avais plus envie<small>tu l\'avais mis de côté avant de le commencer</small>';
+        verdict = '🥀 Tu n\'en avais plus envie<small>tu l\'avais mis de côté avant de le commencer</small>';
       } else if (b.statut === 'GIVE_UP') {
         verdict = '🏳️ Tu l\'as abandonné<small>pas la peine de le racheter</small>';
       } else if (b.wishlist) {
@@ -5980,6 +5989,63 @@ var baseOuverte = null;
 var FORMAT_BM = {papier: 'paperBook', numerique: 'eBook', audio: 'audioBook'};
 var STATUT_BM = {en_cours: 'READING', pause: 'PAUSE', terminee: 'DONE', abandonnee: 'GIVE_UP', plusenvie: 'DROPPED'};
 var UNITE_BM = {pages: 'PAGE', secondes: 'TIME', pourcent: 'PERCENT', episodes: 'EPISODE'};
+
+// date de parution d'un livre (champ parution) : « AAAA-MM-JJ », ou « AAAA-MM » / « AAAA » quand on ne connaît
+// que le mois ou l'année. Le champ annee reste rempli (nombre) pour les stats.
+// Accepte « 2025-05-02 », « 2025/05/02 », « 2025-5 », « 2025 », « 02/05/2025 » ; renvoie '' sinon.
+function normaliserParution(v) {
+  var s = String(v || '').trim();
+  var y = 0;
+  var m = 0;
+  var d = 0;
+  var r = /^(\d{4})(?:[-\/.](\d{1,2})(?:[-\/.](\d{1,2}))?)?/.exec(s);
+  if (r) {
+    y = parseInt(r[1], 10);
+    m = parseInt(r[2] || '0', 10);
+    d = parseInt(r[3] || '0', 10);
+  } else {
+    r = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/.exec(s);
+    if (!r) {
+      return '';
+    }
+    d = parseInt(r[1], 10);
+    m = parseInt(r[2], 10);
+    y = parseInt(r[3], 10);
+  }
+  if (y < 1000 || y > 2999) {
+    return '';
+  }
+  if (m < 1 || m > 12) {
+    return String(y);
+  }
+  var mm = String(m).padStart(2, '0');
+  if (d < 1 || d > new Date(y, m, 0).getDate()) {
+    return y + '-' + mm;
+  }
+  return y + '-' + mm + '-' + String(d).padStart(2, '0');
+}
+function anneeParution(p) {
+  return parseInt(String(p || '').slice(0, 4), 10) || null;
+}
+// « 2 mai 2025 », « mai 2025 » ou « 2025 »
+function texteParution(p) {
+  var morceaux = String(p || '').split('-');
+  if (!morceaux[0]) {
+    return '';
+  }
+  if (morceaux.length === 1) {
+    return morceaux[0];
+  }
+  var mois = MOIS_LONGS[parseInt(morceaux[1], 10) - 1];
+  if (morceaux.length === 2) {
+    return mois + ' ' + morceaux[0];
+  }
+  var jour = parseInt(morceaux[2], 10);
+  if (jour === 1) {
+    jour = '1er';
+  }
+  return jour + ' ' + mois + ' ' + morceaux[0];
+}
 var ROLES = [['auteur', 'Auteur·ice'], ['preface', 'Préface'], ['traduction', 'Traduction'], ['illustration', 'Illustration'], ['narration', 'Narration'], ['autre', 'Autre']];
 
 function valeurs(o) {
@@ -6339,7 +6405,7 @@ function modeleDepuisBase() {
       possession: l.possession || '',
       isbn: (l.isbns || [])[0] || '',
       isbns: l.isbns || [],
-      publication_date: l.annee ? String(l.annee) : '',
+      publication_date: l.parution || (l.annee ? String(l.annee) : ''),
       publisher: l.editeur || '',
       description: l.resume || '',
       tagsBruts: [],
@@ -6723,7 +6789,9 @@ function convertirBookmory(S, images, ancien) {
     }
 
     var isbn = isbn13(chiffres(b.isbn || ''));
-    var annee = parseInt(String(b.publication_date || '').slice(0, 4), 10) || null;
+    // Bookmory écrit la date de parution « AAAA/MM/JJ » (parfois l'année seule)
+    var parution = normaliserParution(b.publication_date);
+    var annee = anneeParution(parution);
     var possession = '';
     if (b.wishlist) {
       possession = 'envie';
@@ -6738,6 +6806,7 @@ function convertirBookmory(S, images, ancien) {
       contributeurs: contributeurs,
       isbns: isbn ? [isbn] : [],
       editeur: b.publisher || '',
+      parution: parution,
       annee: annee,
       langue: b.language || '',
       resume: b.description || '',
@@ -7298,6 +7367,7 @@ textarea.champ{min-height:90px;font-weight:400}
 .form label{display:block;font:700 11px Nunito,sans-serif;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:12px 0 0}
 .deux{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .deux-un{display:grid;grid-template-columns:2fr 1fr;gap:8px}
+.date-parution{display:grid;grid-template-columns:72px 1fr 92px;gap:8px}
 .avec-bouton{display:flex;gap:8px;align-items:center}
 .avec-bouton .champ{flex:1;min-width:0}
 .avec-bouton .act{flex:none;padding:9px 14px}
@@ -7328,7 +7398,7 @@ textarea.champ{min-height:90px;font-weight:400}
 var FORMATS_FR = [['papier', '📖 Papier'], ['numerique', '📱 Numérique'], ['audio', '🎧 Audio']];
 var UNITES = [['pages', 'Pages'], ['secondes', 'Durée (audio)'], ['pourcent', 'Pourcentage'], ['episodes', 'Épisodes']];
 var POSSESSIONS = [['possede', '📚 Dans ma bibliothèque'], ['envie', '💫 Dans mes envies'], ['emprunte', '🤝 Emprunté'], ['', 'Non précisé']];
-var STATUTS = [['en_cours', '📖 En cours'], ['pause', '⏸️ En pause'], ['terminee', '✅ Terminée'], ['abandonnee', '🏳️ Abandonnée'], ['plusenvie', '🍃 Plus envie']];
+var STATUTS = [['en_cours', '📖 En cours'], ['pause', '⏸️ En pause'], ['terminee', '✅ Terminée'], ['abandonnee', '🏳️ Abandonnée'], ['plusenvie', '🥀 Plus envie']];
 var DEVISES = [['EUR', '€'], ['USD', '$'], ['GBP', '£'], ['CHF', 'CHF'], ['CAD', 'CA$']];
 
 // ---------- petits outils de formulaire ----------
@@ -7587,10 +7657,28 @@ function ouvrirFiche(id) {
     }
     serie += '</div>';
   }
+  // « Paru le 2 mai 2025 · Éditeur »
+  var edition = [];
+  var paru = texteParution(l.parution || (l.annee ? String(l.annee) : ''));
+  if (paru) {
+    var le = 'le ';
+    if (!/^(\d{1,2}|1er) /.test(paru)) {
+      le = 'en ';
+    }
+    edition.push('Paru ' + le + paru);
+  }
+  if (l.editeur) {
+    edition.push(l.editeur);
+  }
+  if (edition.length) {
+    edition = '<div class="small muted">' + esc(edition.join(' · ')) + '</div>';
+  } else {
+    edition = '';
+  }
   var poss = POSSESSIONS.find(function (p) { return p[0] === (l.possession || ''); });
   var h = '<div class="tete">' + cover(b) + '<div><h3>' + esc(titre(b)) + '</h3><div class="small muted">' + esc(b.authors.join(', ')) + '</div>' +
     (autres.length ? '<div class="small muted">' + esc(autres.join(' · ')) + '</div>' : '') +
-    '<div style="margin-top:4px">' + pill(b.book_type) + ' ' + (l.total ? texteLongueur(l.unite, l.total) : '') + '</div>' + serie + '</div></div>';
+    '<div style="margin-top:4px">' + pill(b.book_type) + ' ' + (l.total ? texteLongueur(l.unite, l.total) : '') + '</div>' + serie + edition + '</div></div>';
   if (l.possession) {
     h += '<div class="small muted">' + poss[1] + ' · ajouté il y a ' + depuis(l.creeLe) + '</div>';
   }
@@ -7669,7 +7757,7 @@ function genreParNom(nom) {
   return valeurs(D.genres).find(function (g) { return slug(g.nom) === s; }) || null;
 }
 
-// prerempli : {titre, auteurs[], isbn, pages, image, annee, editeur, resume, genres[], possession, format}
+// prerempli : {titre, auteurs[], isbn, pages, image, parution (ou annee), editeur, resume, genres[], possession, format}
 function ouvrirFormLivre(id, prerempli) {
   var l = (id && D.livres[id]) || {};
   var p = prerempli || {};
@@ -7687,7 +7775,7 @@ function ouvrirFormLivre(id, prerempli) {
     possession: id ? (l.possession || '') : (p.possession === undefined ? 'possede' : p.possession),
     isbn: (l.isbns || [])[0] || p.isbn || '',
     editeur: l.editeur || p.editeur || '',
-    annee: l.annee || p.annee || '',
+    parution: l.parution || (l.annee ? String(l.annee) : '') || normaliserParution(p.parution) || (p.annee ? String(p.annee) : ''),
     langue: l.langue || '',
     genres: (l.genreIds || []).filter(function (g) { return D.genres[g]; }).map(function (g) { return D.genres[g].nom; }),
     etagereIds: (l.etagereIds || []).slice(),
@@ -7723,8 +7811,8 @@ function ouvrirFormLivre(id, prerempli) {
     '<label>Couverture</label><div id="zCouv"></div>' +
     '<label>ISBN</label><div class="avec-bouton">' + champ('flIsbn', fl.isbn, 'inputmode="numeric" placeholder="978…"') + '<button type="button" class="act doux" data-act="flScanIsbn">' + ic('scan-barcode') + '</button></div>' +
     '<button type="button" class="lien" data-act="flCompleter">' + ic('search') + ' Compléter depuis internet</button>' +
-    '<div class="deux"><div><label>Éditeur</label>' + champ('flEditeur', fl.editeur, 'list="dlEditeurs" autocomplete="off"') + '</div><div><label>Année</label>' + champ('flAnnee', fl.annee, 'type="number" inputmode="numeric"') + '</div></div>' + listeDeChoix('dlEditeurs', valeurs(D.livres).map(function (x) { return x.editeur; })) +
-    '<label>Langue</label>' + champ('flLangue', fl.langue, 'placeholder="Français"') +
+    '<div class="deux"><div><label>Éditeur</label>' + champ('flEditeur', fl.editeur, 'list="dlEditeurs" autocomplete="off"') + '</div><div><label>Langue</label>' + champ('flLangue', fl.langue, 'placeholder="Français"') + '</div></div>' + listeDeChoix('dlEditeurs', valeurs(D.livres).map(function (x) { return x.editeur; })) +
+    '<label>Date de parution</label>' + champsParution(fl.parution) +
     '<label>Résumé</label><textarea class="champ" id="flResume">' + esc(fl.resume) + '</textarea>' +
     '<div class="row" style="margin-top:16px"><button class="act" data-act="flEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="flAnnuler">Annuler</button></div>';
   if (id) {
@@ -7890,6 +7978,51 @@ ACTIONS.flSansCouv = function () {
   fl.photo = null;
   rendreCouv();
 };
+// la date de parution en trois champs : jour, mois, année (le jour et le mois sont facultatifs)
+function champsParution(p) {
+  var morceaux = String(p || '').split('-');
+  var options = '<option value="">mois</option>' + MOIS_LONGS.map(function (m, i) {
+    var sel = '';
+    if (parseInt(morceaux[1], 10) === i + 1) {
+      sel = ' selected';
+    }
+    return '<option value="' + (i + 1) + '"' + sel + '>' + m + '</option>';
+  }).join('');
+  var jour = '';
+  if (morceaux[2]) {
+    jour = parseInt(morceaux[2], 10);
+  }
+  return '<div class="date-parution">' + champ('flJour', jour, 'type="number" inputmode="numeric" min="1" max="31" placeholder="jour"') +
+    '<select class="champ" id="flMois">' + options + '</select>' + champ('flAnnee', morceaux[0] || '', 'type="number" inputmode="numeric" placeholder="année"') + '</div>';
+}
+function lireParution() {
+  var y = val('flAnnee');
+  if (!y) {
+    return '';
+  }
+  var t = y;
+  if (val('flMois')) {
+    t += '-' + val('flMois');
+    if (val('flJour')) {
+      t += '-' + val('flJour');
+    }
+  }
+  return normaliserParution(t);
+}
+// « Compléter depuis internet » : seulement si l'année n'est pas encore remplie
+function remplirParution(p) {
+  if (!p || val('flAnnee')) {
+    return;
+  }
+  var morceaux = p.split('-');
+  document.getElementById('flAnnee').value = morceaux[0];
+  if (morceaux[1]) {
+    document.getElementById('flMois').value = String(parseInt(morceaux[1], 10));
+  }
+  if (morceaux[2]) {
+    document.getElementById('flJour').value = String(parseInt(morceaux[2], 10));
+  }
+}
 function garderChampsLivre() {
   fl.titre = val('flTitre');
   fl.serieNom = val('flSerie');
@@ -7900,7 +8033,7 @@ function garderChampsLivre() {
   fl.total = lireLongueur('flTotal', fl.unite);
   fl.isbn = val('flIsbn');
   fl.editeur = val('flEditeur');
-  fl.annee = parseInt(val('flAnnee'), 10) || null;
+  fl.parution = lireParution();
   fl.langue = val('flLangue');
   fl.resume = val('flResume');
 }
@@ -7946,7 +8079,7 @@ ACTIONS.flCompleter = function () {
     remplir('flTitre', inf.titre);
     remplir('flIsbn', inf.isbn);
     remplir('flEditeur', inf.editeur);
-    remplir('flAnnee', (/\d{4}/.exec(String(inf.date || '')) || [''])[0]);
+    remplirParution(normaliserParution(inf.date));
     remplir('flResume', inf.resume);
     if (fl.unite === 'pages') {
       remplir('flTotal', inf.pages);
@@ -8058,7 +8191,8 @@ function opsLivre(f) {
     possession: f.possession || '',
     isbns: isbns,
     editeur: f.editeur || '',
-    annee: f.annee || null,
+    parution: f.parution || (f.annee ? String(f.annee) : ''),
+    annee: anneeParution(f.parution) || f.annee || null,
     langue: f.langue || '',
     genreIds: genreIds,
     etagereIds: f.etagereIds || [],
@@ -8567,7 +8701,7 @@ ACTIONS.formSerie = function (el) {
         return;
       }
       var titres = nonLus.map(function (l) { return '• ' + l.titre; }).join('\n');
-      demander('Ses ' + nonLus.length + ' tome' + (nonLus.length > 1 ? 's' : '') + ' pas encore lu' + (nonLus.length > 1 ? 's' : '') + ' passer' + (nonLus.length > 1 ? 'ont' : 'a') + ' en « 🍃 Plus envie » et quitter' + (nonLus.length > 1 ? 'ont' : 'a') + ' ta pile à lire et tes envies :\n' + titres, {titre: 'Abandonner « ' + nom + ' » ?', oui: 'Abandonner la série'}).then(function (ok) {
+      demander('Ses ' + nonLus.length + ' tome' + (nonLus.length > 1 ? 's' : '') + ' pas encore lu' + (nonLus.length > 1 ? 's' : '') + ' passer' + (nonLus.length > 1 ? 'ont' : 'a') + ' en « 🥀 Plus envie » et quitter' + (nonLus.length > 1 ? 'ont' : 'a') + ' ta pile à lire et tes envies :\n' + titres, {titre: 'Abandonner « ' + nom + ' » ?', oui: 'Abandonner la série'}).then(function (ok) {
         if (!ok) {
           return;
         }
@@ -8740,7 +8874,7 @@ ACTIONS.choisirResultat = function (el) {
     return;
   }
   siIndependant(function () {
-    ouvrirFormLivre(null, {titre: inf.titre, auteurs: inf.auteurs, isbn: inf.isbn, pages: inf.pages, image: inf.image, annee: parseInt((/\d{4}/.exec(String(inf.date || '')) || [''])[0], 10) || '', editeur: inf.editeur, resume: inf.resume, genres: genresDepuis(inf.categories || [])});
+    ouvrirFormLivre(null, {titre: inf.titre, auteurs: inf.auteurs, isbn: inf.isbn, pages: inf.pages, image: inf.image, parution: normaliserParution(inf.date), editeur: inf.editeur, resume: inf.resume, genres: genresDepuis(inf.categories || [])});
   });
 };
 
@@ -8761,7 +8895,7 @@ function ajouterDepuisInfos(infos, isbn, mode) {
       possession: mode === 'envie' ? 'envie' : 'possede',
       isbn: isbn || infos.isbn || '',
       editeur: infos.editeur || '',
-      annee: parseInt((/\d{4}/.exec(String(infos.date || '')) || [''])[0], 10) || null,
+      parution: normaliserParution(infos.date),
       langue: '',
       genres: genresDepuis(infos.categories || []),
       etagereIds: [],
@@ -9962,7 +10096,10 @@ ACTIONS.ocrTout = function () {
 // ---------- Propositions : genres, tropes, traductions et couvertures trouvés en ligne, à valider livre par livre ----------
 // Fichier JSON reçu par 📥 ou par le partage :
 // {format: 'grimoire-propositions', date, livres: [{id, titre, genres[], tropes[], traducteurs[], roles[{nom, role}],
-//  langue, source, confiance, note, couverture: {image: 'data:image/…' ou 'https://…', source}}]}
+//  langue, source, confiance, note, couverture: {image: 'data:image/…' ou 'https://…', source},
+//  infos: {parution: 'AAAA-MM-JJ', editeur, isbn, langue, resume, unite: 'pages'}}]}
+// (langue = langue d'origine d'une traduction ; infos.langue = langue de l'édition du livre)
+// Les infos ne remplissent que ce qui manque au livre (une date plus précise que l'année seule compte comme manquante).
 // Une couverture en data: est rangée dans la table photos (elle ne peut plus casser), une adresse est gardée telle quelle.
 // Rien n'est écrit avant « Appliquer ». Les tropes vont dans le carnet (sans que le livre compte comme noté : estNote()).
 // Les genres déjà sur le livre mais pas proposés restent tant qu'on ne les décoche pas.
@@ -10095,6 +10232,45 @@ function propChoix(l, p) {
       choix.push({type: 'role', etat: 'ajout', nom: r.nom, vers: r.role, on: true});
     }
   });
+  return choix.concat(propChoixInfos(l, p.infos || {}));
+}
+
+// infos de l'édition : {type: 'info', champ, valeur, texte}, seulement si le livre ne les a pas déjà (jamais de retrait)
+function propChoixInfos(l, inf) {
+  var choix = [];
+  function ajout(champ, valeur, texte, etat) {
+    choix.push({type: 'info', champ: champ, valeur: valeur, texte: texte, etat: etat || 'ajout', nom: champ + ' ' + valeur, on: true});
+  }
+  var pa = normaliserParution(inf.parution);
+  var actuelle = l.parution || (l.annee ? String(l.annee) : '');
+  if (pa && pa.length > actuelle.length) {
+    if (!actuelle || pa.indexOf(actuelle) === 0) {
+      ajout('parution', pa, 'parution : ' + texteParution(pa));
+    } else {
+      ajout('parution', pa, 'parution : ' + texteParution(actuelle) + ' → ' + texteParution(pa), 'change');
+    }
+  }
+  if (inf.editeur && !l.editeur) {
+    ajout('editeur', String(inf.editeur).trim(), 'éditeur : ' + String(inf.editeur).trim());
+  }
+  var isbn = isbn13(chiffres(String(inf.isbn || '')));
+  if (isbn && !(l.isbns || []).length) {
+    ajout('isbn', isbn, 'ISBN ' + isbn);
+  }
+  if (inf.langue && !l.langue) {
+    ajout('langue', String(inf.langue).trim(), 'langue : ' + String(inf.langue).trim().toLowerCase());
+  }
+  if (inf.resume && !l.resume) {
+    ajout('resume', String(inf.resume).trim(), 'résumé');
+  }
+  // compté en pages : seulement si rien ne serait faussé (épisodes = un pour un, ou aucune position notée)
+  if (inf.unite === 'pages' && l.unite && l.unite !== 'pages') {
+    var lectures = valeurs(D.lectures).filter(function (x) { return x.livreId === l.id; });
+    if (l.unite === 'episodes' || lectures.every(function (x) { return !x.position; })) {
+      var u = UNITES.find(function (x) { return x[0] === l.unite; });
+      ajout('unite', 'pages', 'compté en ' + ((u && u[1]) || l.unite).toLowerCase() + ' → pages', 'change');
+    }
+  }
   return choix;
 }
 
@@ -10204,10 +10380,22 @@ function htmlPropLivre(it, i) {
     lien = '<a href="' + esc(p.source) + '" target="_blank" rel="noopener">source</a>';
   }
   h += groupe('role', trad, lien);
+  h += groupe('info', 'Infos de l\'édition');
+  it.choix.forEach(function (c) {
+    if (c.type === 'info' && c.champ === 'resume') {
+      h += '<details class="prop-note small muted"><summary>lire le résumé proposé</summary>' + esc(c.valeur) + '</details>';
+    }
+  });
   h += '<button class="prop-rien" data-act="propRien" data-i="' + i + '">Rien pour ce livre</button></div>';
   return h;
 }
 function textePuceProp(c) {
+  if (c.type === 'info') {
+    if (c.etat === 'change') {
+      return c.texte;
+    }
+    return '+ ' + c.texte;
+  }
   if (c.type === 'role') {
     if (c.etat === 'change') {
       return c.nom + ' : ' + libelleRole(c.de).toLowerCase() + ' → ' + libelleRole(c.vers).toLowerCase();
@@ -10337,7 +10525,7 @@ function propOperations(blobs) {
   ['genres', 'tropes'].forEach(function (t) {
     ordres[t] = valeurs(D[t]).reduce(function (m, x) { return Math.max(m, x.ordre || 0); }, -1);
   });
-  var n = {changements: 0, livres: 0, genres: 0, retraits: 0, tropes: 0, roles: 0, couvertures: 0};
+  var n = {changements: 0, livres: 0, genres: 0, retraits: 0, tropes: 0, roles: 0, couvertures: 0, infos: 0};
   function idListe(t, nom) {
     var x = propParNom(t, nom);
     if (x) {
@@ -10392,6 +10580,7 @@ function propOperations(blobs) {
     var tropeIds = ((avis && avis.tropeIds) || []).slice();
     var livreChange = false;
     var avisChange = false;
+    var infos = {};
     it.choix.forEach(function (c) {
       if (c.etat === 'deja') {
         return;
@@ -10450,10 +10639,35 @@ function propOperations(blobs) {
         contributeurs = nouveaux;
         livreChange = true;
         n.roles++;
+      } else if (c.type === 'info' && c.on) {
+        infos[c.champ] = c.valeur;
+        livreChange = true;
+        n.infos++;
       }
     });
+    var champs = {};
+    if (infos.parution) {
+      champs.parution = infos.parution;
+      champs.annee = anneeParution(infos.parution);
+    }
+    ['editeur', 'langue', 'resume'].forEach(function (k) {
+      if (infos[k]) {
+        champs[k] = infos[k];
+      }
+    });
+    if (infos.isbn) {
+      champs.isbns = [infos.isbn].concat((l.isbns || []).filter(function (x) { return x !== infos.isbn; }));
+    }
+    if (infos.unite) {
+      champs.unite = 'pages';
+      valeurs(D.lectures).forEach(function (x) {
+        if (x.livreId === it.id && x.unite && x.unite !== 'pages') {
+          ops.push({t: 'lectures', o: Object.assign({}, x, {unite: 'pages'})});
+        }
+      });
+    }
     if (livreChange) {
-      ops.push({t: 'livres', o: Object.assign({}, l, {genreIds: genreIds, contributeurs: contributeurs, couverture: couverture})});
+      ops.push({t: 'livres', o: Object.assign({}, l, {genreIds: genreIds, contributeurs: contributeurs, couverture: couverture}, champs)});
     }
     if (avisChange) {
       if (avis) {
@@ -10466,7 +10680,7 @@ function propOperations(blobs) {
       n.livres++;
     }
   });
-  n.changements = n.genres + n.retraits + n.tropes + n.roles + n.couvertures;
+  n.changements = n.genres + n.retraits + n.tropes + n.roles + n.couvertures + n.infos;
   var morceaux = [];
   if (n.genres) {
     morceaux.push(n.genres + ' genre' + (n.genres > 1 ? 's' : '') + ' ajouté' + (n.genres > 1 ? 's' : ''));
@@ -10482,6 +10696,9 @@ function propOperations(blobs) {
   }
   if (n.couvertures) {
     morceaux.push(n.couvertures + ' couverture' + (n.couvertures > 1 ? 's' : ''));
+  }
+  if (n.infos) {
+    morceaux.push(n.infos + ' info' + (n.infos > 1 ? 's' : '') + ' d\'édition');
   }
   return {ops: ops, changements: n.changements, livres: n.livres, resume: morceaux.join(', ')};
 }
@@ -11397,7 +11614,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 15:03:31';
+var VERSION_APPLI = '2026-10-05 15:27:06';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
