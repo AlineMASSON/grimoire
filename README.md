@@ -55,6 +55,7 @@ Il contient l'appli publiée sur GitHub Pages :
 | `version.txt` | numéro de la version en ligne, comparé par l'appli pour se mettre à jour |
 | `aide.html`, `aide/` | le mode d'emploi et ses captures |
 | `reparer.html` | la page de réparation d'une mise à jour bloquée |
+| `prompt-propositions.md` | la consigne envoyée à Claude par « ✨ Compléter avec Claude » (genres, tropes et traducteurs à proposer) |
 
 ## Crédits
 
