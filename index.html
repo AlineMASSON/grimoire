@@ -2026,6 +2026,28 @@ function vGouts() {
   return h;
 }
 
+// neuf, occasion et cadeaux : ce qu'on a dépensé de chaque côté
+function blocEtatsAchats(achats, cadeaux) {
+  var neuf = achats.filter(function (a) { return a.etat === 'neuf'; });
+  var occ = achats.filter(function (a) { return a.etat === 'occasion'; });
+  if (!neuf.length && !occ.length && !cadeaux) {
+    return '';
+  }
+  function somme(l) {
+    return l.reduce(function (s, a) { return s + a.prix; }, 0);
+  }
+  var t = [];
+  if (neuf.length) {
+    t.push(['✨ ' + Math.round(somme(neuf)) + ' €', neuf.length + ' en neuf · ' + round(somme(neuf) / neuf.length, 2) + ' € en moyenne']);
+  }
+  if (occ.length) {
+    t.push(['♻️ ' + Math.round(somme(occ)) + ' €', occ.length + ' d\'occasion · ' + round(somme(occ) / occ.length, 2) + ' € en moyenne']);
+  }
+  if (cadeaux) {
+    t.push(['🎁 ' + cadeaux, 'livre' + (cadeaux > 1 ? 's' : '') + ' offert' + (cadeaux > 1 ? 's' : '')]);
+  }
+  return '<div style="margin-top:10px">' + kpis(t) + '</div>';
+}
 function vArgent() {
   var achats = [];
   M.livres.filter(compte).forEach(function (b) {
@@ -2036,7 +2058,16 @@ function vArgent() {
         if (r) {
           star = r.star;
         }
-        achats.push({b: b, prix: p.price, date: p.purchased_at || p.created_at, star: star});
+        achats.push({b: b, prix: p.price, date: p.purchased_at || p.created_at, star: star, etat: p.etat});
+      }
+    });
+  });
+  // les cadeaux n'ont souvent pas de prix : on les compte à part
+  var cadeaux = 0;
+  M.livres.filter(compte).forEach(function (b) {
+    (b.purchases || []).forEach(function (p) {
+      if (p.etat === 'cadeau') {
+        cadeaux++;
       }
     });
   });
@@ -2051,7 +2082,7 @@ function vArgent() {
     [Math.round(total) + ' €', achats.length + ' livres achetés'],
     [round(total / achats.length, 2) + ' €', 'prix moyen'],
     [lus.length + '/' + achats.length, 'achats déjà lus']
-  ]) + '<p class="small muted" style="margin:12px 0 4px">Dépenses par année</p>' + bars(Object.keys(parAn).sort().reverse().map(function (y) { return {l: y, v: parAn[y], txt: Math.round(parAn[y]) + ' €'}; }), {unite: ' €'}) +
+  ]) + blocEtatsAchats(achats, cadeaux) + '<p class="small muted" style="margin:12px 0 4px">Dépenses par année</p>' + bars(Object.keys(parAn).sort().reverse().map(function (y) { return {l: y, v: parAn[y], txt: Math.round(parAn[y]) + ' €'}; }), {unite: ' €'}) +
     '<table style="margin-top:10px"><tr><th>Livre</th><th class="n">Prix</th><th class="n">€/★</th><th class="n">cts/page</th></tr>' + achats.sort(function (a, b) { return b.prix - a.prix; }).map(function (a) {
       var parEt = '–';
       if (a.star) {
@@ -2061,7 +2092,13 @@ function vArgent() {
       if (a.b.total_page && a.b.book_type !== 'audioBook') {
         parPage = round(100 * a.prix / a.b.total_page, 1);
       }
-      return '<tr><td>' + esc(titre(a.b)) + '</td><td class="n">' + a.prix + '</td><td class="n">' + parEt + '</td><td class="n">' + parPage + '</td></tr>';
+      var marque = '';
+      if (a.etat === 'occasion') {
+        marque = '♻️ ';
+      } else if (a.etat === 'cadeau') {
+        marque = '🎁 ';
+      }
+      return '<tr><td>' + marque + esc(titre(a.b)) + '</td><td class="n">' + a.prix + '</td><td class="n">' + parEt + '</td><td class="n">' + parPage + '</td></tr>';
     }).join('') + '</table>', 'livres avec un prix saisi');
 }
 
@@ -6024,6 +6061,41 @@ function normaliserParution(v) {
   }
   return y + '-' + mm + '-' + String(d).padStart(2, '0');
 }
+// neuf, d'occasion ou offert : le champ etat d'un achat ('neuf', 'occasion', 'cadeau' ou '')
+var ETATS_ACHAT = [['neuf', '✨ Neuf'], ['occasion', '♻️ Occasion'], ['cadeau', '🎁 Cadeau']];
+var BOUTIQUES_OCCASION = ['bourse-aux-livres', 'vinted', 'momox', 'recyclivre', 'emmaus', 'brocante', 'boite-a-livres', 'occasion', 'leboncoin'];
+var BOUTIQUES_NEUF = ['librairie', 'espace-culturel', 'cultura', 'fnac'];
+function etatSelonNom(boutique) {
+  var s = slug(boutique);
+  if (!s) {
+    return '';
+  }
+  if (BOUTIQUES_OCCASION.some(function (m) { return s.indexOf(m) >= 0; })) {
+    return 'occasion';
+  }
+  if (BOUTIQUES_NEUF.some(function (m) { return s.indexOf(m) >= 0; })) {
+    return 'neuf';
+  }
+  return '';
+}
+// une fois : les achats papier déjà notés reçoivent neuf ou occasion d'après leur boutique
+function opsEtatAchats() {
+  if (reglage('migrationEtatAchats')) {
+    return [];
+  }
+  var ops = [];
+  valeurs(D.achats).forEach(function (a) {
+    var l = D.livres[a.livreId] || {};
+    var e = etatSelonNom(a.boutique);
+    if (!a.etat && (a.format || l.format) === 'papier' && e) {
+      ops.push({t: 'achats', o: Object.assign({}, a, {etat: e}), garderDate: true});
+    }
+  });
+  if (valeurs(D.achats).length) {
+    ops.push({t: 'reglages', o: {id: 'migrationEtatAchats', v: Date.now()}});
+  }
+  return ops;
+}
 // la langue écrite à l'anglaise ou en code (« French », « fr »…) devient « Français »
 var LANGUES_FRANCAIS = ['french', 'fr', 'fre', 'fra', 'francais', 'français'];
 function normaliserLangue(v) {
@@ -6269,7 +6341,7 @@ function opsListesDeDepart() {
 // au démarrage : base chargée, listes de départ créées si besoin, migrations faites une seule fois
 function preparerBase() {
   return chargerBase().then(function () {
-    var migration = opsFusionSessions().concat(opsPlusEnvie(), opsEmojisCriteres(), opsLangueFrancais());
+    var migration = opsFusionSessions().concat(opsPlusEnvie(), opsEmojisCriteres(), opsLangueFrancais(), opsEtatAchats());
     if (migration.length) {
       // la base a changé : une sauvegarde partira au démarrage
       lsSet('bm_sauv_attente', '1');
@@ -6382,7 +6454,7 @@ function modeleDepuisBase() {
     if (!achatsPar[a.livreId]) {
       achatsPar[a.livreId] = [];
     }
-    achatsPar[a.livreId].push({_id: a.id, price: a.prix || 0, purchased_at: a.date, created_at: a.creeLe, from: a.boutique || '', currency_code: a.devise || 'EUR', memo: a.memo || ''});
+    achatsPar[a.livreId].push({_id: a.id, price: a.prix || 0, purchased_at: a.date, created_at: a.creeLe, from: a.boutique || '', currency_code: a.devise || 'EUR', memo: a.memo || '', etat: a.etat || ''});
   });
   var sessionsPar = {};
   valeurs(D.sessions).forEach(function (s) {
@@ -7729,6 +7801,10 @@ function ouvrirFiche(id) {
   var achats = valeurs(D.achats).filter(function (a) { return a.livreId === id; }).sort(function (a, b) { return (a.date || 0) - (b.date || 0); });
   h += '<h4>Achats</h4>' + achats.map(function (a) {
     var details = [];
+    var etat = ETATS_ACHAT.find(function (e) { return e[0] === a.etat; });
+    if (etat) {
+      details.push(etat[1].toLowerCase());
+    }
     if (a.boutique) {
       details.push(esc(a.boutique));
     }
@@ -8635,6 +8711,25 @@ ACTIONS.formAchat = function (el) {
     ouvrirFormAchat(aid, livreId);
   });
 };
+function choixEtatAchat(format, etat) {
+  var options = ETATS_ACHAT.filter(function (e) { return format === 'papier' || e[0] === 'cadeau'; });
+  if (!options.some(function (e) { return e[0] === etat; })) {
+    etat = '';
+  }
+  return choix('acEtat', [['', 'Non précisé']].concat(options), etat);
+}
+// ce qui a déjà été noté pour cette boutique (le plus fréquent), sinon d'après son nom
+function etatSelonBoutique(boutique, sauf) {
+  var s = slug(boutique);
+  var vus = {};
+  valeurs(D.achats).forEach(function (x) {
+    if (x.id !== sauf && x.etat && s && slug(x.boutique) === s) {
+      vus[x.etat] = (vus[x.etat] || 0) + 1;
+    }
+  });
+  var meilleur = Object.keys(vus).sort(function (p, q) { return vus[q] - vus[p]; })[0];
+  return meilleur || etatSelonNom(boutique);
+}
 function ouvrirFormAchat(aid, livreId) {
   var a = (aid && D.achats[aid]) || null;
   var l = D.livres[(a && a.livreId) || livreId];
@@ -8643,12 +8738,22 @@ function ouvrirFormAchat(aid, livreId) {
     '<div class="deux"><div><label>Prix</label>' + champ('acPrix', v.prix === null || v.prix === undefined ? '' : String(v.prix).replace('.', ','), 'inputmode="decimal" placeholder="0,00"') + '</div><div><label>Devise</label>' + choix('acDevise', DEVISES, v.devise) + '</div></div>' +
     '<div class="deux"><div><label>Date</label>' + champ('acDate', dateVersChamp(v.date), 'type="date"') + '</div><div><label>Format</label>' + choix('acFormat', FORMATS_FR, v.format) + '</div></div>' +
     '<label>Boutique</label>' + champ('acBoutique', v.boutique, 'list="dlBoutiques" autocomplete="off"') + listeDeChoix('dlBoutiques', valeurs(D.achats).map(function (x) { return x.boutique; })) +
+    '<label>Neuf, occasion ou cadeau</label><div id="zEtat">' + choixEtatAchat(v.format, v.etat || '') + '</div>' +
     '<label>Mémo</label>' + champ('acMemo', v.memo) +
     '<div class="row" style="margin-top:16px"><button class="act" data-act="acEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
   if (a) {
     h += '<button class="lien danger" data-act="acSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer cet achat</button>';
   }
   ouvrirFeuille(h + '</div>');
+  // neuf et occasion pour le papier seulement ; la boutique choisie propose ce qu'on avait noté pour elle
+  document.getElementById('acFormat').addEventListener('change', function () {
+    document.getElementById('zEtat').innerHTML = choixEtatAchat(val('acFormat'), val('acEtat'));
+  });
+  document.getElementById('acBoutique').addEventListener('change', function () {
+    if (!val('acEtat')) {
+      document.getElementById('zEtat').innerHTML = choixEtatAchat(val('acFormat'), etatSelonBoutique(val('acBoutique'), a && a.id));
+    }
+  });
   ACTIONS.acEnregistrer = function () {
     var achat = Object.assign({}, a || {id: nouvelId(), livreId: l.id, origine: 'appli'}, {
       prix: valNombre('acPrix') || 0,
@@ -8656,6 +8761,7 @@ function ouvrirFormAchat(aid, livreId) {
       date: champVersDate(val('acDate'), a && a.date),
       format: val('acFormat'),
       boutique: val('acBoutique'),
+      etat: val('acEtat'),
       memo: val('acMemo')
     });
     var ops = [{t: 'achats', o: achat}];
@@ -11632,7 +11738,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 15:55:43';
+var VERSION_APPLI = '2026-10-05 16:04:15';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
