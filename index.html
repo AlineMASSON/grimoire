@@ -10809,7 +10809,8 @@ ACTIONS.reglages = function () {
   }
 
   var v = VERSION_APPLI;
-  h += '<div class="reglage"><h4>📱 Stockage sur le téléphone</h4><p class="small" id="etatStockage">…</p><p class="small muted">Version de l\'appli : ' + esc(v.slice(8, 10) + '/' + v.slice(5, 7) + '/' + v.slice(0, 4) + ' à ' + v.slice(11, 16)) + ' · <a href="reparer.html">bloquée sur une ancienne version ? Réparer</a></p></div>';
+  h += '<div class="reglage"><h4>📱 Stockage sur le téléphone</h4><p class="small" id="etatStockage">…</p><p class="small muted">Version de l\'appli : ' + esc(v.slice(8, 10) + '/' + v.slice(5, 7) + '/' + v.slice(0, 4) + ' à ' + v.slice(11, 16)) + ' · <a href="reparer.html" style="color:var(--accent)">bloquée sur une ancienne version ? Réparer</a></p>' +
+    '<p class="small"><a href="aide.html" style="color:var(--accent)">📖 Installer, mettre à jour, changer de téléphone : le mode d\'emploi</a></p></div>';
   ouvrirFeuille(h);
   afficherStockage();
 };
@@ -11048,7 +11049,7 @@ function proposerRestauration(lu) {
 function ecranVide() {
   M = null;
   document.getElementById('src').textContent = '';
-  document.getElementById('app').innerHTML = card('Bienvenue dans ton grimoire ✨', '<div class="vide"><p><b>Nouveau téléphone ?</b> Retrouve ton grimoire depuis ton Drive : ⚙️ Réglages → colle ton code de liaison (fichier <i>Grimoire sauvegardes / code-de-liaison.txt</i>) → ' + ic('rotate-ccw') + ' Restaurer.</p><div class="row" style="justify-content:center"><button class="act" data-act="reglages">' + ic('cloud-download') + ' Restaurer depuis mon Drive</button></div><p class="small muted" style="margin-top:16px">Ou choisis un fichier : une sauvegarde du grimoire, ou un export Bookmory.</p><div class="row" style="justify-content:center"><button class="act doux" data-act="choisirExport">' + ic('folder-open') + ' Choisir un fichier</button><button class="act doux" data-act="grimoireVide">' + ic('sparkles') + ' Commencer à zéro</button></div></div>');
+  document.getElementById('app').innerHTML = card('Bienvenue dans ton grimoire ✨', '<div class="vide"><p><b>Nouveau téléphone ?</b> Retrouve ton grimoire depuis ton Drive : ⚙️ Réglages → colle ton code de liaison (fichier <i>Grimoire sauvegardes / code-de-liaison.txt</i>) → ' + ic('rotate-ccw') + ' Restaurer.</p><div class="row" style="justify-content:center"><button class="act" data-act="reglages">' + ic('cloud-download') + ' Restaurer depuis mon Drive</button></div><p class="small muted" style="margin-top:16px">Ou choisis un fichier : une sauvegarde du grimoire, ou un export Bookmory.</p><div class="row" style="justify-content:center"><button class="act doux" data-act="choisirExport">' + ic('folder-open') + ' Choisir un fichier</button><button class="act doux" data-act="grimoireVide">' + ic('sparkles') + ' Commencer à zéro</button></div><p class="small" style="margin-top:16px"><a href="aide.html" style="color:var(--accent)">📖 Le mode d\'emploi : installer, sauvegarder, mettre à jour</a></p></div>');
 }
 ACTIONS.grimoireVide = function () {
   ecrire([{t: 'reglages', o: {id: 'mode', v: 'independant'}}, {t: 'reglages', o: {id: 'bascule', v: Date.now()}}]).then(function () {
@@ -11073,7 +11074,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 11:44:12';
+var VERSION_APPLI = '2026-10-05 11:58:15';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }

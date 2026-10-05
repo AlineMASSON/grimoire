@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1a1230">
+<title>Mode d'emploi du grimoire</title>
+<link rel="icon" href="icone2-192.png">
+<style>
+:root{--bg:#1a1230;--carte:#281c3d;--encre:#f7e9f3;--doux:#d8c6e2;--muet:#bba5c8;--ligne:#4a3566;--rose:#e9a3c9;--or:#f0d08a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--encre);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:22px 16px 48px}
+a{color:var(--rose)}
+.retour{display:inline-block;margin-bottom:14px;font-weight:700;text-decoration:none}
+h1{font:700 30px/1.2 Georgia,"Times New Roman",serif;margin:0 0 6px}
+h1 i{color:var(--rose);font-weight:400}
+.chapo{color:var(--doux);margin:0 0 18px}
+nav{background:var(--carte);border:1px solid var(--ligne);border-radius:16px;padding:12px 16px;margin-bottom:22px}
+nav b{display:block;margin-bottom:4px}
+nav ol{margin:0;padding-left:22px}
+nav li{margin:3px 0}
+section{background:var(--carte);border:1px solid var(--ligne);border-radius:20px;padding:16px 16px 6px;margin-bottom:16px}
+h2{font:700 22px/1.25 Georgia,"Times New Roman",serif;margin:0 0 10px}
+h3{font-size:16px;margin:16px 0 6px;color:var(--or)}
+p,li{color:var(--doux)}
+p{margin:0 0 12px}
+ol,ul{padding-left:22px;margin:0 0 12px}
+li{margin:5px 0}
+b,strong{color:var(--encre)}
+code{background:#3a2a52;border-radius:6px;padding:1px 6px;color:var(--encre);font-size:.92em;overflow-wrap:anywhere}
+figure{margin:10px 0 14px;text-align:center}
+figure img{max-width:100%;height:auto;border-radius:14px;border:1px solid var(--ligne);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+figure.etroit img{max-width:260px}
+figcaption{font-size:13px;color:var(--muet);margin-top:6px}
+.note{border-left:3px solid var(--rose);padding:6px 0 6px 12px;margin:0 0 12px;color:var(--doux)}
+.note b{color:var(--rose)}
+footer{text-align:center;color:var(--muet);font-size:13px;margin-top:22px}
+</style>
+</head>
+<body>
+<main>
+<a class="retour" href="./">← Ouvrir le grimoire</a>
+<h1>Le mode d'emploi <i>du grimoire</i></h1>
+<p class="chapo">Installer l'appli, la garder à jour, sauvegarder tes lectures et changer de téléphone.</p>
+
+<nav>
+<b>Sommaire</b>
+<ol>
+<li><a href="#installer">Installer l'appli</a></li>
+<li><a href="#commencer">Le premier lancement</a></li>
+<li><a href="#maj">Les mises à jour</a></li>
+<li><a href="#sauvegarder">Sauvegarder</a></li>
+<li><a href="#telephone">Changer de téléphone</a></li>
+<li><a href="#savoir">Bon à savoir</a></li>
+</ol>
+</nav>
+
+<section id="installer">
+<h2>1. Installer l'appli</h2>
+<p>Le grimoire s'installe depuis le navigateur, sans passer par un store. Son adresse : <code>alinemasson.github.io/grimoire</code></p>
+
+<h3>Sur Android, avec Chrome</h3>
+<ol>
+<li>Ouvre <b>Chrome</b> et va à l'adresse <code>alinemasson.github.io/grimoire</code>.</li>
+<li>Touche le menu <b>⋮</b> en haut à droite, puis <b>Ajouter à l'écran d'accueil</b>.</li>
+</ol>
+<figure class="etroit"><img src="aide/installer-1.jpg" alt="Menu de Chrome, avec « Ajouter à l'écran d'accueil » entouré" width="720" height="1334" loading="lazy"><figcaption>Le menu ⋮ de Chrome</figcaption></figure>
+<ol start="3">
+<li>Choisis <b>Installer</b>, et pas « Créer un raccourci ».</li>
+</ol>
+<figure><img src="aide/installer-2.jpg" alt="Choix entre « Installer » (entouré) et « Créer un raccourci »" width="1080" height="500" loading="lazy"><figcaption>Un raccourci s'ouvre dans Chrome et garde son icône pour toujours : choisis « Installer ».</figcaption></figure>
+<ol start="4">
+<li>Confirme avec <b>Installer</b>.</li>
+</ol>
+<figure><img src="aide/installer-3.jpg" alt="Fenêtre « Installer l'application », bouton « Installer » entouré" width="1080" height="564" loading="lazy"></figure>
+<p>L'icône du grimoire apparaît sur ton écran d'accueil. L'appli s'ouvre en plein écran et marche aussi sans connexion.</p>
+<p class="note"><b>Sur un Samsung</b>, le plus simple est de passer par Chrome, même si Samsung Internet est ton navigateur habituel.</p>
+
+<h3>Sur iPhone, avec Safari</h3>
+<ol>
+<li>Ouvre <b>Safari</b> et va à l'adresse <code>alinemasson.github.io/grimoire</code>.</li>
+<li>Touche le bouton <b>Partager</b> (le carré avec une flèche vers le haut).</li>
+<li>Choisis <b>Sur l'écran d'accueil</b>, puis <b>Ajouter</b>.</li>
+</ol>
+<p class="note"><b>Sur iPhone</b>, l'appli n'a pas encore été testée. Le scan des codes-barres n'y marche pas (tape l'ISBN à la place), le téléphone ne vibre pas pendant les animations de victoire, et on ne peut pas partager un fichier vers l'appli : utilise <b>Importer un fichier</b> dans ⚙️ Réglages.</p>
+</section>
+
+<section id="commencer">
+<h2>2. Le premier lancement</h2>
+<p>À la première ouverture, le grimoire est vide et propose trois choix :</p>
+<ul>
+<li><b>Commencer à zéro</b> : touche ensuite <b>« + »</b> pour ajouter ton premier livre, en scannant son code-barres, en le cherchant par son titre ou en le saisissant à la main.</li>
+<li><b>Choisir un fichier</b> : reprends une sauvegarde du grimoire (un fichier <code>.zip</code>, voir <a href="#sauvegarder">Sauvegarder</a>).</li>
+<li><b>Restaurer depuis mon Drive</b> : seulement si tu as un code de liaison pour la sauvegarde Drive (voir plus bas).</li>
+</ul>
+</section>
+
+<section id="maj">
+<h2>3. Les mises à jour</h2>
+<p>Tu n'as rien à faire : quand une nouvelle version est en ligne, l'appli se recharge toute seule au moment où tu reviens dedans.</p>
+<p>Si tu étais en train de faire quelque chose (une fiche ouverte, le minuteur…), elle attend et affiche ce bouton en haut. Touche-le quand tu veux.</p>
+<figure><img src="aide/maj-bouton.jpg" alt="Bouton « Nouvelle version : toucher pour l'avoir » en haut de l'appli" width="1080" height="400" loading="lazy"></figure>
+
+<h3>Vérifier sa version</h3>
+<p>Ouvre <b>⚙️ Réglages</b> et descends tout en bas : la date et l'heure de ta version sont écrites là.</p>
+<figure><img src="aide/reglages-version.jpg" alt="Bas des Réglages : version de l'appli et lien « Réparer »" width="1080" height="240" loading="lazy"></figure>
+<p class="note"><b>À ne pas confondre</b> : sous le titre de l'accueil, « ☁️ sauvegardé à 9 h 21 » est l'heure de ta dernière sauvegarde Drive, pas la version.</p>
+
+<h3>Si l'appli reste sur une ancienne version</h3>
+<ol>
+<li>Ferme complètement l'appli (balaie-la depuis les applis récentes) et rouvre-la.</li>
+<li>Si elle n'est toujours pas à jour : dans ⚙️ Réglages, touche <b>Réparer</b> (à côté de la version). Si l'appli ne s'ouvre plus, va dans Chrome à l'adresse <code>alinemasson.github.io/grimoire/reparer.html</code>.</li>
+<li>Touche <b>Réparer et ouvrir le grimoire</b>.</li>
+</ol>
+<figure><img src="aide/reparer.jpg" alt="Page « Réparer la mise à jour » avec son bouton" width="1080" height="830" loading="lazy"></figure>
+<p>La réparation efface seulement la copie de l'appli gardée par le téléphone. <b>Tes livres, ton carnet, tes citations et tes réglages ne sont pas touchés.</b></p>
+
+<h3>L'icône ne change pas</h3>
+<p>Quand l'icône du grimoire change, Chrome met à jour celle de ton écran d'accueil tout seul, mais ça peut prendre jusqu'à un jour. Il peut aussi te demander de confirmer la nouvelle icône : accepte.</p>
+<p>Si ton icône a un <b>petit logo Chrome</b> dans un coin, c'est un raccourci : il ne changera jamais. Supprime ce raccourci (ça n'enlève que l'icône, pas tes lectures), puis installe l'appli comme expliqué <a href="#installer">plus haut</a>.</p>
+</section>
+
+<section id="sauvegarder">
+<h2>4. Sauvegarder</h2>
+<p>Tes lectures sont enregistrées <b>sur ton téléphone</b>. Garde-en une copie ailleurs, au cas où le téléphone serait perdu ou effacé.</p>
+<h3>Une sauvegarde en fichier</h3>
+<ol>
+<li>⚙️ Réglages → <b>💾 Fichier</b> → <b>Exporter</b>.</li>
+<li>Le téléphone propose de partager le fichier <code>.zip</code> (ou le télécharge) : range-le dans ton Drive, envoie-le-toi par mail, etc.</li>
+</ol>
+<p>Ce fichier contient tout : livres, lectures, carnet, citations et leurs photos. Refais-en un de temps en temps.</p>
+<h3>La sauvegarde automatique dans le Drive</h3>
+<p>Elle envoie une copie dans un dossier du Drive, 30 secondes après chaque modification. Elle demande un <b>code de liaison</b> personnel, à coller dans ⚙️ Réglages → <b>☁️ Sauvegarde dans ton Drive</b>. Sans code de liaison, utilise la sauvegarde en fichier.</p>
+</section>
+
+<section id="telephone">
+<h2>5. Changer de téléphone</h2>
+<ol>
+<li>Sur le nouveau téléphone, installe l'appli (voir <a href="#installer">Installer</a>).</li>
+<li>Au premier lancement :
+<ul>
+<li>avec la sauvegarde Drive : touche <b>Restaurer depuis mon Drive</b>, colle ton code de liaison, touche <b>Relier</b> puis <b>Restaurer</b>, et choisis la copie la plus récente ;</li>
+<li>avec un fichier : touche <b>Choisir un fichier</b> et prends ta dernière sauvegarde <code>.zip</code>.</li>
+</ul>
+</li>
+</ol>
+</section>
+
+<section id="savoir">
+<h2>6. Bon à savoir</h2>
+<ul>
+<li><b>Tes données restent chez toi</b> : livres, carnet et citations ne quittent le téléphone que pour ta sauvegarde Drive, si tu l'as reliée. L'appli va seulement chercher en ligne les informations et les couvertures des livres.</li>
+<li><b>Ne vide pas les données de Chrome</b> pour ce site (Paramètres → Confidentialité, ou Paramètres des sites) : ça effacerait le grimoire. Fais d'abord une sauvegarde.</li>
+<li><b>Stockage protégé</b> : en bas de ⚙️ Réglages, « ✅ Protégé » veut dire qu'Android n'effacera pas le grimoire tout seul s'il manque de place.</li>
+<li><b>Hors connexion</b>, tout marche, sauf ce qui va chercher en ligne : la recherche d'un livre, les couvertures jamais affichées, et la sauvegarde Drive (elle repart à la prochaine ouverture de l'appli avec une connexion).</li>
+</ul>
+</section>
+
+<footer>Mon grimoire de lectures · <a href="./">ouvrir l'appli</a></footer>
+</main>
+</body>
+</html>
