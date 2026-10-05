@@ -2398,7 +2398,7 @@ function vSeries() {
 
 <script>
 // ---------- Carnet : notes détaillées, citations ----------
-var CRITERES = [['perso', '🧙‍♀️', 'Personnages'], ['plume', '✒️', 'Plume'], ['intrigue', '🗝️', 'Intrigue'], ['emotions', '💧', 'Émotions'], ['univers', '🏰', 'Univers']];
+var CRITERES = [['perso', '🧙‍♀️', 'Personnages'], ['plume', '🪶', 'Plume'], ['intrigue', '🗝️', 'Intrigue'], ['emotions', '💧', 'Émotions'], ['univers', '🏞️', 'Univers']];
 var HUMEURS = ['🥰 Doudou', '😭 Larmes', '😱 Frissons', '🔥 Passion', '🌙 Mélancolie', '😂 Rire', '🤯 Coup de théâtre', '✨ Magie', '😤 Rage', '🫶 Réconfort'];
 var TROPES = ['Ennemis devenus amants', 'Romance à feu doux', 'Famille de cœur', 'L\'élu·e', 'Proximité forcée', 'Faux couple', 'Grincheux × rayon de soleil', 'Seconde chance', 'Héros ni bon ni méchant', 'Triangle amoureux', 'Académie de magie', 'Fées et Faërie', 'Dragons', 'Enquête', 'Huis clos', 'Retournement final'];
 var brouillon = null;
@@ -3722,7 +3722,7 @@ function suivreInclinaison() {
 
 // ---------- Décorations d'étagère à gagner ----------
 // chaque décoration est un emoji (rendu par le téléphone)
-var DECOS_EMOJI = {plante: '🪴', chat: '🐈‍⬛', bougie: '🕯️', boule: '🔮', chouette: '🦉', pile: '🔖', lanterne: '🏮', sablier: '⏳', fiole: '🦄', oeuf: '🐉', citrouille: '🎃', sapin: '🎄',
+var DECOS_EMOJI = {plante: '🪴', chat: '🐈‍⬛', bougie: '🕯️', boule: '🔮', chouette: '🦉', pile: '🔖', lanterne: '🏮', sablier: '⏳', fiole: '💎', oeuf: '🐉', citrouille: '🎃', sapin: '🎄',
   bonhomme: '⛄', champignon: '🍄', phenix: '🐦‍🔥', toile: '🕸️', bougie2: '🪔', trophee: '🏆', matriochka: '🪆', theiere: '🫖'};
 // [id, nom, comment la gagner, condition sur donneesDecos()]
 var DECOS = [
@@ -3734,7 +3734,7 @@ var DECOS = [
   ['pile', 'Marque-page', '100 livres lus', function (d) { return d.livres >= 100; }],
   ['lanterne', 'Lanterne', '5 défis réussis', function (d) { return d.defis >= 5; }],
   ['sablier', 'Sablier', '50 h au minuteur', function (d) { return d.minuteur >= 50; }],
-  ['fiole', 'Licorne', 'Gagner un pari du destin', function (d) { return d.paris >= 1; }],
+  ['fiole', 'Gemme', 'Gagner un pari du destin', function (d) { return d.paris >= 1; }],
   ['oeuf', 'Bébé dragon', 'Quête du Mois de l\'Imaginaire', function (d) { return !!d.saisons.imaginaire; }],
   ['citrouille', 'Citrouille', 'Quête d\'Halloween', function (d) { return !!d.saisons.halloween; }],
   ['sapin', 'Sapin', 'Quête de Noël', function (d) { return !!d.saisons.noel; }],
@@ -5506,7 +5506,7 @@ function opsListesDeDepart() {
 // au démarrage : base chargée, listes de départ créées si besoin, migrations faites une seule fois
 function preparerBase() {
   return chargerBase().then(function () {
-    var migration = opsFusionSessions().concat(opsPlusEnvie(), opsMagicienne());
+    var migration = opsFusionSessions().concat(opsPlusEnvie(), opsEmojisCriteres());
     if (migration.length) {
       // la base a changé : une sauvegarde partira au démarrage
       lsSet('bm_sauv_attente', '1');
@@ -5515,13 +5515,19 @@ function preparerBase() {
   });
 }
 
-// le critère « Personnages » passe de 👥 à 🧙‍♀️, sauf si son emoji a été changé dans « Mes listes »
-function opsMagicienne() {
-  var c = D.criteres && D.criteres.perso;
-  if (!c || c.emoji !== '👥') {
-    return [];
-  }
-  return [{t: 'criteres', o: Object.assign({}, c, {emoji: '🧙‍♀️'}), garderDate: true}];
+// nouveaux emojis des critères du carnet (sauf si l'emoji a été changé dans « Mes listes ») :
+// Personnages 👥 → 🧙‍♀️, Plume ✒️ → 🪶, Univers 🏰 → 🏞️
+var NOUVEAUX_EMOJIS_CRITERES = {perso: ['👥', '🧙‍♀️'], plume: ['✒️', '🪶'], univers: ['🏰', '🏞️']};
+function opsEmojisCriteres() {
+  var ops = [];
+  Object.keys(NOUVEAUX_EMOJIS_CRITERES).forEach(function (id) {
+    var c = D.criteres && D.criteres[id];
+    var e = NOUVEAUX_EMOJIS_CRITERES[id];
+    if (c && c.emoji === e[0]) {
+      ops.push({t: 'criteres', o: Object.assign({}, c, {emoji: e[1]}), garderDate: true});
+    }
+  });
+  return ops;
 }
 // Un abandon sans aucune page notée, c'est un livre qu'on avait décidé de lire puis plus du tout envie :
 // il passe une fois pour toutes dans l'état « plus envie » (ni lu, ni vraiment abandonné).
@@ -9970,7 +9976,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 09:07:43';
+var VERSION_APPLI = '2026-10-05 09:18:59';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
