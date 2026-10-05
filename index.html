@@ -209,8 +209,8 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .crit{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0}
 .crit > span:first-child{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .crit .pips{flex:none;white-space:nowrap}
-.pips button{border:0;background:none;font-size:22px;line-height:1;padding:0 1px;cursor:pointer;color:color-mix(in srgb,var(--muted) 45%,transparent)}
-.pips button.on{color:var(--accent);text-shadow:0 0 6px color-mix(in srgb,var(--accent) 45%,transparent)}
+.pips button{border:0;background:none;font-size:22px;opacity:.22;padding:0 1px;cursor:pointer;filter:grayscale(.6)}
+.pips button.on{opacity:1;filter:none}
 @keyframes fondu{from{opacity:0}to{opacity:1}}
 @keyframes monte{from{transform:translateY(40px)}to{transform:none}}
 
@@ -2526,6 +2526,38 @@ ACTIONS.noter = function (el) {
   ouvrirFeuille('<div class="tete">' + cover(b) + '<div><h3>' + esc(titre(b)) + '</h3><div class="small muted">' + esc((b.authors || []).join(', ')) + '</div></div></div><div id="editeur"></div>');
   rendreEditeur();
 };
+// le cœur emoji qui va avec la couleur principale du thème (💜 violet, 🩷 rose, 💚 vert…)
+function coeurDuTheme() {
+  var t = document.createElement('span');
+  t.style.color = 'var(--accent)';
+  document.body.appendChild(t);
+  var c = getComputedStyle(t).color;
+  t.remove();
+  var v = (c.match(/[\d.]+/g) || []).map(Number);
+  if (v.length < 3) {
+    return '💜';
+  }
+  // rgb(255, 0, 0) ou color(srgb 1 0 0)
+  if (c.indexOf('color(') === 0) {
+    v = v.map(function (x) { return x * 255; });
+  }
+  var r = v[0] / 255, g = v[1] / 255, b = v[2] / 255;
+  var max = Math.max(r, g, b), min = Math.min(r, g, b);
+  if (max - min < 0.12) {
+    return '🤍';
+  }
+  var h;
+  if (max === r) {
+    h = ((g - b) / (max - min) + 6) % 6;
+  } else if (max === g) {
+    h = (b - r) / (max - min) + 2;
+  } else {
+    h = (r - g) / (max - min) + 4;
+  }
+  h *= 60;
+  var COEURS = [[15, '❤️'], [40, '🧡'], [65, '💛'], [170, '💚'], [200, '🩵'], [240, '💙'], [290, '💜'], [345, '🩷'], [360, '❤️']];
+  return COEURS.filter(function (x) { return h < x[0]; })[0][1];
+}
 function pips(champ, val, symbole, max) {
   var h = '<span class="pips">';
   for (var i = 1; i <= max; i++) {
@@ -2552,7 +2584,7 @@ function zoneNouveau(t) {
 function rendreEditeur() {
   var b = brouillon;
   var h = '<h4>Mes critères</h4>' + listeCarnet('criteres', function (c) { return b.notes[c.id]; }).map(function (c) {
-    return '<div class="crit"><span>' + esc(libelle(c)) + '</span>' + pips(c.id, b.notes[c.id] || 0, '♥\uFE0E', 5) + '</div>';
+    return '<div class="crit"><span>' + esc(libelle(c)) + '</span>' + pips(c.id, b.notes[c.id] || 0, coeurDuTheme(), 5) + '</div>';
   }).join('') + zoneNouveau('criteres');
   h += '<h4>Humeur du livre</h4><div>' + listeCarnet('humeurs', function (x) { return b.humeurIds.indexOf(x.id) >= 0; }).map(function (x) {
     var cls = 'chip';
@@ -9976,7 +10008,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 09:18:59';
+var VERSION_APPLI = '2026-10-05 09:22:38';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
