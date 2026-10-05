@@ -10414,15 +10414,25 @@ ACTIONS.preparerClaude = function () {
     avertir('Je n\'arrive pas à lire la consigne pour Claude : vérifie ta connexion internet.', 'Compléter avec Claude');
   });
 };
+// Chrome sur Android refuse de partager un .md (NotAllowedError « Permission denied ») même quand canShare dit oui :
+// fichier .txt en text/plain. share() est appelé tout de suite dans le clic (la demande est prête depuis l'ouverture).
 ACTIONS.partagerClaude = function () {
-  var f = new File([propDemandeClaude], 'grimoire-a-completer.md', {type: 'text/markdown'});
-  if (navigator.canShare && navigator.canShare({files: [f]})) {
-    navigator.share({files: [f], title: 'Mon grimoire : livres à compléter', text: 'Suis les consignes du fichier joint.'}).catch(function () {});
-  } else if (navigator.share) {
-    navigator.share({title: 'Mon grimoire : livres à compléter', text: propDemandeClaude}).catch(function () {});
-  } else {
+  var f = new File([propDemandeClaude], 'grimoire-a-completer.txt', {type: 'text/plain'});
+  if (!navigator.share) {
     ACTIONS.copierClaude();
+    return;
   }
+  var donnees = {title: 'Mon grimoire : livres à compléter', text: propDemandeClaude};
+  if (navigator.canShare && navigator.canShare({files: [f]})) {
+    donnees = {files: [f], title: 'Mon grimoire : livres à compléter', text: 'Suis les consignes du fichier joint.'};
+  }
+  navigator.share(donnees).catch(function (e) {
+    // « Annuler » dans la feuille de partage : rien à dire
+    if (e && e.name === 'AbortError') {
+      return;
+    }
+    avertir('Le partage n\'a pas marché sur ce téléphone (' + ((e && e.name) || 'erreur') + '). Utilise plutôt « Copier », puis colle la demande dans une nouvelle conversation avec Claude.', 'Compléter avec Claude');
+  });
 };
 ACTIONS.copierClaude = function () {
   navigator.clipboard.writeText(propDemandeClaude).then(function () {
@@ -11225,7 +11235,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 12:36:58';
+var VERSION_APPLI = '2026-10-05 13:09:31';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
