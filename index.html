@@ -209,8 +209,8 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .crit{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0}
 .crit > span:first-child{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .crit .pips{flex:none;white-space:nowrap}
-.pips button{border:0;background:none;font-size:22px;opacity:.22;padding:0 1px;cursor:pointer;filter:grayscale(.6)}
-.pips button.on{opacity:1;filter:none}
+.pips button{border:0;background:none;font-size:22px;line-height:1;padding:0 1px;cursor:pointer;color:color-mix(in srgb,var(--muted) 45%,transparent)}
+.pips button.on{color:var(--accent);text-shadow:0 0 6px color-mix(in srgb,var(--accent) 45%,transparent)}
 @keyframes fondu{from{opacity:0}to{opacity:1}}
 @keyframes monte{from{transform:translateY(40px)}to{transform:none}}
 
@@ -2398,7 +2398,7 @@ function vSeries() {
 
 <script>
 // ---------- Carnet : notes détaillées, citations ----------
-var CRITERES = [['perso', '👥', 'Personnages'], ['plume', '✒️', 'Plume'], ['intrigue', '🗝️', 'Intrigue'], ['emotions', '💧', 'Émotions'], ['univers', '🏰', 'Univers']];
+var CRITERES = [['perso', '🧙‍♀️', 'Personnages'], ['plume', '✒️', 'Plume'], ['intrigue', '🗝️', 'Intrigue'], ['emotions', '💧', 'Émotions'], ['univers', '🏰', 'Univers']];
 var HUMEURS = ['🥰 Doudou', '😭 Larmes', '😱 Frissons', '🔥 Passion', '🌙 Mélancolie', '😂 Rire', '🤯 Coup de théâtre', '✨ Magie', '😤 Rage', '🫶 Réconfort'];
 var TROPES = ['Ennemis devenus amants', 'Romance à feu doux', 'Famille de cœur', 'L\'élu·e', 'Proximité forcée', 'Faux couple', 'Grincheux × rayon de soleil', 'Seconde chance', 'Héros ni bon ni méchant', 'Triangle amoureux', 'Académie de magie', 'Fées et Faërie', 'Dragons', 'Enquête', 'Huis clos', 'Retournement final'];
 var brouillon = null;
@@ -2552,7 +2552,7 @@ function zoneNouveau(t) {
 function rendreEditeur() {
   var b = brouillon;
   var h = '<h4>Mes critères</h4>' + listeCarnet('criteres', function (c) { return b.notes[c.id]; }).map(function (c) {
-    return '<div class="crit"><span>' + esc(libelle(c)) + '</span>' + pips(c.id, b.notes[c.id] || 0, '💗', 5) + '</div>';
+    return '<div class="crit"><span>' + esc(libelle(c)) + '</span>' + pips(c.id, b.notes[c.id] || 0, '♥\uFE0E', 5) + '</div>';
   }).join('') + zoneNouveau('criteres');
   h += '<h4>Humeur du livre</h4><div>' + listeCarnet('humeurs', function (x) { return b.humeurIds.indexOf(x.id) >= 0; }).map(function (x) {
     var cls = 'chip';
@@ -3722,7 +3722,8 @@ function suivreInclinaison() {
 
 // ---------- Décorations d'étagère à gagner ----------
 // chaque décoration est un emoji (rendu par le téléphone)
-var DECOS_EMOJI = {plante: '🪴', chat: '🐈‍⬛', bougie: '🕯️', boule: '🔮', chouette: '🦉', pile: '📚', lanterne: '🏮', sablier: '⏳', fiole: '🧪', oeuf: '🐉', citrouille: '🎃', sapin: '🎄'};
+var DECOS_EMOJI = {plante: '🪴', chat: '🐈‍⬛', bougie: '🕯️', boule: '🔮', chouette: '🦉', pile: '🔖', lanterne: '🏮', sablier: '⏳', fiole: '🦄', oeuf: '🐉', citrouille: '🎃', sapin: '🎄',
+  bonhomme: '⛄', champignon: '🍄', phenix: '🐦‍🔥', toile: '🕸️', bougie2: '🪔', trophee: '🏆', matriochka: '🪆', theiere: '🫖'};
 // [id, nom, comment la gagner, condition sur donneesDecos()]
 var DECOS = [
   ['plante', 'Plante grimpante', 'offerte', function () { return true; }],
@@ -3730,13 +3731,21 @@ var DECOS = [
   ['chat', 'Chat noir', '30 jours d\'affilée', function (d) { return d.flamme >= 30; }],
   ['boule', 'Boule de cristal', 'Niveau 5', function (d) { return d.niveau >= 4; }],
   ['chouette', 'Chouette', '20 relevés après 23 h', function (d) { return d.nuit >= 20; }],
-  ['pile', 'Pile de grimoires', '100 livres lus', function (d) { return d.livres >= 100; }],
+  ['pile', 'Marque-page', '100 livres lus', function (d) { return d.livres >= 100; }],
   ['lanterne', 'Lanterne', '5 défis réussis', function (d) { return d.defis >= 5; }],
   ['sablier', 'Sablier', '50 h au minuteur', function (d) { return d.minuteur >= 50; }],
-  ['fiole', 'Potion magique', 'Gagner un pari du destin', function (d) { return d.paris >= 1; }],
+  ['fiole', 'Licorne', 'Gagner un pari du destin', function (d) { return d.paris >= 1; }],
   ['oeuf', 'Bébé dragon', 'Quête du Mois de l\'Imaginaire', function (d) { return !!d.saisons.imaginaire; }],
   ['citrouille', 'Citrouille', 'Quête d\'Halloween', function (d) { return !!d.saisons.halloween; }],
-  ['sapin', 'Sapin', 'Quête de Noël', function (d) { return !!d.saisons.noel; }]
+  ['sapin', 'Sapin', 'Quête de Noël', function (d) { return !!d.saisons.noel; }],
+  ['bonhomme', 'Bonhomme de neige', 'Quête de l\'Hiver', function (d) { return !!d.saisons.hiver; }],
+  ['champignon', 'Champignon', 'Quête de l\'Automne', function (d) { return !!d.saisons.automne; }],
+  ['phenix', 'Phénix', 'Relire un livre', function (d) { return d.relu; }],
+  ['toile', 'Toile d\'araignée', 'Lire un livre en PAL depuis 1 an', function (d) { return d.palAncienne; }],
+  ['bougie2', 'Lampe à huile', '10 soirées de lecture après 22 h', function (d) { return d.soirees >= 10; }],
+  ['trophee', 'Trophée', 'Atteindre ton objectif de l\'année', function (d) { return d.objectif; }],
+  ['matriochka', 'Matriochka', 'Terminer une série', function (d) { return d.series >= 1; }],
+  ['theiere', 'Théière', '20 matins de lecture (avant 9 h)', function (d) { return d.matins >= 20; }]
 ];
 function donneesDecos() {
   return avec('quetes', function () {
@@ -3753,9 +3762,26 @@ function donneesDecos() {
       defis: cles.filter(function (k) { return k.charAt(0) === 'S' || k.charAt(0) === 'M'; }).length,
       paris: cles.filter(function (k) { return k.indexOf('P:') === 0; }).length,
       minuteur: (M.sessions || []).filter(function (x) { return compte(x.book); }).reduce(function (t, x) { return t + x.dureeSec; }, 0) / 3600,
-      saisons: saisons
+      saisons: saisons,
+      relu: s.relu,
+      series: s.series,
+      objectif: s.objectif,
+      palAncienne: finies().some(function (r) { return r.start && r.book.created_at && r.start - r.book.created_at > 365 * DAY; }),
+      soirees: soireesEntre(0, Date.now() + DAY),
+      matins: matinsDeLecture()
     };
   });
+}
+// jours où une lecture a commencé entre 5 h et 9 h du matin
+function matinsDeLecture() {
+  var vus = {};
+  (M.sessions || []).forEach(function (s) {
+    var h = new Date(s.debut).getHours();
+    if (compte(s.book) && h >= 5 && h < 9) {
+      vus[dkey(new Date(s.debut))] = 1;
+    }
+  });
+  return Object.keys(vus).length;
 }
 function decosGagnees(d) {
   d = d || donneesDecos();
@@ -5480,8 +5506,8 @@ function opsListesDeDepart() {
 // au démarrage : base chargée, listes de départ créées si besoin, migrations faites une seule fois
 function preparerBase() {
   return chargerBase().then(function () {
-    var migration = opsFusionSessions().concat(opsPlusEnvie());
-    if (migration.length > 1) {
+    var migration = opsFusionSessions().concat(opsPlusEnvie(), opsMagicienne());
+    if (migration.length) {
       // la base a changé : une sauvegarde partira au démarrage
       lsSet('bm_sauv_attente', '1');
     }
@@ -5489,6 +5515,14 @@ function preparerBase() {
   });
 }
 
+// le critère « Personnages » passe de 👥 à 🧙‍♀️, sauf si son emoji a été changé dans « Mes listes »
+function opsMagicienne() {
+  var c = D.criteres && D.criteres.perso;
+  if (!c || c.emoji !== '👥') {
+    return [];
+  }
+  return [{t: 'criteres', o: Object.assign({}, c, {emoji: '🧙‍♀️'}), garderDate: true}];
+}
 // Un abandon sans aucune page notée, c'est un livre qu'on avait décidé de lire puis plus du tout envie :
 // il passe une fois pour toutes dans l'état « plus envie » (ni lu, ni vraiment abandonné).
 function opsPlusEnvie() {
@@ -9287,7 +9321,8 @@ function etatJeu() {
       sceaux: paliersSceaux(),
       livres: finies().map(function (r) { return r.book.id + ':' + r.nth; }),
       saisons: quetesSaisonReussies(),
-      decos: decosGagnees()
+      decos: decosGagnees(),
+      catalogue: DECOS.map(function (x) { return x[0]; })
     };
   });
 }
@@ -9444,8 +9479,9 @@ function differencesJeu(avant, apres, res) {
   }
   // décorations gagnées
   if (avant.decos) {
+    var connues = avant.catalogue || ['plante', 'bougie', 'chat', 'boule', 'chouette', 'pile', 'lanterne', 'sablier', 'fiole', 'oeuf', 'citrouille', 'sapin'];
     apres.decos.forEach(function (id) {
-      if (avant.decos.indexOf(id) < 0) {
+      if (avant.decos.indexOf(id) < 0 && connues.indexOf(id) >= 0) {
         fetes.push({type: 'deco', id: id});
       }
     });
@@ -9934,7 +9970,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 08:26:57';
+var VERSION_APPLI = '2026-10-05 09:07:43';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
