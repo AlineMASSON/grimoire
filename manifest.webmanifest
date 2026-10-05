@@ -10,9 +10,9 @@
   "background_color": "#fcf0f6",
   "theme_color": "#f3c3da",
   "icons": [
-    {"src": "icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
-    {"src": "icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
-    {"src": "icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+    {"src": "icone2-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icone2-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icone2-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
   ],
   "share_target": {
     "action": "./partage",

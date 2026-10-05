@@ -1,12 +1,12 @@
 // Service worker du grimoire : fonctionnement hors ligne + réception des fichiers partagés (sauvegarde, export Bookmory).
-var VERSION = 'grimoire-v7';
+var VERSION = 'grimoire-v8';
 var PARTAGE = 'grimoire-partage';
 var FICHIERS = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './icone-192.png',
-  './icone-512.png',
+  './icone2-192.png',
+  './icone2-512.png',
   'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js',
   'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.wasm',
   'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
