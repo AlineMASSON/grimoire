@@ -8117,6 +8117,8 @@ function ouvrirFiche(id) {
   }
   h += blocExclusion(b);
   ouvrirFeuille(h);
+  // retenu pour revenir sur cette fiche si Android ferme l'appli en arrière-plan (garderVue)
+  document.getElementById('feuille').dataset.fiche = id;
 }
 ACTIONS.livre = function (el) {
   ouvrirFiche(el.dataset.id);
@@ -12103,7 +12105,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 18:02:38';
+var VERSION_APPLI = '2026-10-05 18:45:39';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
@@ -12197,8 +12199,12 @@ function demarrer() {
     var s = JSON.parse(lsGet('bm_sous') || '{}');
     Object.keys(s).forEach(function (k) { sous[k] = s[k]; });
   } catch (e) {}
-  // l'appli s'ouvre toujours sur l'Accueil
+  // l'appli s'ouvre sur l'Accueil, sauf si elle reprend là où on était (fermée par Android il y a moins d'une heure)
+  var reprise = vueGardee();
   onglet = 'accueil';
+  if (reprise && reprise.onglet) {
+    onglet = reprise.onglet;
+  }
 
   if ('serviceWorker' in navigator) {
     // service worker en place mais sans ses fichiers hors ligne (après une réparation) : on les lui fait recharger
@@ -12249,11 +12255,59 @@ function demarrer() {
     if (params.get('db')) {
       return fetch(params.get('db')).then(function (r) { return r.arrayBuffer(); }).then(recevoirFichier);
     }
-    return ouvrirGrimoire();
+    return Promise.resolve(ouvrirGrimoire()).then(function () {
+      reprendreVue(reprise);
+    });
   }).then(function () {
     setTimeout(verifierMiseAJour, 2000);
   }).catch(erreurEcran);
 }
+
+// ---------- reprendre là où on était ----------
+// Android ferme parfois l'appli restée en arrière-plan (pour la mémoire) : elle redémarre alors. On garde l'onglet,
+// la position dans la page et la fiche de livre ouverte quand elle passe en arrière-plan (ou se recharge pour une
+// mise à jour), et on les retrouve au démarrage s'il y a moins d'une heure.
+var REPRISE_MAX = 60 * 60 * 1000;
+function garderVue() {
+  var f = document.getElementById('feuille');
+  var v = {quand: Date.now(), onglet: onglet, scroll: window.scrollY || 0, fiche: '', scrollFiche: 0};
+  if (f && f.dataset.fiche) {
+    v.fiche = f.dataset.fiche;
+    v.scrollFiche = f.querySelector('.sheet').scrollTop || 0;
+  }
+  lsSet('bm_vue', JSON.stringify(v));
+}
+function vueGardee() {
+  try {
+    var v = JSON.parse(lsGet('bm_vue') || 'null');
+    if (v && Date.now() - v.quand < REPRISE_MAX) {
+      return v;
+    }
+  } catch (e) {}
+  return null;
+}
+function reprendreVue(v) {
+  if (!v || !M) {
+    return;
+  }
+  // juste après l'affichage de l'onglet (setTimeout plutôt que requestAnimationFrame, en pause si la page est cachée)
+  setTimeout(function () {
+    window.scrollTo(0, v.scroll || 0);
+    if (v.fiche && D.livres[v.fiche]) {
+      ouvrirFiche(v.fiche);
+      var s = document.querySelector('#feuille .sheet');
+      if (s) {
+        s.scrollTop = v.scrollFiche || 0;
+      }
+    }
+  }, 30);
+}
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden') {
+    garderVue();
+  }
+});
+window.addEventListener('pagehide', garderVue);
 
 function ouvrirGrimoire() {
   if (valeurs(D.livres).length || reglage('mode', 'miroir') !== 'miroir') {
