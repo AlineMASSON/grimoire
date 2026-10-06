@@ -56,6 +56,7 @@ Il contient l'appli publiée sur GitHub Pages :
 | `aide.html`, `aide/` | le mode d'emploi et ses captures |
 | `reparer.html` | la page de réparation d'une mise à jour bloquée |
 | `prompt-propositions.md` | la consigne envoyée à Claude par « ✨ Compléter avec Claude » (genres, tropes et traducteurs à proposer) |
+| `.github/workflows/publier.yml` | la publication sur GitHub Pages, à chaque envoi sur `main` (GitHub Actions) |
 
 ## Crédits
 
