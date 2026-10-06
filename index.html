@@ -71,7 +71,9 @@
   --voile:rgba(10,5,20,.5);
 }
 *{box-sizing:border-box}
-html{background:var(--bg)}
+/* garde-fou : un élément trop large ne doit jamais élargir la page (sur Android, l'appli installée la laisserait glisser
+   sur le côté, et l'en-tête, ⚙️, le + et la barre du bas partiraient avec) ; outils/tests.html vérifie qu'aucune vue ne déborde */
+html{background:var(--bg);overflow-x:hidden}
 body{margin:0;color:var(--ink);font:15px/1.5 Nunito,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;
   background:
     radial-gradient(1.6px 1.6px at 22px 34px,var(--spark) 50%,transparent 52%),
@@ -238,7 +240,7 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .etagere{margin:6px 0 20px}
 .etagere h4{display:inline-flex;align-items:baseline;gap:6px;margin:0 0 8px;padding:3px 14px 4px;border-radius:999px;border:1px solid color-mix(in srgb,var(--gold) 60%,transparent);background:color-mix(in srgb,var(--gold) 10%,transparent);font:700 18px "Cormorant Garamond",Georgia,serif}
 .etagere h4 .small{font-family:Nunito,sans-serif}
-.bascule-vue{display:flex;gap:6px;margin:0 0 12px}
+.bascule-vue{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
 .bascule-vue button{display:inline-flex;align-items:center;gap:5px;font:700 13px Nunito,sans-serif;padding:5px 12px;border-radius:999px;border:1.5px solid var(--line);background:none;color:var(--muted);cursor:pointer}
 .bascule-vue button.on{color:var(--ink);border-color:var(--gold);background:color-mix(in srgb,var(--gold) 14%,transparent)}
 .bascule-vue .ic{width:15px;height:15px}
@@ -14337,7 +14339,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 11:20:49';
+var VERSION_APPLI = '2026-10-06 11:37:00';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
