@@ -16,7 +16,7 @@
 <style>
 /* Thèmes : « rose féerique » (clair), « nuit enchantée » (sombre), « automne cosy » */
 :root{
-  --bg:#fcf0f6;--bg2:#ece6fc;--card:#fffafd;--ink:#4a2a45;--muted:#97738c;--line:#f1d3e2;
+  --bg:#fcf0f6;--bg2:#ece6fc;--card:#fffafd;--ink:#4a2a45;--muted:#86637c;--line:#f1d3e2;
   --accent:#d6588f;--accent-soft:#fbe0ec;--lav:#6f6fd8;--lav-soft:#ebe8fb;--gold:#c08a2a;--gold-soft:#f8ecd5;
   --paper:#e06a9e;--audio:#9a82e2;--ebook:#5fbf9f;--mint-soft:#e2f6ee;
   --heat0:#f6e7ef;--heat1:#f3b6d0;--heat2:#e47aa9;--heat3:#b8457f;
@@ -45,7 +45,7 @@
   --shelf:#5b3f66;--voile:rgba(5,0,15,.6);
 }
 :root[data-theme="autumn"]{
-  --bg:#f8efe3;--bg2:#f1dcc6;--card:#fffaf2;--ink:#4a2c20;--muted:#93725f;--line:#ecd6bf;
+  --bg:#f8efe3;--bg2:#f1dcc6;--card:#fffaf2;--ink:#4a2c20;--muted:#866554;--line:#ecd6bf;
   --accent:#c0573a;--accent-soft:#f7ddd0;--lav:#8e5b7c;--lav-soft:#f1e2ea;--gold:#c48a2c;--gold-soft:#f7e8cc;
   --paper:#c0573a;--audio:#8e5b7c;--ebook:#6f8f4e;--mint-soft:#e7efdc;
   --heat0:#f3e4d4;--heat1:#eab48f;--heat2:#d27b4f;--heat3:#9c4326;
@@ -100,7 +100,7 @@ nav button span{display:block;font-size:21px;line-height:1.25;filter:saturate(.6
 nav button.on{color:var(--accent)}
 nav button.on span{filter:none;opacity:1;transform:translateY(-2px)}
 nav button.on span::before{content:"";position:absolute;left:50%;top:-4px;width:38px;height:38px;margin-left:-19px;border-radius:50%;background:radial-gradient(circle,var(--accent-soft) 0%,transparent 70%);z-index:-1}
-nav button.on::after{content:"✦";position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-size:8px;color:var(--gold)}
+nav button.on::after{/* petit-ok : étoile décorative */content:"✦";position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-size:8px;color:var(--gold)}
 .card{background:linear-gradient(var(--card),var(--card)) padding-box,var(--frame) border-box;border:1.5px solid transparent;border-radius:22px;padding:16px;margin:14px 0;box-shadow:var(--shadow)}
 .card h2{font:700 21px/1.2 "Cormorant Garamond",Georgia,serif;margin:0 0 12px}
 .card h2::before{content:"✧ ";color:var(--gold);font-size:16px}
@@ -121,52 +121,40 @@ nav button.on::after{content:"✦";position:absolute;bottom:0;left:50%;transform
 .bar[data-tip]{cursor:pointer;border-radius:8px}
 .bar.actif .fil{background:var(--gold) !important;box-shadow:0 0 8px var(--gold)}
 .bar.axe-x{margin-top:2px}
-.graduations{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);border-top:1px solid var(--line);padding-top:2px}
+.graduations{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);border-top:1px solid var(--line);padding-top:2px}
 .graph{display:grid;grid-template-columns:auto 1fr;gap:6px}
-.axe-y{position:relative;width:28px;height:110px;font-size:10px;color:var(--muted);line-height:1}
+.axe-y{position:relative;width:28px;height:110px;font-size:11px;color:var(--muted);line-height:1}
 .axe-y span{position:absolute;right:0;transform:translateY(-50%)}
 .axe-y span:nth-child(1){top:0}.axe-y span:nth-child(2){top:50%}.axe-y span:nth-child(3){top:100%}
 .cols{display:flex;align-items:flex-end;gap:2px;height:110px;border-bottom:1px solid var(--line);background:linear-gradient(var(--line),var(--line)) 0 0/100% 1px no-repeat,linear-gradient(var(--line),var(--line)) 0 50%/100% 1px no-repeat}
 .cols .col{flex:1;height:100%;display:flex;align-items:flex-end;cursor:pointer;border-radius:4px 4px 0 0}
 .cols .col i{display:block;width:100%;background:linear-gradient(180deg,var(--accent),var(--lav));border-radius:4px 4px 0 0;min-height:1px}
 .cols .col.actif i{background:var(--gold);box-shadow:0 0 8px var(--gold)}
-.colslab{display:flex;gap:2px;font-size:10px;color:var(--muted);margin-top:3px}
+.colslab{display:flex;gap:2px;font-size:11px;color:var(--muted);margin-top:3px}
 .colslab span{flex:1;text-align:center}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:7px 4px;border-bottom:1px dashed var(--line);text-align:left}
 th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
 td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .scroll{overflow-x:auto}
-.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,11px);gap:3px;width:max-content}
-.heat i{width:11px;height:11px;border-radius:4px;background:var(--heat0)}
-.heat i.l1{background:var(--heat1)}.heat i.l2{background:var(--heat2)}.heat i.l3{background:var(--heat3);box-shadow:0 0 6px var(--heat2)}
-.heat i.out{background:transparent}
-.heat i[data-tip]{cursor:pointer}
-.heat i.actif{outline:2px solid var(--gold);outline-offset:1px}
-.heat-mois{position:relative;height:14px;font-size:10px;color:var(--muted)}
-.heat-mois span{position:absolute;top:0}
-.heat-legende{display:flex;align-items:center;gap:3px;justify-content:flex-end;font-size:10px;color:var(--muted);margin-top:6px}
-.heat-legende i{width:11px;height:11px;border-radius:4px;background:var(--heat0)}
 /* jours de lecture : calendrier du mois avec la couverture du livre lu chaque jour */
 .cal-tete{display:flex;align-items:center;justify-content:space-between;margin:2px 0 10px}
 .cal-tete b{font:700 18px "Cormorant Garamond",Georgia,serif}
 .cal-tete button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 .cal-tete button:disabled{opacity:.3;cursor:default}
 .cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
-.cal-t{text-align:center;font:700 10px Nunito,sans-serif;color:var(--muted)}
+.cal-t{text-align:center;font:700 11px Nunito,sans-serif;color:var(--muted)}
 .cal-j{position:relative;aspect-ratio:2/3;border-radius:7px;overflow:hidden;background:var(--heat0);box-shadow:var(--cover-shadow);padding:0;border:0;cursor:pointer;color:var(--ink)}
 .cal-j>img,.cal-j>.ph{width:100%;height:100%;object-fit:cover;display:block}
-.cal-j>.ph{display:flex;align-items:center;justify-content:center;font:600 8px/1.1 Nunito,sans-serif;text-align:center;padding:2px;color:var(--muted);overflow:hidden;word-break:break-word}
+.cal-j>.ph{/* petit-ok : case du calendrier, le détail du jour s'ouvre d'un toucher */display:flex;align-items:center;justify-content:center;font:600 8px/1.1 Nunito,sans-serif;text-align:center;padding:2px;color:var(--muted);overflow:hidden;word-break:break-word}
 .cal-j .b2{position:absolute;right:2px;bottom:2px;width:46%;height:46%;border-radius:4px;overflow:hidden;border:1.5px solid var(--card);background:var(--heat0)}
 .cal-j .b2 img,.cal-j .b2 .ph{width:100%;height:100%;object-fit:cover;display:block;font-size:0}
-.cal-j em{position:absolute;left:2px;bottom:2px;font:800 9px Nunito,sans-serif;background:var(--accent);color:#fff;border-radius:6px;padding:0 4px;font-style:normal}
-.cal-j span{position:absolute;left:3px;top:2px;font:800 10px Nunito,sans-serif;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.65)}
+.cal-j em{/* petit-ok : case du calendrier, le détail du jour s'ouvre d'un toucher */position:absolute;left:2px;bottom:2px;font:800 9px Nunito,sans-serif;background:var(--accent);color:#fff;border-radius:6px;padding:0 4px;font-style:normal}
+.cal-j span{position:absolute;left:3px;top:2px;font:800 11px Nunito,sans-serif;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.65)}
 .cal-j.vide,.cal-j.futur{box-shadow:none;background:transparent;border:1px dashed var(--line);cursor:default}
 .cal-j.futur{opacity:.4}
 .cal-j.vide span,.cal-j.futur span{color:var(--muted);text-shadow:none}
 .cal-j.auj{outline:2px solid var(--gold);outline-offset:1px}
-.heat-legende i.l1{background:var(--heat1)}.heat-legende i.l2{background:var(--heat2)}.heat-legende i.l3{background:var(--heat3)}
-.heat-legende span{margin:0 3px}
 /* bulle de valeur */
 .bulle{position:fixed;z-index:60;transform:translate(-50%,-100%);background:var(--ink);color:var(--card);font:700 12px/1.3 Nunito,sans-serif;padding:7px 11px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.25);pointer-events:none;opacity:0;transition:opacity .15s;max-width:240px;text-align:center}
 .bulle.vis{opacity:1}
@@ -187,7 +175,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .qsrc::before{content:"✦ ";color:var(--gold)}
 .covers{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
 .covers img,.covers .ph{width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:6px;background:var(--heat0);box-shadow:var(--cover-shadow)}
-.covers .ph{display:flex;align-items:center;justify-content:center;font-size:10px;padding:4px;text-align:center;color:var(--muted);overflow:hidden}
+.covers .ph{display:flex;align-items:center;justify-content:center;font-size:11px;padding:4px;text-align:center;color:var(--muted);overflow:hidden}
 .covers > div:nth-child(3n+1) > *{transform:rotate(-2deg)}
 .covers > div:nth-child(3n+2) > *{transform:rotate(1.5deg)}
 .badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:12px 8px}
@@ -221,6 +209,7 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 /* feuille (fenêtre du bas) */
 .sheet-bg{position:fixed;inset:0;background:var(--voile);z-index:20;display:flex;align-items:flex-end;justify-content:center;animation:fondu .2s ease}
 .sheet{background:var(--card);border-radius:26px 26px 0 0;width:100%;max-width:760px;max-height:90vh;overflow:auto;padding:22px 18px 34px;position:relative;animation:monte .25s ease}
+.sheet:focus{outline:none}
 .sheet h3{font:700 23px/1.2 "Cormorant Garamond",Georgia,serif;margin:0 40px 4px 0}
 .sheet-x{position:absolute;right:14px;top:14px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:14px;cursor:pointer}
 .sheet .tete{display:flex;gap:14px;align-items:center;margin-bottom:10px}
@@ -244,15 +233,6 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .niveau .em{font-size:44px;width:72px;height:72px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%,var(--gold-soft),var(--lav-soft));box-shadow:0 0 0 3px var(--gold),0 0 22px var(--gold-soft)}
 .niveau .nom{font:700 22px/1.15 "Cormorant Garamond",Georgia,serif}
 
-/* bingo */
-.bingo{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
-.bingo .c{aspect-ratio:1;border-radius:12px;background:var(--heat0);font-size:9px;line-height:1.15;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:3px;position:relative;overflow:hidden;color:var(--muted)}
-.bingo .c b{font-size:19px;line-height:1.2;position:relative}
-.bingo .c span{position:relative}
-.bingo .c img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3}
-.bingo .c.ok{background:linear-gradient(145deg,var(--accent-soft),var(--lav-soft));box-shadow:inset 0 0 0 2px var(--gold);color:var(--ink);font-weight:700}
-.bingo .c.ok::after{content:"✦";position:absolute;top:2px;right:4px;color:var(--gold);font-size:11px}
-.bingo .c.ligne{box-shadow:inset 0 0 0 2px var(--gold),0 0 12px var(--gold)}
 
 /* étagère : meuble en bois, guirlande lumineuse, tranches ou couvertures (rangées fixes : 168 px de livres + 14 px de planche) */
 .etagere{margin:6px 0 20px}
@@ -287,12 +267,12 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .bandeau-dispo b{flex:1;font-weight:600}
 .tr-l{position:relative;flex:none;cursor:pointer;color:#fff;border-radius:3px 3px 1px 1px;background:linear-gradient(90deg,rgba(0,0,0,.3),rgba(255,255,255,.2) 28%,rgba(255,255,255,.05) 52%,rgba(0,0,0,.32)),var(--c);box-shadow:3px 1px 4px rgba(0,0,0,.4)}
 .tr-l.relie{border-radius:7px 7px 1px 1px}
-.tr-l::before{content:"✦";position:absolute;top:4px;left:0;right:0;text-align:center;font-size:8px;line-height:1;color:rgba(255,232,170,.95)}
+.tr-l::before{/* petit-ok : étoile décorative */content:"✦";position:absolute;top:4px;left:0;right:0;text-align:center;font-size:8px;line-height:1;color:rgba(255,232,170,.95)}
 .tr-l::after{content:"";position:absolute;left:3px;right:3px;bottom:6px;height:3px;border-top:1px solid rgba(255,232,170,.8);border-bottom:1px solid rgba(255,232,170,.8)}
 .tr-l .t{position:absolute;left:0;right:0;top:16px;bottom:14px;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.tr-l .t span{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:100%;font:800 10px/1.05 Nunito,sans-serif;letter-spacing:.2px;text-shadow:0 1px 1px rgba(0,0,0,.35)}
+.tr-l .t span{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:100%;font:800 11px/1.05 Nunito,sans-serif;letter-spacing:.2px;text-shadow:0 1px 1px rgba(0,0,0,.35)}
 .tr-l.coeur{background:linear-gradient(180deg,#f3d58a 0 3px,transparent 3px),linear-gradient(90deg,rgba(0,0,0,.3),rgba(255,255,255,.2) 28%,rgba(255,255,255,.05) 52%,rgba(0,0,0,.32)),var(--c);box-shadow:3px 1px 4px rgba(0,0,0,.4),0 0 12px color-mix(in srgb,var(--gold) 80%,transparent)}
-.tr-l.coeur::before{content:"★";color:#fff3c4;top:6px;font-size:9px}
+.tr-l.coeur::before{/* petit-ok : étoile décorative */content:"★";color:#fff3c4;top:6px;font-size:9px}
 .tr-l.coeur .t{top:20px}
 .tr-l .audio{position:absolute;left:0;right:0;bottom:13px;display:flex;justify-content:center}
 .tr-l .audio .ic{width:10px;height:10px;stroke-width:2.4}
@@ -390,7 +370,7 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
   .badges{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}
   .seg button{font-size:12px;padding:8px 2px}
   .pips button{font-size:20px}
-  nav button{font-size:10.5px}
+  nav button{font-size:11px}
 }
 /* petit écran presque carré (écran externe du Flip, paysage) */
 @media (max-height:620px){
@@ -399,7 +379,7 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
   header h1{font-size:22px}
   header h1 span{display:inline;font-size:20px}
     main{padding-bottom:78px}
-  nav button{padding:6px 2px 7px;font-size:9.5px}
+  nav button{padding:6px 2px 7px;font-size:11px}
   nav button span{font-size:18px}
   .card{margin:10px 0}
 }
@@ -447,7 +427,7 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 .couvs::-webkit-scrollbar{display:none}
 .couvs > div{flex:none;width:80px;text-align:center;font-size:11px;color:var(--muted);cursor:pointer;line-height:1.4}
 .couvs img,.couvs .ph{width:80px;height:120px;object-fit:cover;border-radius:8px;box-shadow:var(--cover-shadow);display:block;margin-bottom:5px;background:var(--heat0)}
-.couvs .ph{display:flex;align-items:center;justify-content:center;font-size:10px;padding:4px;overflow:hidden}
+.couvs .ph{display:flex;align-items:center;justify-content:center;font-size:11px;padding:4px;overflow:hidden}
 @media (max-width:440px){.carrousel{margin:0 -12px;padding-left:12px;padding-right:12px;scroll-padding-inline:12px}}
 .tete-n .ajout-haut{display:none}
 /* écran externe du Flip 7 : accueil compact */
@@ -479,7 +459,7 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
   .anneau{width:82px;height:82px}
   .anneau::before{inset:8px}
   .anneau b{font-size:24px}
-  .anneau small{font-size:10px}
+  .anneau small{font-size:11px}
   .ligne-obj{font-size:12px;margin:2px 0 7px}
   .pastilles-annee{margin-top:8px}
   .pastille-annee{font-size:11px;padding:4px 9px}
@@ -516,7 +496,6 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></symbol>
 <symbol id="i-crown" viewBox="0 0 24 24"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" /> <path d="M5 21h14" /></symbol>
 <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 15V3" /> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <path d="m7 10 5 5 5-5" /></symbol>
-<symbol id="i-eraser" viewBox="0 0 24 24"><path d="M21 21H8a2 2 0 0 1-1.42-.587l-3.994-3.999a2 2 0 0 1 0-2.828l10-10a2 2 0 0 1 2.829 0l5.999 6a2 2 0 0 1 0 2.828L12.834 21" /> <path d="m5.082 11.09 8.828 8.828" /></symbol>
 <symbol id="i-feather" viewBox="0 0 24 24"><path d="M14.086 18.412A2 2 0 0112.67 19H5v-7.672a2 2 0 01.586-1.414L11.75 3.75a6 6 0 118.49 8.49z" /> <path d="M16 8 2 22" /> <path d="M17.488 15H9" /></symbol>
 <symbol id="i-ferris-wheel" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" /> <path d="M12 2v4" /> <path d="m6.8 15-3.5 2" /> <path d="m20.7 7-3.5 2" /> <path d="M6.8 9 3.3 7" /> <path d="m20.7 17-3.5-2" /> <path d="m9 22 3-8 3 8" /> <path d="M8 22h8" /> <path d="M18 18.7a9 9 0 1 0-12 0" /></symbol>
 <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528" /></symbol>
@@ -551,21 +530,19 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 <symbol id="i-scan-barcode" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2" /> <path d="M17 3h2a2 2 0 0 1 2 2v2" /> <path d="M21 17v2a2 2 0 0 1-2 2h-2" /> <path d="M7 21H5a2 2 0 0 1-2-2v-2" /> <path d="M8 7v10" /> <path d="M12 7v10" /> <path d="M17 7v10" /></symbol>
 <symbol id="i-scan-text" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2" /> <path d="M17 3h2a2 2 0 0 1 2 2v2" /> <path d="M21 17v2a2 2 0 0 1-2 2h-2" /> <path d="M7 21H5a2 2 0 0 1-2-2v-2" /> <path d="M7 8h8" /> <path d="M7 12h10" /> <path d="M7 16h6" /></symbol>
 <symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34" /> <circle cx="11" cy="11" r="8" /></symbol>
-<symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /> <circle cx="12" cy="12" r="3" /></symbol>
 <symbol id="i-share-2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3" /> <circle cx="6" cy="12" r="3" /> <circle cx="18" cy="19" r="3" /> <line x1="8.59" x2="15.42" y1="13.51" y2="17.49" /> <line x1="15.41" x2="8.59" y1="6.51" y2="10.49" /></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" /> <circle cx="12" cy="12" r="3" /></symbol>
 <symbol id="i-shopping-bag" viewBox="0 0 24 24"><path d="M16 10a4 4 0 0 1-8 0" /> <path d="M3.103 6.034h17.794" /> <path d="M3.4 5.467a2 2 0 0 0-.4 1.2V20a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6.667a2 2 0 0 0-.4-1.2l-2-2.667A2 2 0 0 0 17 2H7a2 2 0 0 0-1.6.8z" /></symbol>
 <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="m18 14 4 4-4 4" /> <path d="m18 2 4 4-4 4" /> <path d="M2 18h1.973a4 4 0 0 0 3.3-1.7l5.454-8.6a4 4 0 0 1 3.3-1.7H22" /> <path d="M2 6h1.972a4 4 0 0 1 3.6 2.2" /> <path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45" /></symbol>
 <symbol id="i-smile" viewBox="0 0 24 24"><path d="M15 10V9" /> <path d="M16.472 15a6 6 0 01-8.943 0" /> <path d="M9 10V9" /> <circle cx="12" cy="12" r="10" /></symbol>
 <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z" /> <path d="M20 2v4" /> <path d="M22 4h-4" /> <circle cx="4" cy="20" r="2" /></symbol>
 <symbol id="i-square" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" /></symbol>
-<symbol id="i-star" viewBox="0 0 24 24"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" /></symbol>
 <symbol id="i-sticky-note" viewBox="0 0 24 24"><path d="M21 9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z" /> <path d="M15 3v5a1 1 0 0 0 1 1h5" /></symbol>
 <symbol id="i-sun-moon" viewBox="0 0 24 24"><path d="M12 2v2" /> <path d="M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715" /> <path d="M16 12a4 4 0 0 0-4-4" /> <path d="m19 5-1.256 1.256" /> <path d="M20 12h2" /></symbol>
 <symbol id="i-tag" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" /> <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" /></symbol>
 <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /> <circle cx="12" cy="12" r="6" /> <circle cx="12" cy="12" r="2" /></symbol>
 <symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2" /> <line x1="12" x2="15" y1="14" y2="11" /> <circle cx="12" cy="14" r="8" /></symbol>
 <symbol id="i-trash-2" viewBox="0 0 24 24"><path d="M10 11v6" /> <path d="M14 11v6" /> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" /> <path d="M3 6h18" /> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></symbol>
-<symbol id="i-unlink" viewBox="0 0 24 24"><path d="m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71" /> <path d="m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71" /> <line x1="8" x2="8" y1="2" y2="5" /> <line x1="2" x2="5" y1="8" y2="8" /> <line x1="16" x2="16" y1="19" y2="22" /> <line x1="19" x2="22" y1="16" y2="16" /></symbol>
 <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /> <path d="M16 3.128a4 4 0 0 1 0 7.744" /> <path d="M22 21v-2a4 4 0 0 0-3-3.87" /> <circle cx="9" cy="7" r="4" /></symbol>
 <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" /> <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4" /></symbol>
 <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18" /> <path d="m6 6 12 12" /></symbol>
@@ -615,7 +592,8 @@ function boite(contenu, boutons) {
     var d = document.createElement('div');
     d.className = 'boite-fond';
     d.innerHTML = '<div class="boite" role="dialog" aria-modal="true">' + contenu + '<div class="boutons-boite">' + boutons.map(function (b, i) {
-      return '<button class="act ' + (b.cls || '') + '" data-boite="' + i + '">' + b.texte + '</button>';
+      // libellés écrits dans le code (« Supprimer »…), parfois avec une icône : esc-ok
+      return '<button class="act ' + (b.cls || '') + '" data-boite="' + i + '">' + b.texte + '</button>'; // esc-ok
     }).join('') + '</div></div>';
     function fermer(v) {
       d.remove();
@@ -649,7 +627,7 @@ function titreBoite(titreB) {
   if (!titreB) {
     return '';
   }
-  return '<h3>' + titreB + '</h3>';
+  return '<h3>' + esc(titreB) + '</h3>';
 }
 // une information, un seul bouton
 function avertir(message, titreB) {
@@ -706,6 +684,13 @@ var onglet = 'accueil';
 var sous = {stats: 'rythme', etagere: 'etagere'};
 
 // ---------- utilitaires ----------
+// une couleur sûre à mettre dans un style : #rgb, #rrggbb (ou avec transparence), sinon rien
+function couleurSure(c) {
+  if (/^#[0-9a-f]{3,8}$/i.test(String(c || ''))) {
+    return c;
+  }
+  return '';
+}
 function esc(s) {
   if (s === null || s === undefined) {
     return '';
@@ -782,7 +767,7 @@ function cover(b) {
   if (b.image && /^(https?|blob):/.test(b.image)) {
     return '<img loading="lazy" src="' + esc(b.image) + '" alt="" data-ph="' + esc(titre(b).slice(0, 40)) + '" onerror="couvertureCassee(this)">';
   }
-  return '<div class="ph">' + esc(titre(b)).slice(0, 40) + '</div>';
+  return '<div class="ph">' + esc(titre(b).slice(0, 40)) + '</div>';
 }
 // image qui ne charge plus (adresse disparue du site) : le titre à la place, comme un livre sans couverture
 function couvertureCassee(img) {
@@ -924,19 +909,42 @@ function melanger(a) {
 }
 
 // ---------- feuille (fenêtre qui monte du bas) ----------
+// Une boîte de dialogue pour le lecteur d'écran : titre (le premier h3), focus dedans à l'ouverture, rendu à ce qui l'a
+// ouverte à la fermeture, Échap pour fermer.
+var ouvreurFeuille = null;
+var remplacementFeuille = false;
 function ouvrirFeuille(html) {
+  var ouvreur = ouvreurFeuille;
+  if (!document.getElementById('feuille')) {
+    ouvreur = document.activeElement;
+  }
+  remplacementFeuille = true;
   fermerFeuille();
+  remplacementFeuille = false;
+  ouvreurFeuille = ouvreur;
   var d = document.createElement('div');
   d.className = 'sheet-bg';
   d.id = 'feuille';
-  d.innerHTML = '<div class="sheet"><button class="sheet-x" data-act="fermer" aria-label="Fermer">' + ic('x') + '</button>' + html + '</div>';
+  d.innerHTML = '<div class="sheet" role="dialog" aria-modal="true" tabindex="-1"><button class="sheet-x" data-act="fermer" aria-label="Fermer">' + ic('x') + '</button>' + html + '</div>';
   d.addEventListener('click', function (e) {
     if (e.target === d) {
       fermerFeuille();
     }
   });
+  var sheet = d.querySelector('.sheet');
+  var titreF = d.querySelector('h3');
+  if (titreF) {
+    titreF.id = 'titreFeuille';
+    sheet.setAttribute('aria-labelledby', 'titreFeuille');
+  }
   document.body.appendChild(d);
-  return d.querySelector('.sheet');
+  // un formulaire qui place lui-même son curseur garde la main
+  setTimeout(function () {
+    if (document.getElementById('feuille') === d && !d.contains(document.activeElement)) {
+      sheet.focus({preventScroll: true});
+    }
+  }, 30);
+  return sheet;
 }
 function fermerFeuille() {
   var f = document.getElementById('feuille');
@@ -945,13 +953,27 @@ function fermerFeuille() {
   }
   if (f) {
     f.remove();
+    if (!remplacementFeuille) {
+      if (ouvreurFeuille && ouvreurFeuille.focus && document.body.contains(ouvreurFeuille)) {
+        ouvreurFeuille.focus({preventScroll: true});
+      }
+      ouvreurFeuille = null;
+    }
   }
   // une saisie enregistrée sous la feuille sans redessiner la vue (carnet, étoiles) : la vue se met à jour maintenant
   if (vueARedessiner) {
     rendre();
   }
 }
-ACTIONS.fermer = fermerFeuille;
+ACTIONS.fermer = function () {
+  fermerFeuille();
+};
+// Échap ferme la feuille (une petite boîte de question ouverte par-dessus se ferme d'abord, toute seule)
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && document.getElementById('feuille') && !document.querySelector('.boite') && !document.getElementById('scan')) {
+    fermerFeuille();
+  }
+});
 
 // clics et changements délégués : data-seg, data-act, data-chg
 document.addEventListener('click', function (e) {
@@ -1282,7 +1304,6 @@ document.getElementById('nav').addEventListener('click', function (e) {
   var b = e.target.closest('button');
   if (b) {
     onglet = b.dataset.o;
-    lsSet('bm_onglet', onglet);
     rendre();
     window.scrollTo(0, 0);
   }
@@ -1337,7 +1358,6 @@ function blocEnCeMoment() {
 ACTIONS.allerALire = function () {
   onglet = 'etagere';
   sous.etagere = 'alire';
-  lsSet('bm_onglet', onglet);
   rendre();
   window.scrollTo(0, 0);
 };
@@ -1523,7 +1543,6 @@ function bandeauNiveau() {
 }
 ACTIONS.allerQuetes = function () {
   onglet = 'quetes';
-  lsSet('bm_onglet', onglet);
   rendre();
   window.scrollTo(0, 0);
 };
@@ -1538,7 +1557,7 @@ function carteCitationDuJour() {
   if (c.book) {
     src = esc(titre(c.book));
     if (c.page) {
-      src += ', p. ' + c.page;
+      src += ', p. ' + esc(c.page);
     }
   }
   var photo = '';
@@ -2180,7 +2199,7 @@ function vArgent() {
       if (reventes.par[a.b.id] !== undefined) {
         revendu = ' <span class="small muted">· revendu ' + nombre(reventes.par[a.b.id]) + ' €</span>';
       }
-      return '<tr><td>' + marque + esc(titre(a.b)) + revendu + '</td><td class="n">' + a.prix + '</td><td class="n">' + parEt + '</td><td class="n">' + parPage + '</td></tr>';
+      return '<tr><td>' + marque + esc(titre(a.b)) + revendu + '</td><td class="n">' + esc(a.prix) + '</td><td class="n">' + parEt + '</td><td class="n">' + parPage + '</td></tr>';
     }).join('') + '</table>', 'livres avec un prix saisi');
 }
 
@@ -2209,7 +2228,7 @@ function couleurLivre(b) {
   // couleur choisie dans « Mes listes » pour un de ses genres
   for (var g = 0; g < (b.genreIds || []).length; g++) {
     var genre = D.genres && D.genres[b.genreIds[g]];
-    if (genre && genre.couleur) {
+    if (genre && couleurSure(genre.couleur)) {
       return genre.couleur;
     }
   }
@@ -2487,7 +2506,11 @@ function enregistrerDecos(changes) {
   return ecrire(Object.keys(changes).map(function (k) { return {t: 'reglages', o: {id: k, v: changes[k]}}; })).then(function () {
     planifierSauvegarde();
     placerDecos();
-  }).catch(erreurEcriture);
+    return true;
+  }).catch(function (e) {
+    erreurEcriture(e);
+    return false;
+  });
 }
 // le nom d'une déco avec sa majuscule (nomDeco, dans Saisons.html, la donne en minuscules)
 function nomDecoAffiche(id) {
@@ -2496,7 +2519,11 @@ function nomDecoAffiche(id) {
 }
 ACTIONS.redisposerDecos = function () {
   fermerFeuille();
-  enregistrerDecos({decosGraine: Math.floor(Math.random() * 1e9) + 1}).then(function () { toast('🎲 Nouvel arrangement'); });
+  enregistrerDecos({decosGraine: Math.floor(Math.random() * 1e9) + 1}).then(function (ok) {
+    if (ok) {
+      toast('🎲 Nouvel arrangement');
+    }
+  });
 };
 ACTIONS.disposerDecos = function () {
   fermerFeuille();
@@ -2848,7 +2875,7 @@ function vSeries() {
     if (manquants.length && !abandonnee) {
       info += ' · absent(s) de ta bibliothèque : tome ' + manquants.join(', ');
     }
-    return '<div style="margin:10px 0 16px' + (abandonnee ? ';opacity:.6' : '') + '"><b style="font:700 18px Cormorant Garamond,Georgia,serif">' + esc(s.name) + '</b> <button class="mini-btn" data-act="formSerie" data-id="' + esc(k) + '">' + ic('pencil') + '</button><div class="meuble" style="margin:6px 0 8px"><div class="fond-meuble"><div class="rangs">' + l.map(function (x) { return tranche(x.b, 0); }).join('') + '</div></div></div><div class="prog"><div style="width:' + (100 * lus / l.length) + '%"></div></div><div class="small muted">' + info + '</div></div>';
+    return '<div style="margin:10px 0 16px' + (abandonnee ? ';opacity:.6' : '') + '"><b style="font:700 18px Cormorant Garamond,Georgia,serif">' + esc(s.name) + '</b> <button aria-label="Modifier la série" class="mini-btn" data-act="formSerie" data-id="' + esc(k) + '">' + ic('pencil') + '</button><div class="meuble" style="margin:6px 0 8px"><div class="fond-meuble"><div class="rangs">' + l.map(function (x) { return tranche(x.b, 0); }).join('') + '</div></div></div><div class="prog"><div style="width:' + (100 * lus / l.length) + '%"></div></div><div class="small muted">' + info + '</div></div>';
   }).join(''));
 }
 </script>
@@ -3219,7 +3246,7 @@ function estNote(id) {
 }
 
 function resumeNote(n) {
-  var parts = listeTriee('criteres').filter(function (c) { return n[c.id]; }).map(function (c) { return (c.emoji || '•') + ' <b>' + n[c.id] + '</b>'; });
+  var parts = listeTriee('criteres').filter(function (c) { return n[c.id]; }).map(function (c) { return esc(c.emoji || '•') + ' <b>' + esc(n[c.id]) + '</b>'; });
   var h = '<div class="mini">' + parts.join('') + '</div>';
   if ((n.humeurs || []).length) {
     h += '<div class="small" style="margin-top:3px">' + esc(n.humeurs.join(' · ')) + '</div>';
@@ -3399,7 +3426,7 @@ function pips(champ, val, symbole, max) {
     if (i <= val) {
       cls = ' class="on"';
     }
-    h += '<button' + cls + ' data-act="pip" data-c="' + esc(champ) + '" data-v="' + i + '">' + symbole + '</button>';
+    h += '<button' + cls + ' data-act="pip" data-c="' + esc(champ) + '" data-v="' + i + '" aria-label="' + i + ' sur ' + max + '">' + symbole + '</button>';
   }
   return h + '</span>';
 }
@@ -3560,7 +3587,7 @@ ACTIONS.creerElement = function (el) {
 var minuteurNote = null;
 function rangNoteHtml(b) {
   var etat = b.etat || 'tes changements s\'enregistrent tout seuls';
-  var h = '<span class="small muted etat-note" id="etatNote">' + etat + '</span>';
+  var h = '<span class="small muted etat-note" id="etatNote" role="status">' + etat + '</span>';
   if (D.avis[b.id]) {
     h += '<button class="act doux" data-act="effacerNote">Effacer</button>';
   }
@@ -3721,7 +3748,7 @@ ACTIONS.imageCitation = function (el) {
 .med.fait{border-color:var(--gold);background:radial-gradient(circle at 35% 30%,var(--gold-soft),var(--card));box-shadow:0 0 8px color-mix(in srgb,var(--gold) 45%,transparent)}
 .med.ici{width:48px;height:48px;font-size:24px;border:3px solid var(--gold);background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--accent) 60%,var(--card)),var(--card));box-shadow:0 0 0 5px color-mix(in srgb,var(--gold) 18%,transparent),0 0 18px color-mix(in srgb,var(--accent) 70%,transparent)}
 .med.futur>span:first-child{filter:grayscale(1);opacity:.45}
-.med .cad{position:absolute;bottom:-5px;right:-5px;font-size:10px}
+.med .cad{/* petit-ok : cadenas décoratif */position:absolute;bottom:-5px;right:-5px;font-size:10px}
 .med.vu{transform:translateY(-4px);outline:2px solid var(--accent);outline-offset:3px}
 .detail-niv{border-radius:16px;padding:12px;background:color-mix(in srgb,var(--ink) 4%,transparent);border:1px solid var(--line)}
 .detail-niv .nom{font:700 22px/1.15 "Cormorant Garamond",Georgia,serif;margin:2px 0 6px}
@@ -3733,13 +3760,13 @@ ACTIONS.imageCitation = function (el) {
 .entete-bingo{display:flex;gap:12px;align-items:center;margin-bottom:10px}
 .anneau-bingo{width:62px;height:62px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(closest-side,var(--card) 76%,transparent 78%),conic-gradient(var(--gold) 0 var(--p),color-mix(in srgb,var(--muted) 25%,transparent) var(--p))}
 .anneau-bingo b{font:800 17px/1 Nunito,sans-serif}
-.anneau-bingo span{font-size:10px;color:var(--muted)}
+.anneau-bingo span{font-size:11px;color:var(--muted)}
 .entete-bingo select{margin-top:6px}
 .astuce-bingo{margin:0 0 10px;padding:9px 11px;border-radius:12px;font-size:12.5px;line-height:1.45;background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
 .grille-bingo{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .cb{position:relative;aspect-ratio:1/1.08;border-radius:12px;padding:5px 2px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:3px;cursor:pointer;font-family:Nunito,sans-serif;color:var(--ink)}
 .cb .e{font-size:21px;line-height:1}
-.cb .l{font:800 9.5px/1.15 Nunito,sans-serif;overflow-wrap:anywhere}
+.cb .l{font:800 11px/1.15 Nunito,sans-serif;overflow-wrap:anywhere}
 .cb.ok{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 45%,var(--card)),color-mix(in srgb,var(--lav) 30%,var(--card)));border:1.5px solid color-mix(in srgb,var(--gold) 70%,transparent)}
 .cb.ok::after{content:"✓";position:absolute;top:-6px;right:-5px;width:17px;height:17px;border-radius:50%;background:var(--gold);color:#2a1d0c;font:900 11px/17px Nunito,sans-serif;text-align:center;box-shadow:0 0 6px color-mix(in srgb,var(--gold) 80%,transparent)}
 .cb.ligne{background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 45%,var(--card)),color-mix(in srgb,var(--accent) 45%,var(--card)));border-color:var(--gold);box-shadow:0 0 10px color-mix(in srgb,var(--gold) 45%,transparent)}
@@ -3768,9 +3795,9 @@ ACTIONS.imageCitation = function (el) {
 .cire.p4{background:radial-gradient(circle at 35% 30%,#c9fff1,#2fb3c9 45%,#7a4fd0 80%,#40237f)}
 .cire.verrou{box-shadow:none;background:radial-gradient(closest-side,var(--card) 82%,transparent 84%),conic-gradient(var(--accent) 0 var(--p),color-mix(in srgb,var(--muted) 25%,transparent) var(--p))}
 .cire.verrou>span{filter:grayscale(1);opacity:.45}
-.cire .nouveau{position:absolute;top:-7px;left:50%;transform:translateX(-50%);font:900 9px Nunito,sans-serif;letter-spacing:.5px;color:#2a1d0c;background:var(--gold);padding:2px 6px;border-radius:999px;white-space:nowrap}
+.cire .nouveau{position:absolute;top:-7px;left:50%;transform:translateX(-50%);font:900 11px Nunito,sans-serif;letter-spacing:.5px;color:#2a1d0c;background:var(--gold);padding:2px 6px;border-radius:999px;white-space:nowrap}
 .sceau b{display:block}
-.sceau .palier{display:block;font:900 9px Nunito,sans-serif;color:var(--gold);letter-spacing:.5px;margin-top:1px}
+.sceau .palier{display:block;font:900 11px Nunito,sans-serif;color:var(--gold);letter-spacing:.5px;margin-top:1px}
 .sceau .prog{height:5px;margin:5px 8px 2px}
 </style>
 <script>
@@ -4425,12 +4452,9 @@ function paliersSceaux(d) {
   });
   return p;
 }
+// quand chaque palier de sceau a été gagné (pour l'étiquette NOUVEAU) : dans la base, réglage « sceauxDates »
 function datesSceaux() {
-  try {
-    return JSON.parse(lsGet('bm_sceaux_dates') || '{}');
-  } catch (e) {
-    return {};
-  }
+  return reglage('sceauxDates', null) || {};
 }
 function vSceaux() {
   var d = donneesSceaux();
@@ -4507,8 +4531,8 @@ function vQuetes() {
 .carte-c .art-c{position:relative;flex:1;min-height:0;border-radius:6px;overflow:hidden;background:linear-gradient(160deg,var(--accent),var(--lav));display:flex;align-items:center;justify-content:center;font:700 12px/1.15 "Cormorant Garamond",Georgia,serif;text-align:center;padding:4px}
 .carte-c .art-c img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .carte-c .nom-c{font:700 11.5px/1.1 "Cormorant Garamond",Georgia,serif;margin:4px 3px 1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:25px}
-.carte-c .bas-c{display:flex;justify-content:space-between;align-items:center;gap:2px;font:800 8px Nunito,sans-serif;opacity:.85;margin:0 3px 2px;white-space:nowrap}
-.carte-c .rar-c{position:absolute;z-index:1;top:5px;left:5px;font:900 7.5px Nunito,sans-serif;letter-spacing:.5px;padding:2px 5px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff}
+.carte-c .bas-c{/* petit-ok : carte miniature, la carte en grand s'ouvre d'un toucher */display:flex;justify-content:space-between;align-items:center;gap:2px;font:800 8px Nunito,sans-serif;opacity:.85;margin:0 3px 2px;white-space:nowrap}
+.carte-c .rar-c{/* petit-ok : carte miniature, la carte en grand s'ouvre d'un toucher */position:absolute;z-index:1;top:5px;left:5px;font:900 7.5px Nunito,sans-serif;letter-spacing:.5px;padding:2px 5px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff}
 .carte-c.commune{background:linear-gradient(160deg,#8c9a98,#4b5857)}
 .carte-c.rare{background:linear-gradient(160deg,#6fb2ff,#2b5fae)}
 .carte-c.epique{background:linear-gradient(160deg,#c9a6ff,#6a3fc4)}
@@ -4526,7 +4550,7 @@ function vQuetes() {
 .compteurs-c span{font:800 11.5px Nunito,sans-serif;padding:4px 9px;border-radius:999px;border:1px solid var(--line)}
 /* décorations */
 .decos-g{display:grid;grid-template-columns:repeat(4,1fr);gap:10px 6px}
-.deco-g{position:relative;text-align:center;font:600 10.5px/1.25 Nunito,sans-serif;color:var(--ink);border-radius:14px;padding:8px 3px;background:color-mix(in srgb,var(--ink) 3%,transparent);border:1px solid var(--line);cursor:pointer}
+.deco-g{position:relative;text-align:center;font:600 11px/1.25 Nunito,sans-serif;color:var(--ink);border-radius:14px;padding:8px 3px;background:color-mix(in srgb,var(--ink) 3%,transparent);border:1px solid var(--line);cursor:pointer}
 .deco-g .img-d{height:62px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:5px}
 .deco-g b{display:block}
 .deco-g.pose{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,transparent)}
@@ -4939,7 +4963,7 @@ ACTIONS.poserDeco = function (el) {
 .recompense-s{display:flex;gap:10px;align-items:center;margin:6px 0 4px;padding:9px 11px;border-radius:12px;font-size:12.5px;line-height:1.45;background:color-mix(in srgb,var(--gold) 10%,transparent);border:1px solid color-mix(in srgb,var(--gold) 40%,transparent)}
 .recompense-s .gros{font-size:22px}
 .quete-s+.quete-s{margin-top:16px;padding-top:12px;border-top:1px dashed var(--line)}
-.coll-saison{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 6px;text-align:center;font-size:10.5px;line-height:1.25}
+.coll-saison{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 6px;text-align:center;font-size:11px;line-height:1.25}
 .coll-saison b{display:block}
 .sceau-s{width:52px;height:52px;margin:0 auto 4px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:23px;background:radial-gradient(circle at 35% 30%,#ffe7a3,#c9952f 60%,#8a5f17);box-shadow:0 3px 8px rgba(0,0,0,.35),inset 0 0 0 3px rgba(255,255,255,.18)}
 .sceau-s.manque,.sceau-s.avenir{background:none;box-shadow:none;border:1.5px dashed color-mix(in srgb,var(--muted) 45%,transparent)}
@@ -5270,7 +5294,7 @@ function lignePari() {
 .lettre-h{position:absolute;left:50%;top:18px;width:260px;max-width:88%;transform:translateX(-50%);padding:14px 14px 12px;border-radius:8px;background:linear-gradient(#fbf3e1,#f0e2c2);color:#3a2618;box-shadow:0 10px 24px rgba(0,0,0,.45);text-align:center;animation:hibou-deplie .6s cubic-bezier(.3,1.3,.5,1) both}
 .lettre-h .ecrit{font:700 20px "Dancing Script",cursive}
 .lettre-h .contenu{display:flex;gap:12px;align-items:center;text-align:left;margin-top:8px}
-.lettre-h .contenu img,.lettre-h .contenu .ph{width:60px;height:90px;flex:none;object-fit:cover;border-radius:4px;box-shadow:0 4px 10px rgba(0,0,0,.35);font-size:10px}
+.lettre-h .contenu img,.lettre-h .contenu .ph{width:60px;height:90px;flex:none;object-fit:cover;border-radius:4px;box-shadow:0 4px 10px rgba(0,0,0,.35);font-size:11px}
 .lettre-h .titre-l{font:700 19px/1.15 "Cormorant Garamond",Georgia,serif}
 .lettre-h .info-l{font-size:12px;color:#7a5a3a}
 .lettre-h .sceau-l{position:absolute;top:-14px;left:50%;margin-left:-14px;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffb3c4,#c2385d 60%,#701a33);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}
@@ -5356,12 +5380,9 @@ function chouetteVol() {
 }
 var ENVELOPPE = '<svg viewBox="0 0 150 100" aria-hidden="true"><rect x="2" y="2" width="146" height="96" rx="6" fill="#f4e6cf" stroke="#c9a77a" stroke-width="2"/><path d="M2 8 L75 60 L148 8" fill="#ead6a8" stroke="#c9a77a" stroke-width="2"/><path d="M2 96 L58 50 M148 96 L92 50" stroke="#e0caa0" stroke-width="2"/><circle cx="75" cy="58" r="15" fill="#c2385d"/><circle cx="75" cy="58" r="11" fill="none" stroke="#ffb3c4" stroke-width="1.5"/><text x="75" y="63" text-anchor="middle" font-size="13" fill="#fff">✦</text></svg>';
 
+// les filtres du hibou (formats, tailles) : dans la base, réglage « hibou »
 function choixHibou() {
-  try {
-    return JSON.parse(lsGet('bm_hibou') || '{}');
-  } catch (e) {
-    return {};
-  }
+  return reglage('hibou', null) || {};
 }
 // court / moyen / pavé : en pages, ou en heures d'écoute pour un livre audio minuté
 function tailleLivre(b) {
@@ -5393,7 +5414,7 @@ function candidatsHibou() {
   });
 }
 ACTIONS.filtreHibou = function (el) {
-  var c = choixHibou();
+  var c = JSON.parse(JSON.stringify(choixHibou()));
   var l = c[el.dataset.g] || [];
   var i = l.indexOf(el.dataset.v);
   if (i >= 0) {
@@ -5402,9 +5423,11 @@ ACTIONS.filtreHibou = function (el) {
     l.push(el.dataset.v);
   }
   c[el.dataset.g] = l;
-  lsSet('bm_hibou', JSON.stringify(c));
-  hibou.lettre = null;
-  rendre();
+  regler('hibou', c).then(function () {
+    planifierSauvegarde();
+    hibou.lettre = null;
+    rendre();
+  }).catch(erreurEcriture);
 };
 function attenteHibou() {
   return '<div class="hibou-attente">' + chouettePerchee() + '<div class="branche"></div><div>Le hibou attend sur sa branche.<br>Appelle-le : il t\'apportera un livre de ta PAL.</div></div>';
@@ -5532,14 +5555,14 @@ ACTIONS.ouvrirLettre = function () {
 .bl-prix .trophee{font-size:28px;flex:none;width:40px;text-align:center}
 .bl-prix .cat{font:800 11px Nunito,sans-serif;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold)}
 .bl-prix .gagnant{font:700 19px/1.15 "Cormorant Garamond",Georgia,serif;margin:2px 0}
-.bl-couv{position:relative;width:44px;height:66px;flex:none;border-radius:4px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,.35);background:linear-gradient(160deg,var(--accent),var(--lav));display:flex;align-items:center;justify-content:center;padding:3px;text-align:center;font:700 8px/1.1 Nunito,sans-serif;color:#fff}
+.bl-couv{/* petit-ok : couverture miniature */position:relative;width:44px;height:66px;flex:none;border-radius:4px;overflow:hidden;box-shadow:0 3px 8px rgba(0,0,0,.35);background:linear-gradient(160deg,var(--accent),var(--lav));display:flex;align-items:center;justify-content:center;padding:3px;text-align:center;font:700 8px/1.1 Nunito,sans-serif;color:#fff}
 .bl-couv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .bl-pile{position:relative;height:72px;flex:none}
 .bl-pile .bl-couv{position:absolute;top:3px;transform-origin:50% 100%}
 .bl-lunes{display:grid;grid-template-columns:repeat(6,1fr);gap:10px 4px;text-align:center}
 .bl-lune{border:0;background:none;padding:0;color:var(--ink);cursor:pointer;font-family:Nunito,sans-serif}
 .bl-lune .l{display:flex;align-items:flex-end;justify-content:center;height:46px;line-height:1}
-.bl-lune small{display:block;font:700 10px Nunito,sans-serif;color:var(--muted);margin-top:3px}
+.bl-lune small{display:block;font:700 11px Nunito,sans-serif;color:var(--muted);margin-top:3px}
 .bl-lune.top small{color:var(--gold)}
 .bl-lune small+small{margin-top:1px;font-weight:600;white-space:nowrap}
 .bl-portrait{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -5548,7 +5571,7 @@ ACTIONS.ouvrirLettre = function () {
 .bl-trait b{display:block;font-size:13px;margin-top:2px}
 .bl-trait span{font-size:11.5px;color:var(--muted)}
 .bl-annees{display:flex;align-items:flex-end;gap:5px;height:130px;margin-top:6px}
-.bl-annee{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;border:0;background:none;padding:0;cursor:pointer;font:700 10px Nunito,sans-serif;color:var(--muted)}
+.bl-annee{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;border:0;background:none;padding:0;cursor:pointer;font:700 11px Nunito,sans-serif;color:var(--muted)}
 .bl-annee i{display:block;width:100%;border-radius:6px 6px 2px 2px;background:linear-gradient(var(--accent),var(--lav));margin-bottom:4px;opacity:.55}
 .bl-annee.choisie i{opacity:1;box-shadow:0 0 0 2px var(--accent)}
 .bl-annee.choisie{color:var(--ink)}
@@ -6264,16 +6287,16 @@ ACTIONS.fermerStory = function () {
 var FETES = {
   printemps: {nom: 'Printemps', emoji: '🌸', motifs: ['🌸', '🌷', '🦋'], anim: 'tombe', phrase: 'Les bourgeons et les pages s\'ouvrent',
     bandeau: 'radial-gradient(90% 80% at 15% 0%,#ee5f9840,transparent 70%),radial-gradient(90% 80% at 85% 0%,#5fb05b40,transparent 70%)',
-    c: {bg: '#f1f9ee', bg2: '#ffeef5', card: '#fffefb', ink: '#3d3446', muted: '#857b8c', line: '#e2ecd8', accent: '#ee5f98', lav: '#5fb05b', gold: '#f0b72f', ebook: '#8fb8e8'}},
+    c: {bg: '#f1f9ee', bg2: '#ffeef5', card: '#fffefb', ink: '#3d3446', muted: '#766c7d', line: '#e2ecd8', accent: '#ee5f98', lav: '#5fb05b', gold: '#f0b72f', ebook: '#8fb8e8'}},
   ete: {nom: 'Été', emoji: '☀️', motifs: ['🫧', '🐚', '🫧'], anim: 'monte', phrase: 'Lectures au soleil et pages salées',
     bandeau: 'radial-gradient(55% 90% at 88% 0%,#ffb81c90,transparent 65%),linear-gradient(180deg,transparent 40%,#17a9b830)',
-    c: {bg: '#fff4e2', bg2: '#e3f7f6', card: '#fffdf7', ink: '#3a3140', muted: '#8a7c74', line: '#f2dfc6', accent: '#ff7a4d', lav: '#17a9b8', gold: '#ffb81c', ebook: '#e66a9b'}},
+    c: {bg: '#fff4e2', bg2: '#e3f7f6', card: '#fffdf7', ink: '#3a3140', muted: '#796c69', line: '#f2dfc6', accent: '#ff7a4d', lav: '#17a9b8', gold: '#ffb81c', ebook: '#e66a9b'}},
   automne: {nom: 'Automne', emoji: '🍂', motifs: ['🍂', '🍁', '🌰'], anim: 'tombe', phrase: 'Plaid, thé et grimoires',
     bandeau: 'radial-gradient(100% 90% at 50% 0%,#d99a2b55,transparent 70%)',
-    c: {bg: '#f8ecdd', bg2: '#f3d9bf', card: '#fffaf2', ink: '#4a2c20', muted: '#93725f', line: '#ecd6bf', accent: '#c9552c', lav: '#7d8b3a', gold: '#d99a2b', ebook: '#6f8f4e'}},
+    c: {bg: '#f8ecdd', bg2: '#f3d9bf', card: '#fffaf2', ink: '#4a2c20', muted: '#846352', line: '#ecd6bf', accent: '#c9552c', lav: '#7d8b3a', gold: '#d99a2b', ebook: '#6f8f4e'}},
   hiver: {nom: 'Hiver', emoji: '❄️', motifs: ['❄', '❅', '❆'], anim: 'tombe', phrase: 'Flocons dehors, chapitres dedans',
     bandeau: 'linear-gradient(180deg,#cfe0f7,transparent)',
-    c: {bg: '#eaf2fb', bg2: '#f4f1fd', card: '#ffffff', ink: '#28324f', muted: '#7680a2', line: '#d9e3f2', accent: '#5b7fe0', lav: '#8f79d8', gold: '#8fb3d9', ebook: '#5fb3c9'}},
+    c: {bg: '#eaf2fb', bg2: '#f4f1fd', card: '#ffffff', ink: '#28324f', muted: '#616b8c', line: '#d9e3f2', accent: '#5b7fe0', lav: '#8f79d8', gold: '#8fb3d9', ebook: '#5fb3c9'}},
   noel: {nom: 'Noël', emoji: '🎄', motifs: ['❄', '🎁', '✦'], anim: 'tombe', phrase: 'Joyeux Noël, lectrice des neiges',
     bandeau: 'repeating-linear-gradient(45deg,#e2403f26 0 14px,transparent 14px 28px),radial-gradient(100% 90% at 50% 0%,#f2c55233,transparent 70%)',
     c: {bg: '#0f2a1c', bg2: '#3a0f16', card: '#173525', ink: '#fff8ec', muted: '#d2c3a6', line: '#2e5340', accent: '#e2403f', lav: '#41b06e', gold: '#f2c552', ebook: '#f2c552'}},
@@ -6288,31 +6311,31 @@ var FETES = {
     c: {bg: '#0e1f1d', bg2: '#24133a', card: '#16292a', ink: '#eafff8', muted: '#9fc4bb', line: '#24443f', accent: '#a879ff', lav: '#2fd0a8', gold: '#e7c36b', ebook: '#f08bb8'}},
   valentin: {nom: 'Saint-Valentin', emoji: '💌', motifs: ['💕', '♡', '💗'], anim: 'monte', phrase: 'Romances et coups de cœur',
     bandeau: 'radial-gradient(100% 90% at 50% 0%,#e0386b40,transparent 70%)',
-    c: {bg: '#fff0f3', bg2: '#fde3ec', card: '#fffafb', ink: '#4a2235', muted: '#9a6f83', line: '#f6d3de', accent: '#e0386b', lav: '#b0518f', gold: '#d9a14a', ebook: '#e88aa8'}},
+    c: {bg: '#fff0f3', bg2: '#fde3ec', card: '#fffafb', ink: '#4a2235', muted: '#8c6276', line: '#f6d3de', accent: '#e0386b', lav: '#b0518f', gold: '#d9a14a', ebook: '#e88aa8'}},
   chandeleur: {nom: 'Chandeleur', emoji: '🥞', motifs: ['🥞', '🍯', '✦'], anim: 'tombe', phrase: 'Une crêpe, un chapitre',
     bandeau: 'radial-gradient(100% 90% at 50% 0%,#e9b94966,transparent 70%)',
-    c: {bg: '#fbf4e6', bg2: '#f6ead6', card: '#fffcf6', ink: '#4b3622', muted: '#9a826a', line: '#efe1c8', accent: '#d68b2c', lav: '#b3632f', gold: '#e9b949', ebook: '#8fa86b'}},
+    c: {bg: '#fbf4e6', bg2: '#f6ead6', card: '#fffcf6', ink: '#4b3622', muted: '#826a54', line: '#efe1c8', accent: '#d68b2c', lav: '#b3632f', gold: '#e9b949', ebook: '#8fa86b'}},
   paques: {nom: 'Pâques', emoji: '🐰', motifs: ['🥚', '🐣', '🌼'], anim: 'flotte', phrase: 'Chasse aux œufs et aux chapitres',
     bandeau: 'radial-gradient(80% 90% at 20% 0%,#b48be040,transparent 70%),radial-gradient(80% 90% at 80% 0%,#7cc28d40,transparent 70%)',
-    c: {bg: '#f7f3ff', bg2: '#f0fbf2', card: '#fffefd', ink: '#3e3550', muted: '#8b819c', line: '#e6e0f2', accent: '#b48be0', lav: '#7cc28d', gold: '#f2c14e', ebook: '#f0a0b8'}},
+    c: {bg: '#f7f3ff', bg2: '#f0fbf2', card: '#fffefd', ink: '#3e3550', muted: '#746a85', line: '#e6e0f2', accent: '#b48be0', lav: '#7cc28d', gold: '#f2c14e', ebook: '#f0a0b8'}},
   poisson: {nom: 'Poisson d\'avril', emoji: '🐟', motifs: ['🐟', '🐠', '🫧'], anim: 'flotte', phrase: 'Attention aux livres farceurs',
     bandeau: 'linear-gradient(180deg,#2fa7b840,transparent)',
-    c: {bg: '#eefaf9', bg2: '#eef3ff', card: '#fbffff', ink: '#23414a', muted: '#6e8f96', line: '#d3eceb', accent: '#2fa7b8', lav: '#f07fa4', gold: '#f3b93f', ebook: '#7d8ff0'}},
+    c: {bg: '#eefaf9', bg2: '#eef3ff', card: '#fbffff', ink: '#23414a', muted: '#55757d', line: '#d3eceb', accent: '#2fa7b8', lav: '#f07fa4', gold: '#f3b93f', ebook: '#7d8ff0'}},
   livre: {nom: 'Journée mondiale du livre', emoji: '🌹', motifs: ['🌹', '📖', '✦'], anim: 'tombe', phrase: 'Un livre, une rose',
     bandeau: 'radial-gradient(100% 90% at 50% 0%,#b02e4a40,transparent 70%)',
-    c: {bg: '#f6efe2', bg2: '#f3e3e3', card: '#fffaf1', ink: '#3d2a24', muted: '#8c7468', line: '#e8d9c3', accent: '#b02e4a', lav: '#6b4a8c', gold: '#c4932f', ebook: '#5f8f6b'}},
+    c: {bg: '#f6efe2', bg2: '#f3e3e3', card: '#fffaf1', ink: '#3d2a24', muted: '#7e675c', line: '#e8d9c3', accent: '#b02e4a', lav: '#6b4a8c', gold: '#c4932f', ebook: '#5f8f6b'}},
   musique: {nom: 'Fête de la musique', emoji: '🎶', motifs: ['🎵', '🎶', '♪'], anim: 'monte', phrase: 'Lire en musique',
     bandeau: 'radial-gradient(80% 90% at 20% 0%,#ff4f9a40,transparent 70%),radial-gradient(80% 90% at 80% 0%,#6a5cff40,transparent 70%)',
-    c: {bg: '#f6efff', bg2: '#ffeef7', card: '#fffcff', ink: '#352a4a', muted: '#8a7ea3', line: '#e8ddf6', accent: '#ff4f9a', lav: '#6a5cff', gold: '#ffb703', ebook: '#21b8a6'}},
+    c: {bg: '#f6efff', bg2: '#ffeef7', card: '#fffcff', ink: '#352a4a', muted: '#73678b', line: '#e8ddf6', accent: '#ff4f9a', lav: '#6a5cff', gold: '#ffb703', ebook: '#21b8a6'}},
   chat: {nom: 'Journée du chat', emoji: '🐈‍⬛', motifs: ['🐾', '🐈‍⬛', '🧶'], anim: 'flotte', phrase: 'Ronrons et pages tournées',
     bandeau: 'radial-gradient(100% 90% at 50% 0%,#d9785b40,transparent 70%)',
-    c: {bg: '#f8f3ee', bg2: '#f0eef6', card: '#fffdfa', ink: '#3a3030', muted: '#8c7f78', line: '#ebe1d8', accent: '#d9785b', lav: '#6e6a8f', gold: '#d6a446', ebook: '#7aa58a'}},
+    c: {bg: '#f8f3ee', bg2: '#f0eef6', card: '#fffdfa', ink: '#3a3030', muted: '#786c67', line: '#ebe1d8', accent: '#d9785b', lav: '#6e6a8f', gold: '#d6a446', ebook: '#7aa58a'}},
   etoiles: {nom: 'Nuit des étoiles', emoji: '☄️', motifs: ['☄️', '✦', '✧'], anim: 'brille', phrase: 'Fais un vœu à chaque étoile filante',
     bandeau: 'radial-gradient(120% 100% at 50% 0%,#54c6ff40,transparent 70%)',
     c: {bg: '#050b24', bg2: '#0b2a4a', card: '#0e1a3a', ink: '#eaf6ff', muted: '#9fb7d8', line: '#1e3360', accent: '#54c6ff', lav: '#8a7dff', gold: '#ffe07a', ebook: '#6fe0c8'}},
   rentree: {nom: 'Rentrée littéraire', emoji: '📖', motifs: ['📖', '✒️', '🍎'], anim: 'tombe', phrase: 'Les nouveautés de la rentrée',
     bandeau: 'repeating-linear-gradient(180deg,#3e6fb014 0 1px,transparent 1px 22px),radial-gradient(100% 90% at 50% 0%,#c0503f30,transparent 70%)',
-    c: {bg: '#f5f3ec', bg2: '#eef2f7', card: '#fffefb', ink: '#2f3440', muted: '#7f8593', line: '#e3e1d6', accent: '#c0503f', lav: '#3e6fb0', gold: '#d2a13c', ebook: '#5f9a6b'}},
+    c: {bg: '#f5f3ec', bg2: '#eef2f7', card: '#fffefb', ink: '#2f3440', muted: '#686e7b', line: '#e3e1d6', accent: '#c0503f', lav: '#3e6fb0', gold: '#d2a13c', ebook: '#5f9a6b'}},
   pleinelune: {nom: 'Pleine lune', emoji: '🌕', motifs: ['✧', '🦉', '✦'], anim: 'brille', phrase: 'Nuit de pleine lune, lecture magique',
     bandeau: 'radial-gradient(40% 70% at 50% 25%,#f4ecc460,transparent 70%)',
     c: {bg: '#1a1d2e', bg2: '#2c2a3e', card: '#232638', ink: '#f4f3ff', muted: '#b9b8d4', line: '#3a3d58', accent: '#d8d2ff', lav: '#9fb6d6', gold: '#f4ecc4', ebook: '#f0a0c8'}},
@@ -6495,7 +6518,7 @@ function choixThemesHtml() {
     if (themeChoisi === 'f:' + k) {
       sel = ' selected';
     }
-    return '<option value="' + k + '"' + sel + '>' + FETES[k].emoji + ' ' + FETES[k].nom + '</option>';
+    return '<option value="' + k + '"' + sel + '>' + FETES[k].emoji + ' ' + FETES[k].nom + '</option>'; // esc-ok : fêtes écrites dans le code
   }).join('') + '</select>';
   return '<div>' + THEMES.map(function (th) {
     var cls = 'chip';
@@ -6511,7 +6534,7 @@ function puceFete() {
     return '';
   }
   var f = FETES[feteActive];
-  return '<div class="puce-fete"><span class="em">' + f.emoji + '</span><span><b>' + f.nom + '</b> · ' + f.phrase + '</span></div>';
+  return '<div class="puce-fete"><span class="em">' + f.emoji + '</span><span><b>' + f.nom + '</b> · ' + f.phrase + '</span></div>'; // esc-ok : fêtes écrites dans le code
 }
 </script>
 
@@ -6627,7 +6650,8 @@ function ouvrirScanner(surCode) {
     scan.flux = flux;
     var v = d.querySelector('video');
     v.srcObject = flux;
-    v.play();
+    // la lecture s'interrompt si le scanner se ferme aussitôt : rien de grave
+    v.play().catch(function () {});
     var piste = flux.getVideoTracks()[0];
     if (piste.getCapabilities && piste.getCapabilities().torch) {
       document.getElementById('torche').hidden = false;
@@ -6681,8 +6705,11 @@ ACTIONS.torche = function (el) {
   }
   var piste = scan.flux.getVideoTracks()[0];
   var allume = el.dataset.on !== '1';
-  piste.applyConstraints({advanced: [{torch: allume}]});
-  el.dataset.on = allume ? '1' : '0';
+  piste.applyConstraints({advanced: [{torch: allume}]}).then(function () {
+    el.dataset.on = allume ? '1' : '0';
+  }, function () {
+    toast('🔦 La lampe ne s\'allume pas sur cet appareil');
+  });
 };
 ACTIONS.isbnManuel = function () {
   var c = chiffres(document.getElementById('isbnManuel').value);
@@ -6900,7 +6927,7 @@ function resultatScan(isbn) {
         }
         jauge = '<p class="small" style="margin:8px 0 0"><b>Affinité estimée : ' + nombre(a) + '/5</b> · ' + avis + '</p><div class="jauge"><i style="width:' + Math.max(0, Math.min(100, a * 20)) + '%"></i></div>';
       }
-      var img = '<div class="ph">' + esc(infos.titreCourt).slice(0, 40) + '</div>';
+      var img = '<div class="ph">' + esc(String(infos.titreCourt || '').slice(0, 40)) + '</div>';
       if (infos.image) {
         img = '<img src="' + esc(infos.image) + '" alt="">';
       }
@@ -6910,7 +6937,7 @@ function resultatScan(isbn) {
         details.push(an[0]);
       }
       if (infos.pages) {
-        details.push(infos.pages + ' p.');
+        details.push(esc(infos.pages) + ' p.');
       }
       h = '<div class="tete">' + img + '<div><h3>' + esc(infos.titre) + '</h3><div class="small muted">' + esc(infos.auteurs.join(', ')) + '</div><div class="small muted">' + details.join(' · ') + '</div></div></div><div class="verdict">✨ Nouveau pour toi<small>il n\'est pas encore dans ton grimoire</small></div>' +
         (genres.length ? '<div>' + genres.map(function (g) { return '<span class="chip">' + esc(g) + '</span>'; }).join('') + '</div>' : '') + jauge + blocAuteur(infos.auteurs, null) +
@@ -7028,6 +7055,24 @@ function etatSelonNom(boutique) {
   return '';
 }
 // une fois : les achats papier déjà notés reçoivent neuf ou occasion d'après leur boutique
+// l'état du jeu gardé jusqu'ici sur le téléphone seulement (dates des sceaux, filtres du hibou) passe dans la base :
+// il suit la sauvegarde Drive et un changement de téléphone. Le réglage présent sert de drapeau.
+function opsEtatJeuDansBase() {
+  var ops = [];
+  [['sceauxDates', 'bm_sceaux_dates'], ['hibou', 'bm_hibou']].forEach(function (x) {
+    if (reglage(x[0]) !== undefined) {
+      return;
+    }
+    var v = null;
+    try {
+      v = JSON.parse(lsGet(x[1]) || 'null');
+    } catch (e) {}
+    if (v && Object.keys(v).length) {
+      ops.push({t: 'reglages', o: {id: x[0], v: v}});
+    }
+  });
+  return ops;
+}
 function opsEtatAchats() {
   if (reglage('migrationEtatAchats')) {
     return [];
@@ -7378,7 +7423,7 @@ function opsListesDeDepart() {
 // au démarrage : base chargée, listes de départ créées si besoin, migrations faites une seule fois
 function preparerBase() {
   return chargerBase().then(function () {
-    var migration = fusionnerMigrations(opsFusionSessions().concat(opsPlusEnvie(), opsEmojisCriteres(), opsLangueFrancais(), opsEtatAchats()));
+    var migration = fusionnerMigrations(opsFusionSessions().concat(opsPlusEnvie(), opsEmojisCriteres(), opsLangueFrancais(), opsEtatAchats(), opsEtatJeuDansBase()));
     var change = migration.some(function (op) { return op.t !== 'reglages'; });
     if (change) {
       // la base va changer : une sauvegarde partira au démarrage
@@ -8673,7 +8718,7 @@ textarea.champ{min-height:90px;font-weight:400}
 .etoiles-saisie.mini span{font-size:12px}
 .apercu-couv{display:flex;gap:12px;align-items:center;margin:6px 0}
 .apercu-couv img,.apercu-couv .ph{width:56px;height:84px;object-fit:cover;border-radius:6px;background:var(--heat0);box-shadow:var(--cover-shadow);flex:none}
-.apercu-couv .ph{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted);text-align:center;padding:4px}
+.apercu-couv .ph{display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);text-align:center;padding:4px}
 .ligne-ed{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)}
 .ligne-ed:last-child{border-bottom:0}
 .ligne-ed .boutons{display:flex;gap:4px;flex:none}
@@ -8824,7 +8869,7 @@ function heureVersChamp(ts) {
 function prix(v, devise) {
   var s = String(round(v || 0, 2).toFixed(2)).replace('.', ',');
   var d = DEVISES.find(function (x) { return x[0] === (devise || 'EUR'); });
-  return s + ' ' + ((d && d[1]) || devise || '€');
+  return s + ' ' + ((d && d[1]) || esc(devise) || '€');
 }
 
 // note de 0 à 5 par demi-étoiles : toucher une étoile la remplit, la retoucher la coupe en deux, puis l'efface
@@ -9027,7 +9072,7 @@ function ouvrirFiche(id) {
       prog = '<div class="prog"><div style="width:' + Math.min(100, 100 * (x.position || 0) / x.total) + '%"></div></div><div class="small muted">' + texteLongueur(x.unite, x.position) + ' / ' + texteLongueur(x.unite, x.total) + '</div>';
     }
     var fmt = FORMATS_FR.find(function (f) { return f[0] === x.format; });
-    return '<div class="ligne-ed"><div style="flex:1"><div class="small"><b>' + texteLecture(x) + '</b></div><div class="small muted">' + ((fmt && fmt[1]) || '') + ' · ' + etoiles(x.etoiles) + '</div>' + prog + '</div><div class="boutons"><button class="mini-btn" data-act="sessions" data-lecture="' + x.id + '">' + ic('history') + ' ' + nb + '</button><button class="mini-btn" data-act="formLecture" data-id="' + x.id + '">' + ic('pencil') + '</button></div></div>';
+    return '<div class="ligne-ed"><div style="flex:1"><div class="small"><b>' + texteLecture(x) + '</b></div><div class="small muted">' + ((fmt && fmt[1]) || '') + ' · ' + etoiles(x.etoiles) + '</div>' + prog + '</div><div class="boutons"><button class="mini-btn" data-act="sessions" data-lecture="' + x.id + '">' + ic('history') + ' ' + nb + '</button><button aria-label="Modifier la lecture" class="mini-btn" data-act="formLecture" data-id="' + x.id + '">' + ic('pencil') + '</button></div></div>';
   }).join('');
   h += '<button class="lien" data-act="formLecture" data-livre="' + id + '">' + ic('plus') + ' Ajouter une lecture passée</button>';
 
@@ -9052,7 +9097,7 @@ function ouvrirFiche(id) {
     if (a.prix) {
       montant = '<b>' + prix(a.prix, a.devise) + '</b> · ';
     }
-    return '<div class="ligne-ed"><div class="small">' + montant + details.join(' · ') + '</div><div class="boutons"><button class="mini-btn" data-act="formAchat" data-id="' + a.id + '">' + ic('pencil') + '</button></div></div>';
+    return '<div class="ligne-ed"><div class="small">' + montant + details.join(' · ') + '</div><div class="boutons"><button aria-label="Modifier l\'achat" class="mini-btn" data-act="formAchat" data-id="' + a.id + '">' + ic('pencil') + '</button></div></div>';
   }).join('') + '<button class="lien" data-act="formAchat" data-livre="' + id + '">' + ic('plus') + ' Ajouter un achat</button>';
   // la revente : une ligne si le livre est revendu, sinon un bouton (pour un livre qu'on a eu chez soi)
   if (l.possession === 'revendu' && l.revente) {
@@ -9067,7 +9112,7 @@ function ouvrirFiche(id) {
     if (l.revente.prix) {
       rvPrix = '<b>' + prix(l.revente.prix, l.revente.devise) + '</b> · ';
     }
-    h += '<div class="ligne-ed"><div class="small">💸 Revendu · ' + rvPrix + rv.join(' · ') + '</div><div class="boutons"><button class="mini-btn" data-act="formRevente" data-livre="' + id + '">' + ic('pencil') + '</button></div></div>';
+    h += '<div class="ligne-ed"><div class="small">💸 Revendu · ' + rvPrix + rv.join(' · ') + '</div><div class="boutons"><button aria-label="Modifier la revente" class="mini-btn" data-act="formRevente" data-livre="' + id + '">' + ic('pencil') + '</button></div></div>';
   } else if (achats.length || l.possession === 'possede') {
     h += '<button class="lien" data-act="formRevente" data-livre="' + id + '">💸 Je l\'ai revendu</button>';
   }
@@ -9110,7 +9155,7 @@ function activerAutoForm(o) {
   });
 }
 function rangAutoForm(livreId) {
-  return '<p class="small muted etat-auto" id="etatAuto">✍️ tes changements s\'enregistrent tout seuls</p>' +
+  return '<p class="small muted etat-auto" id="etatAuto" role="status">✍️ tes changements s\'enregistrent tout seuls</p>' +
     '<div class="row"><button class="act" data-act="retourFiche" data-id="' + livreId + '">' + ic('check') + ' Terminé</button><button type="button" class="lien" data-act="defaireAutoForm" id="defaireAuto" hidden>↩️ Annuler mes modifications</button></div>';
 }
 function etatAutoForm(t) {
@@ -9260,10 +9305,10 @@ function ouvrirFormLivre(id, prerempli) {
     '<label>Série et tome</label><div class="deux-un">' + champ('flSerie', fl.serieNom, 'list="dlSeries" placeholder="Pas de série" autocomplete="off"') + champ('flTome', fl.tome === null || fl.tome === undefined ? '' : String(fl.tome).replace('.', ','), 'inputmode="decimal" placeholder="Tome"') + '</div>' + listeDeChoix('dlSeries', valeurs(D.series).map(function (s) { return s.nom; })) +
     '<div class="deux"><div><label>Format</label>' + choix('flFormat', FORMATS_FR, fl.format) + '</div><div><label>Chez moi</label>' + choix('flPossession', POSSESSIONS, fl.possession) + '</div></div>' +
     '<div class="deux"><div><label>Se compte en</label>' + choix('flUnite', UNITES, fl.unite) + '</div><div><label>Longueur</label><div id="zTotal">' + champLongueur('flTotal', fl.unite, fl.total) + '</div></div></div>' +
-    '<label>Genres</label><div id="zGenres"></div><div class="avec-bouton">' + champ('flGenre', '', 'list="dlGenres" placeholder="Ajouter un genre" autocomplete="off"') + '<button type="button" class="act doux" data-act="flAjouterGenre">' + ic('plus') + '</button></div>' + listeDeChoix('dlGenres', valeurs(D.genres).filter(function (g) { return !g.archive; }).map(function (g) { return g.nom; })) +
+    '<label>Genres</label><div id="zGenres"></div><div class="avec-bouton">' + champ('flGenre', '', 'list="dlGenres" placeholder="Ajouter un genre" autocomplete="off"') + '<button aria-label="Ajouter ce genre" type="button" class="act doux" data-act="flAjouterGenre">' + ic('plus') + '</button></div>' + listeDeChoix('dlGenres', valeurs(D.genres).filter(function (g) { return !g.archive; }).map(function (g) { return g.nom; })) +
     (valeurs(D.etageres).length ? '<label>Étagères</label><div id="zEtageres"></div>' : '') +
     '<label>Couverture</label><div id="zCouv"></div>' +
-    '<label>ISBN</label><div class="avec-bouton">' + champ('flIsbn', fl.isbn, 'inputmode="numeric" placeholder="978…"') + '<button type="button" class="act doux" data-act="flScanIsbn">' + ic('scan-barcode') + '</button></div>' +
+    '<label>ISBN</label><div class="avec-bouton">' + champ('flIsbn', fl.isbn, 'inputmode="numeric" placeholder="978…"') + '<button aria-label="Scanner le code-barres" type="button" class="act doux" data-act="flScanIsbn">' + ic('scan-barcode') + '</button></div>' +
     '<button type="button" class="lien" data-act="flCompleter">' + ic('search') + ' Compléter depuis internet</button>' +
     '<div class="deux"><div><label>Éditeur</label>' + champ('flEditeur', fl.editeur, 'list="dlEditeurs" autocomplete="off"') + '</div><div><label>Langue</label>' + champ('flLangue', fl.langue, 'placeholder="Français"') + '</div></div>' + listeDeChoix('dlEditeurs', valeurs(D.livres).map(function (x) { return x.editeur; })) +
     '<label>Date de parution</label>' + champsParution(fl.parution) +
@@ -9388,7 +9433,7 @@ function rendreContrib() {
       var r = ROLES.find(function (x) { return x[0] === c.role; });
       role = ' <span class="muted">(' + esc(((r && r[1]) || c.role).toLowerCase()) + ')</span>';
     }
-    return '<span class="chip on">' + esc(c.nom) + role + '<span class="x" data-act="flRetirerAuteur" data-i="' + i + '">' + ic('x') + '</span></span>';
+    return '<span class="chip on">' + esc(c.nom) + role + '<span role="button" aria-label="Retirer" class="x" data-act="flRetirerAuteur" data-i="' + i + '">' + ic('x') + '</span></span>';
   }).join('') || '<p class="small muted" style="margin:4px 0">Personne pour l\'instant.</p>';
 }
 ACTIONS.flAjouterAuteur = function () {
@@ -9413,7 +9458,7 @@ function rendreGenresForm() {
     return;
   }
   z.innerHTML = fl.genres.map(function (g, i) {
-    return '<span class="chip on">' + esc(g) + '<span class="x" data-act="flRetirerGenre" data-i="' + i + '">' + ic('x') + '</span></span>';
+    return '<span class="chip on">' + esc(g) + '<span role="button" aria-label="Retirer" class="x" data-act="flRetirerGenre" data-i="' + i + '">' + ic('x') + '</span></span>';
   }).join('') || '<p class="small muted" style="margin:4px 0">Aucun genre.</p>';
 }
 ACTIONS.flAjouterGenre = function () {
@@ -9475,7 +9520,7 @@ function rendreCouv() {
   if (src) {
     img = '<img src="' + esc(src) + '" alt="">';
   }
-  z.innerHTML = '<div class="apercu-couv">' + img + '<div><button type="button" class="mini-btn" data-act="flPhotoCouv">' + ic('camera') + ' Photo</button> <button type="button" class="mini-btn" data-act="flLienCouv">' + ic('link') + ' Lien</button>' + (src ? ' <button type="button" class="mini-btn" data-act="flSansCouv">' + ic('x') + '</button>' : '') + '</div></div>';
+  z.innerHTML = '<div class="apercu-couv">' + img + '<div><button type="button" class="mini-btn" data-act="flPhotoCouv">' + ic('camera') + ' Photo</button> <button type="button" class="mini-btn" data-act="flLienCouv">' + ic('link') + ' Lien</button>' + (src ? ' <button aria-label="Retirer la couverture" type="button" class="mini-btn" data-act="flSansCouv">' + ic('x') + '</button>' : '') + '</div></div>';
 }
 ACTIONS.flPhotoCouv = function () {
   document.getElementById('flFichierCouv').click();
@@ -10187,7 +10232,7 @@ function afficherSessions(lid) {
     } else if (gains[s.id]) {
       rythme = ' · ' + gains[s.id] + ' p.';
     }
-    return '<div class="ligne-ed"><div class="small"><div>' + JOURS[(d.getDay() + 6) % 7] + ' ' + fdate(s.debut) + page + '</div><div class="muted">' + texteSession(s) + rythme + '</div></div><div class="boutons"><button class="mini-btn" data-act="formSession" data-id="' + s.id + '">' + ic('pencil') + '</button></div></div>';
+    return '<div class="ligne-ed"><div class="small"><div>' + JOURS[(d.getDay() + 6) % 7] + ' ' + fdate(s.debut) + page + '</div><div class="muted">' + texteSession(s) + rythme + '</div></div><div class="boutons"><button aria-label="Modifier la session" class="mini-btn" data-act="formSession" data-id="' + s.id + '">' + ic('pencil') + '</button></div></div>';
   }).join('');
   h += '<div class="row" style="margin-top:12px"><button class="act doux" data-act="formSession" data-lecture="' + lid + '">' + ic('plus') + ' Ajouter une session</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">' + ic('chevron-left') + ' Retour</button></div>';
   ouvrirFeuille(h);
@@ -10518,7 +10563,7 @@ ACTIONS.auteurs = function () {
     var l = valeurs(D.auteurs).filter(function (a) { return !q || slug(a.nom).indexOf(q) >= 0; }).sort(function (a, b) { return (a.tri || '').localeCompare(b.tri || '', 'fr') || a.nom.localeCompare(b.nom, 'fr'); });
     document.getElementById('listeAuteurs').innerHTML = l.map(function (a) {
       var n = livresDeLAuteur(a.id).length;
-      return '<div class="ligne-ed"><div class="small"><b>' + esc(a.nom) + '</b> <span class="muted">· ' + n + ' livre' + (n > 1 ? 's' : '') + '</span></div><div class="boutons"><button class="mini-btn" data-act="formAuteur" data-id="' + esc(a.id) + '">' + ic('pencil') + '</button></div></div>';
+      return '<div class="ligne-ed"><div class="small"><b>' + esc(a.nom) + '</b> <span class="muted">· ' + n + ' livre' + (n > 1 ? 's' : '') + '</span></div><div class="boutons"><button aria-label="Modifier" class="mini-btn" data-act="formAuteur" data-id="' + esc(a.id) + '">' + ic('pencil') + '</button></div></div>';
     }).join('') || '<p class="small muted">Personne.</p>';
   }
   lister();
@@ -10600,7 +10645,7 @@ ACTIONS.nouveauManuel = function () {
   });
 };
 ACTIONS.chercherTitre = function () {
-  ouvrirFeuille('<h3>Chercher un livre</h3><div class="avec-bouton">' + champ('rechTitre', '', 'placeholder="Titre, auteur…" autocomplete="off" enterkeyhint="search"') + '<button class="act" data-act="lancerRecherche">' + ic('search') + '</button></div><div id="resultatsRecherche"></div>');
+  ouvrirFeuille('<h3>Chercher un livre</h3><div class="avec-bouton">' + champ('rechTitre', '', 'placeholder="Titre, auteur…" autocomplete="off" enterkeyhint="search"') + '<button aria-label="Chercher" class="act" data-act="lancerRecherche">' + ic('search') + '</button></div><div id="resultatsRecherche"></div>');
   var c = document.getElementById('rechTitre');
   c.addEventListener('keydown', function (e) {
     if (e.key === 'Enter') {
@@ -10627,12 +10672,12 @@ ACTIONS.lancerRecherche = function () {
     var biblio = M ? M : modeleDepuisBase();
     z.innerHTML = l.map(function (inf, i) {
       var deja = biblio.livres.length && trouverDansBibliothequeDe(biblio, inf.isbn, inf);
-      var img = '<div class="ph">' + esc(inf.titreCourt).slice(0, 30) + '</div>';
+      var img = '<div class="ph">' + esc(String(inf.titreCourt || '').slice(0, 30)) + '</div>';
       if (inf.image) {
         img = '<img loading="lazy" src="' + esc(inf.image) + '" alt="">';
       }
       var an = (/\d{4}/.exec(String(inf.date || '')) || [''])[0];
-      return '<div class="book resultat" data-act="choisirResultat" data-i="' + i + '">' + img + '<div><div class="t">' + esc(inf.titre) + '</div><div class="small muted">' + esc(inf.auteurs.join(', ')) + '</div><div class="small muted">' + [an, inf.pages ? inf.pages + ' p.' : ''].filter(Boolean).join(' · ') + (deja ? ' <span class="etiquette-deja">déjà chez toi</span>' : '') + '</div></div></div>';
+      return '<div class="book resultat" data-act="choisirResultat" data-i="' + i + '">' + img + '<div><div class="t">' + esc(inf.titre) + '</div><div class="small muted">' + esc(inf.auteurs.join(', ')) + '</div><div class="small muted">' + [an, inf.pages ? esc(inf.pages) + ' p.' : ''].filter(Boolean).join(' · ') + (deja ? ' <span class="etiquette-deja">déjà chez toi</span>' : '') + '</div></div></div>';
     }).join('');
   });
 };
@@ -10729,7 +10774,7 @@ body.minuteur-actif main{padding-bottom:180px}
 .infos-m b{color:var(--ink)}
 .commandes{display:flex;align-items:center;justify-content:center;gap:24px;margin-top:auto;padding-top:18px}
 .rond-m{width:60px;height:60px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;color:var(--ink);cursor:pointer}
-.rond-m small{font:700 9px Nunito,sans-serif;color:var(--muted);margin-top:1px}
+.rond-m small{font:700 11px Nunito,sans-serif;color:var(--muted);margin-top:1px}
 .gros-m{width:100px;height:100px;border-radius:50%;border:0;display:flex;align-items:center;justify-content:center;font-size:40px;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--lav));box-shadow:0 10px 30px color-mix(in srgb,var(--accent) 55%,transparent),0 0 0 6px color-mix(in srgb,var(--accent) 18%,transparent);transition:transform .1s}
 .gros-m:active{transform:scale(.94)}
 .eveil{font-size:11px;color:var(--muted);margin-top:14px}
@@ -10760,7 +10805,7 @@ body.minuteur-actif main{padding-bottom:180px}
   .page-minuteur .titre{font-size:17px;margin:4px 0 0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .anneau-m{width:min(178px,42vh);height:min(178px,42vh);margin:10px 0 6px}
   .chrono-m{font-size:min(46px,11vh)}
-  .etat-m{font-size:10.5px;margin-top:4px;padding:3px 10px}
+  .etat-m{font-size:11px;margin-top:4px;padding:3px 10px}
   .page-minuteur.pause .etat-m{font-size:12.5px;padding:5px 14px}
   .infos-m{font-size:11.5px;min-height:0;line-height:1.45}
   .commandes{gap:18px;padding-top:8px}
@@ -11023,7 +11068,7 @@ function modifierSessionEnCours(champs) {
   return ecrire([{t: 'sessions', o: Object.assign({}, s, champs)}]).then(function () {
     majMinuteur();
     majVerrouEcran();
-  });
+  }).catch(erreurEcriture);
 }
 // ▶ / ⏸ : un « bzz » pour reprendre, deux pour la pause
 ACTIONS.basculerMinuteur = function () {
@@ -11312,7 +11357,7 @@ ACTIONS.mesListes = function (el) {
     if (n > 1) {
       unite = ' livres';
     }
-    var haut = '<button class="mini-btn" data-act="deplacerElement" data-id="' + esc(x.id) + '" data-sens="-1"' + (i <= 0 ? ' disabled' : '') + '>' + ic('chevron-up') + '</button>';
+    var haut = '<button aria-label="Monter" class="mini-btn" data-act="deplacerElement" data-id="' + esc(x.id) + '" data-sens="-1"' + (i <= 0 ? ' disabled' : '') + '>' + ic('chevron-up') + '</button>';
     var bas = '<button class="mini-btn" data-act="deplacerElement" data-id="' + esc(x.id) + '" data-sens="1"' + (i < 0 || i >= actifs.length - 1 ? ' disabled' : '') + '>' + ic('chevron-down') + '</button>';
     if (x.archive) {
       haut = '';
@@ -11320,9 +11365,9 @@ ACTIONS.mesListes = function (el) {
     }
     var pastille = '';
     if (t === 'genres' && x.couleur) {
-      pastille = '<i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:' + esc(x.couleur) + ';margin-right:6px"></i>';
+      pastille = '<i style="display:inline-block;width:10px;height:10px;border-radius:3px;background:' + (couleurSure(x.couleur) || 'var(--line)') + ';margin-right:6px"></i>';
     }
-    return '<div class="ligne-ed' + (x.archive ? ' archive' : '') + '" data-s="' + esc(slug(x.nom)) + '"><div class="nom small">' + pastille + '<b>' + esc(libelle(x)) + '</b> <span class="muted">· ' + n + unite + (x.archive ? ' · archivé' : '') + '</span></div><div class="boutons">' + haut + bas + '<button class="mini-btn" data-act="formElement" data-t="' + t + '" data-id="' + esc(x.id) + '">' + ic('pencil') + '</button></div></div>';
+    return '<div class="ligne-ed' + (x.archive ? ' archive' : '') + '" data-s="' + esc(slug(x.nom)) + '"><div class="nom small">' + pastille + '<b>' + esc(libelle(x)) + '</b> <span class="muted">· ' + n + unite + (x.archive ? ' · archivé' : '') + '</span></div><div class="boutons">' + haut + bas + '<button aria-label="Modifier" class="mini-btn" data-act="formElement" data-t="' + t + '" data-id="' + esc(x.id) + '">' + ic('pencil') + '</button></div></div>';
   }).join('') + '</div>';
   h += '<p class="small muted" id="listeRien" hidden></p><button class="lien" id="ajoutListe" data-act="formElement" data-t="' + t + '">' + ic('plus') + ' Ajouter un·e ' + info[2] + '</button>';
   ouvrirFeuille(h);
@@ -11549,7 +11594,7 @@ function carteCitations() {
     if (n.book) {
       src = esc(titre(n.book));
       if (n.page) {
-        src += ', p. ' + n.page;
+        src += ', p. ' + esc(n.page);
       }
     }
     var type = iconeTypeCitation(n.type);
@@ -11573,7 +11618,7 @@ function carteCitations() {
     if (n.type === 'NOTE') {
       boite += ' note-cit';
     }
-    return '<div style="margin:14px 0 18px"><div class="' + boite + '">' + texte + photo + '<p class="qsrc">' + src + ' · ' + fdate(n.created_at) + '</p></div><div class="row" style="justify-content:center;margin-top:8px"><button class="act doux" data-act="formCitation" data-id="' + esc(n._key) + '">' + ic('pencil') + '</button>' + image + '</div></div>';
+    return '<div style="margin:14px 0 18px"><div class="' + boite + '">' + texte + photo + '<p class="qsrc">' + src + ' · ' + fdate(n.created_at) + '</p></div><div class="row" style="justify-content:center;margin-top:8px"><button aria-label="Modifier la citation" class="act doux" data-act="formCitation" data-id="' + esc(n._key) + '">' + ic('pencil') + '</button>' + image + '</div></div>';
   }).join(''));
 }
 
@@ -11587,7 +11632,7 @@ function blocCitationsLivre(id) {
     }
     var p = '';
     if (c.page) {
-      p = 'p. ' + c.page + ' · ';
+      p = 'p. ' + esc(c.page) + ' · ';
     }
     var icone = iconeTypeCitation(c.type);
 
@@ -11595,7 +11640,7 @@ function blocCitationsLivre(id) {
     if (c.photoId && urlPhoto(c.photoId)) {
       vignette = '<img class="cit-vignette" style="width:48px;height:48px" src="' + esc(urlPhoto(c.photoId)) + '" alt="">';
     }
-    return '<div class="ligne-ed">' + vignette + '<div class="small" style="flex:1"><span class="muted">' + p + '</span>' + icone + '<i>' + esc(t) + '</i></div><div class="boutons"><button class="mini-btn" data-act="formCitation" data-id="' + esc(c.id) + '">' + ic('pencil') + '</button></div></div>';
+    return '<div class="ligne-ed">' + vignette + '<div class="small" style="flex:1"><span class="muted">' + p + '</span>' + icone + '<i>' + esc(t) + '</i></div><div class="boutons"><button aria-label="Modifier la citation" class="mini-btn" data-act="formCitation" data-id="' + esc(c.id) + '">' + ic('pencil') + '</button></div></div>';
   }).join('') + '<button class="lien" data-act="formCitation" data-livre="' + id + '">' + ic('plus') + ' Ajouter une citation</button>';
 }
 
@@ -11665,7 +11710,7 @@ function rendrePhotoCitation() {
     z.innerHTML = '<div class="row"><button type="button" class="mini-btn" data-act="ciPhoto">' + ic('camera') + ' Prendre ou choisir une photo</button></div>';
     return;
   }
-  z.innerHTML = '<div style="display:flex;gap:12px;align-items:center"><img class="cit-vignette" src="' + esc(src) + '" alt=""><div class="row"><button type="button" class="mini-btn" data-act="ciLireTexte">' + ic('scan-text') + ' Lire le texte</button><button type="button" class="mini-btn" data-act="ciPhoto">' + ic('refresh-cw') + '</button><button type="button" class="mini-btn" data-act="ciSansPhoto">' + ic('x') + '</button></div></div>';
+  z.innerHTML = '<div style="display:flex;gap:12px;align-items:center"><img class="cit-vignette" src="' + esc(src) + '" alt=""><div class="row"><button type="button" class="mini-btn" data-act="ciLireTexte">' + ic('scan-text') + ' Lire le texte</button><button aria-label="Changer la photo" type="button" class="mini-btn" data-act="ciPhoto">' + ic('refresh-cw') + '</button><button aria-label="Retirer la photo" type="button" class="mini-btn" data-act="ciSansPhoto">' + ic('x') + '</button></div></div>';
 }
 ACTIONS.ciPhoto = function () {
   document.getElementById('ciFichier').click();
@@ -11802,7 +11847,7 @@ function lireTexteImage(source) {
 ACTIONS.preparerOcr = function () {
   toast('🔤 Téléchargement de la lecture de texte (≈ 5 Mo)…');
   travailleurOcr(suiviOcr).then(function () {
-    regler('ocrPret', Date.now());
+    regler('ocrPret', Date.now()).catch(erreurEcriture);
     toast('✨ Lecture de texte prête, même hors connexion');
   }).catch(function (e) {
     avertir('Téléchargement impossible : ' + ((e && e.message) || e));
@@ -13139,15 +13184,21 @@ function differencesJeu(avant, apres, res) {
     });
   }
   // sceaux et paliers
-  var dates = datesSceaux();
+  var dates = Object.assign({}, datesSceaux());
+  var nouveauxSceaux = false;
   Object.keys(apres.sceaux).forEach(function (k) {
     var a = (avant.sceaux || {})[k] || 0;
     for (var p = a + 1; p <= apres.sceaux[k]; p++) {
       dates[k + ':' + p] = now;
+      nouveauxSceaux = true;
       fetes.push({type: 'sceau', cle: k, palier: p});
     }
   });
-  lsSet('bm_sceaux_dates', JSON.stringify(dates));
+  if (nouveauxSceaux) {
+    regler('sceauxDates', dates).then(planifierSauvegarde).catch(function (e) {
+      noterErreur(e && e.message, 'dates des sceaux');
+    });
+  }
   if (apres.niveau > (avant.niveau || 0)) {
     fetes.push({type: 'niveau', de: avant.niveau || 0, a: apres.niveau});
   }
@@ -13423,6 +13474,12 @@ ACTIONS.reglages = function () {
     h += '</div>';
   }
 
+  // le journal n'apparaît que s'il y a eu une erreur
+  var nbErreurs = journalErreurs().length;
+  if (nbErreurs) {
+    h += '<div class="reglage"><h4>🐞 Journal des erreurs</h4><p class="small muted">' + nbErreurs + ' souci' + (nbErreurs > 1 ? 's' : '') + ' noté' + (nbErreurs > 1 ? 's' : '') + ' par l\'appli. Tu peux me les envoyer pour que je regarde.</p><div class="row"><button class="act doux" data-act="journalErreurs">' + ic('list') + ' Voir</button></div></div>';
+  }
+
   var v = VERSION_APPLI;
   h += '<div class="reglage"><h4>🛟 Copies de sécurité</h4><p class="small muted">Le grimoire garde une copie de tes données avant chaque restauration, réimport, application de propositions ou mise à jour de l\'appli (les 5 dernières).</p><div class="row"><button class="act doux" data-act="copiesSecurite">' + ic('history') + ' Voir les copies</button></div></div>';
 
@@ -13430,6 +13487,30 @@ ACTIONS.reglages = function () {
     '<p class="small"><a href="aide.html" style="color:var(--accent)">📖 Installer, mettre à jour, changer de téléphone : le mode d\'emploi</a></p></div>';
   ouvrirFeuille(h);
   afficherStockage();
+};
+
+ACTIONS.journalErreurs = function () {
+  var j = journalErreurs().slice().reverse();
+  var lignes = j.map(function (x) {
+    return '<div class="ligne-ed"><div class="small"><b>' + esc(fdate(x.date)) + ' ' + esc(heureVersChamp(x.date)) + '</b> · ' + esc(x.message) + '<div class="muted">' + esc(x.ou) + ' · version ' + esc(x.version || '') + '</div></div></div>';
+  }).join('');
+  ouvrirFeuille('<h3>🐞 Journal des erreurs</h3><p class="small muted">Les ' + j.length + ' derniers soucis, du plus récent au plus ancien.</p>' + lignes +
+    '<div class="row" style="margin-top:12px"><button class="act" data-act="copierJournal">' + ic('copy') + ' Copier</button><button class="act doux" data-act="viderJournal">' + ic('trash-2') + ' Vider</button></div>');
+};
+ACTIONS.copierJournal = function () {
+  var texte = journalErreurs().map(function (x) {
+    return new Date(x.date).toISOString() + ' [' + (x.version || '') + '] ' + x.message + ' — ' + x.ou;
+  }).join('\n');
+  navigator.clipboard.writeText(texte).then(function () {
+    toast('📋 Journal copié');
+  }, function () {
+    avertir('Je n\'arrive pas à copier : fais une capture d\'écran à la place.');
+  });
+};
+ACTIONS.viderJournal = function () {
+  lsSet('bm_erreurs', '[]');
+  fermerFeuille();
+  toast('🐞 Journal vidé');
 };
 
 // les copies de sécurité locales (faireInstantane, Base.html) : la liste, et le retour à l'une d'elles
@@ -13475,6 +13556,8 @@ function afficherStockage() {
       t += ' Place utilisée : ' + nombre(r[1].usage / 1048576) + ' Mo.';
     }
     el.textContent = t;
+  }).catch(function () {
+    el.textContent = 'État du stockage inconnu sur ce navigateur.';
   });
 }
 
@@ -13506,7 +13589,7 @@ ACTIONS.delierDrive = function () {
     ecrire([{t: 'reglages', suppr: 'liaison'}]).then(function () {
       majTemoin('');
       ACTIONS.reglages();
-    });
+    }).catch(erreurEcriture);
   });
 };
 ACTIONS.sauverDrive = function () {
@@ -13554,6 +13637,43 @@ ACTIONS.restaurerFichierDrive = function (el) {
 .maj-dispo{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top));transform:translateX(-50%);z-index:75;display:flex;align-items:center;gap:8px;border:0;background:var(--ink);color:var(--card);font:700 14px Nunito,sans-serif;padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.3);white-space:nowrap;max-width:92vw;animation:fondu .3s ease}
 </style>
 <script>
+// ---------- erreurs visibles : un message discret, et un journal (⚙️ Réglages → 🐞 Journal des erreurs) ----------
+var JOURNAL_MAX = 30;
+var dernierMessageErreur = 0;
+function journalErreurs() {
+  try {
+    return JSON.parse(lsGet('bm_erreurs') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+function noterErreur(message, ou) {
+  message = String(message || 'erreur inconnue');
+  // bruit du navigateur, sans conséquence
+  if (/ResizeObserver loop/.test(message)) {
+    return;
+  }
+  var j = journalErreurs();
+  j.push({date: Date.now(), message: message.slice(0, 300), ou: String(ou || '').slice(0, 200), version: VERSION_APPLI});
+  lsSet('bm_erreurs', JSON.stringify(j.slice(-JOURNAL_MAX)));
+  // un message au plus toutes les 10 secondes
+  if (Date.now() - dernierMessageErreur > 10000 && document.body) {
+    dernierMessageErreur = Date.now();
+    toast('⚠️ Un petit souci est arrivé (détails : ⚙️ → Journal des erreurs)');
+  }
+}
+window.addEventListener('error', function (e) {
+  noterErreur(e.message || (e.error && e.error.message), (e.filename || '').split('/').pop() + ':' + (e.lineno || '') + ':' + (e.colno || ''));
+});
+window.addEventListener('unhandledrejection', function (e) {
+  var r = e.reason;
+  var ou = '';
+  if (r && r.stack) {
+    ou = r.stack.split('\n').slice(0, 2).join(' ');
+  }
+  noterErreur((r && r.message) || r, ou);
+});
+
 // ---------- Version appli (PWA) : démarrage, fichiers reçus (partage Android ou 📥) ----------
 var CACHE_PARTAGE = 'grimoire-partage';
 
@@ -13753,7 +13873,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 10:25:05';
+var VERSION_APPLI = '2026-10-06 10:32:39';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
@@ -13803,7 +13923,7 @@ function verifierMiseAJour() {
   if (navigator.serviceWorker) {
     navigator.serviceWorker.getRegistration().then(function (r) {
       if (r) {
-        r.update();
+        r.update().catch(function () {});
       }
     }).catch(function () {});
   }
@@ -13872,12 +13992,12 @@ function demarrer() {
     }).catch(function () {});
   }
   if (navigator.storage && navigator.storage.persist) {
-    navigator.storage.persist();
+    navigator.storage.persist().catch(function () {});
   }
   document.getElementById('fichierImport').addEventListener('change', function (e) {
     var f = e.target.files[0];
     if (f) {
-      f.arrayBuffer().then(recevoirFichier);
+      f.arrayBuffer().then(recevoirFichier).catch(erreurEcran);
     }
     e.target.value = '';
   });
@@ -13897,7 +14017,7 @@ function demarrer() {
             return ouvrirGrimoire();
           }
           return rep.arrayBuffer().then(function (b) {
-            c.delete('partage-recu');
+            c.delete('partage-recu').catch(function () {});
             return recevoirFichier(b);
           });
         });
@@ -13971,13 +14091,30 @@ function ouvrirGrimoire() {
     afficherGrimoire();
     return;
   }
-  return idbGet('export').then(function (e) {
+  return ancienneBaseExiste().then(function (existe) {
+    if (!existe) {
+      return null;
+    }
+    return idbGet('export');
+  }).then(function (e) {
     if (e && e.octets) {
       proposerImportAncien(e);
     } else {
       ecranVide();
     }
   }).catch(ecranVide);
+}
+// la très ancienne base « grimoire » n'existe que sur un téléphone qui avait la version lecture seule :
+// on ne l'ouvre (donc on ne la crée) que si elle est là ; un navigateur qui ne sait pas lister les bases l'ouvre comme avant
+function ancienneBaseExiste() {
+  if (!indexedDB.databases) {
+    return Promise.resolve(true);
+  }
+  return indexedDB.databases().then(function (l) {
+    return l.some(function (b) { return b.name === 'grimoire'; });
+  }, function () {
+    return true;
+  });
 }
 </script>
 
