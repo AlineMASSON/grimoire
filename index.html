@@ -8895,7 +8895,35 @@ function afficherSessions(lid) {
   var x = D.lectures[lid];
   var l = D.livres[x.livreId];
   var ss = valeurs(D.sessions).filter(function (s) { return s.lectureId === lid && !s.enCours; }).sort(function (a, b) { return (b.debut || 0) - (a.debut || 0); });
+  // pages lues pendant chaque session : ce qu'elle a fait avancer depuis la page la plus loin atteinte avant elle
+  var gains = {};
+  if (x.unite === 'pages') {
+    var plusLoin = 0;
+    ss.slice().sort(function (a, b) { return (a.debut || 0) - (b.debut || 0); }).forEach(function (s) {
+      if (s.position !== null && s.position !== undefined) {
+        gains[s.id] = Math.max(0, s.position - plusLoin);
+        plusLoin = Math.max(plusLoin, s.position);
+      }
+    });
+  }
+  // vitesse : seulement pour une session minutée (au moins une minute) qui a fait avancer
+  function vitesse(s) {
+    if (!gains[s.id] || !s.dureeSec || s.dureeSec < 60) {
+      return 0;
+    }
+    return gains[s.id] / (s.dureeSec / 60);
+  }
   var h = '<h3>Sessions de lecture</h3><p class="small muted">' + esc(l.titre) + ' · ' + texteLecture(x) + '</p>';
+  var minutees = ss.filter(function (s) { return vitesse(s) > 0; });
+  if (minutees.length) {
+    var pages = minutees.reduce(function (n, s) { return n + gains[s.id]; }, 0);
+    var minutes = minutees.reduce(function (n, s) { return n + s.dureeSec / 60; }, 0);
+    var parPage = '';
+    if (pages / minutes < 1) {
+      parPage = ', soit environ ' + nombre(round(minutes / pages, 1)) + ' min par page';
+    }
+    h += '<p class="small">⚡ En moyenne <b>' + nombre(round(pages / minutes, 1)) + ' page' + (pages / minutes >= 2 ? 's' : '') + ' par minute</b>' + parPage + ' (' + minutees.length + ' session' + (minutees.length > 1 ? 's' : '') + ' minutée' + (minutees.length > 1 ? 's' : '') + ')</p>';
+  }
   if (!ss.length) {
     h += '<p class="small muted">Aucune session notée.</p>';
   }
@@ -8905,7 +8933,13 @@ function afficherSessions(lid) {
     if (s.position !== null && s.position !== undefined) {
       page = ' · ' + texteLongueur(x.unite, s.position);
     }
-    return '<div class="ligne-ed"><div class="small"><div>' + JOURS[(d.getDay() + 6) % 7] + ' ' + fdate(s.debut) + page + '</div><div class="muted">' + texteSession(s) + '</div></div><div class="boutons"><button class="mini-btn" data-act="formSession" data-id="' + s.id + '">' + ic('pencil') + '</button></div></div>';
+    var rythme = '';
+    if (vitesse(s)) {
+      rythme = ' · ' + gains[s.id] + ' p. · <b>' + nombre(round(vitesse(s), 1)) + ' p./min</b>';
+    } else if (gains[s.id]) {
+      rythme = ' · ' + gains[s.id] + ' p.';
+    }
+    return '<div class="ligne-ed"><div class="small"><div>' + JOURS[(d.getDay() + 6) % 7] + ' ' + fdate(s.debut) + page + '</div><div class="muted">' + texteSession(s) + rythme + '</div></div><div class="boutons"><button class="mini-btn" data-act="formSession" data-id="' + s.id + '">' + ic('pencil') + '</button></div></div>';
   }).join('');
   h += '<div class="row" style="margin-top:12px"><button class="act doux" data-act="formSession" data-lecture="' + lid + '">' + ic('plus') + ' Ajouter une session</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">' + ic('chevron-left') + ' Retour</button></div>';
   ouvrirFeuille(h);
@@ -12105,7 +12139,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-05 18:45:39';
+var VERSION_APPLI = '2026-10-06 08:32:20';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
