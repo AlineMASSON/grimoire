@@ -3252,7 +3252,8 @@ function preparerStylesGuirlandes(forme) {
   if (!st) {
     st = document.createElement('style');
     st.id = 'stylesGuirlandes';
-    st.textContent = '.m-orne .rangs::before,.m-orne .rangs::after,.m-orne .vitrine::before,.m-orne .vitrine::after{top:-' + DECALAGE_GUIRLANDE + 'px}' +
+    // bottom : rien sur la planche du bas du meuble (ni festons, ni lueur recopiée)
+    st.textContent = '.m-orne .rangs::before,.m-orne .rangs::after,.m-orne .vitrine::before,.m-orne .vitrine::after{top:-' + DECALAGE_GUIRLANDE + 'px;bottom:22px}' +
       '.m-orne .rangs::before,.m-orne .vitrine::before{background:var(--g1,var(--gold));mix-blend-mode:screen}' +
       '.m-orne .rangs::after,.m-orne .vitrine::after{background:var(--g2,var(--accent));mix-blend-mode:screen}';
     document.head.appendChild(st);
@@ -13951,7 +13952,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 10:57:10';
+var VERSION_APPLI = '2026-10-06 11:04:02';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
