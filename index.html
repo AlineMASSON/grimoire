@@ -2863,7 +2863,7 @@ function vSeries() {
 .orn-m{position:absolute;pointer-events:none;z-index:2;display:block}
 .orn-m svg{display:block;width:100%;height:100%;overflow:visible}
 .plaque-meuble{position:absolute;left:50%;transform:translateX(-50%);z-index:3;white-space:nowrap;font:800 12px "Cormorant Garamond",Georgia,serif;letter-spacing:1px;color:#3a220f;padding:2px 13px;border-radius:999px;background:linear-gradient(180deg,#fff4c2,var(--dore) 45%,#8a6418 55%,#f3d27a);box-shadow:0 2px 4px rgba(0,0,0,.45),inset 0 1px 0 #fff8dd}
-.plaque-meuble small{font:700 10px Nunito,sans-serif;letter-spacing:0;opacity:.75}
+.plaque-meuble small{font:700 11px Nunito,sans-serif;letter-spacing:0;opacity:.75}
 /* la place au-dessus de chaque meuble, pour son fronton */
 .etagere.e-bombe{margin-top:58px}.etagere.e-victorienne{margin-top:56px}.etagere.e-neoclassique{margin-top:76px}.etagere.e-gothique{margin-top:100px}.etagere.e-rococo{margin-top:84px}.etagere.e-artnouveau{margin-top:90px}.etagere.e-campagne{margin-top:64px}
 .etagere.e-bombe:first-of-type,.etagere[class*="e-"]{scroll-margin-top:110px}
@@ -3101,7 +3101,9 @@ function ornementSaison(saison, n) {
   return '';
 }
 
-// ---------- guirlande : une forme par thème, découpée par un masque SVG (24 px de large, une lumière par rayon) ----------
+// ---------- guirlande : en festons de tailles variées, accrochée sous chaque planche (et sous le haut du meuble) ----------
+// Une forme de lumière par thème, découpée par deux masques SVG : ::before porte le fil et une lumière sur deux (couleur 1),
+// ::after les autres lumières (couleur 2). Le motif fait 350 px de large et la hauteur d'un rayon : il se répète.
 var FORMES_GUIRLANDE = {
   ampoule: function (y) { return '<rect x="10.6" y="' + (y - 8) + '" width="2.8" height="3" rx=".6"/><ellipse cx="12" cy="' + (y + 1) + '" rx="3.6" ry="5"/>'; },
   etoile: function (y) { return '<path d="M12 ' + (y - 7) + 'l2.1 4.6 5 .5-3.8 3.3 1.1 4.9L12 ' + (y + 4.8) + 'l-4.4 2.5 1.1-4.9-3.8-3.3 5-.5z"/>'; },
@@ -3112,10 +3114,35 @@ var FORMES_GUIRLANDE = {
   flocon: function (y) { var s = ''; for (var k = 0; k < 3; k++) { s += '<rect x="11.2" y="' + (y - 6) + '" width="1.6" height="12" transform="rotate(' + (k * 60) + ' 12 ' + y + ')"/>'; } return s; },
   lune: function (y) { return '<path d="M15 ' + (y - 6) + 'A6.5 6.5 0 1 0 15 ' + (y + 6) + 'A5 5 0 1 1 15 ' + (y - 6) + 'Z"/>'; }
 };
-function masqueGuirlande(forme, haut, per) {
-  var y = haut + 8;
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="' + per + '" viewBox="0 0 24 ' + per + '"><path d="M0 ' + (y - 9) + 'Q12 ' + (y - 5) + ' 24 ' + (y - 9) + '" stroke="#000" stroke-width=".8" fill="none" opacity=".55"/>' + FORMES_GUIRLANDE[forme](y) + '</svg>';
-  return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
+// les festons d'un motif : [début, fin, creux, nombre de lumières]
+var FESTONS = [[0, 80, 9, 3], [80, 200, 19, 6], [200, 350, 14, 7]];
+var LARGEUR_FESTONS = 350;
+// → [masque du fil et des lumières impaires, masque des lumières paires] pour des rayons de per px
+function masquesFestons(forme, per) {
+  var dessin = FORMES_GUIRLANDE[forme];
+  var fil = [];
+  var autres = [];
+  FESTONS.forEach(function (f) {
+    var y = 2;
+    var cx = (f[0] + f[1]) / 2;
+    var cy = y + 2 * f[2];
+    fil.push('<path d="M' + f[0] + ' ' + y + 'Q' + cx + ' ' + cy + ' ' + f[1] + ' ' + y + '" fill="none" stroke="#000" stroke-width="1.4"/><circle cx="' + f[0] + '" cy="' + y + '" r="1.8"/><circle cx="' + f[1] + '" cy="' + y + '" r="1.8"/>');
+    for (var i = 1; i <= f[3]; i++) {
+      var s = i / (f[3] + 1);
+      var px = (1 - s) * (1 - s) * f[0] + 2 * (1 - s) * s * cx + s * s * f[1];
+      var py = (1 - s) * (1 - s) * y + 2 * (1 - s) * s * cy + s * s * y + 5;
+      var lumiere = '<g transform="translate(' + (px - 9.6).toFixed(1) + ' ' + (py - 16).toFixed(1) + ') scale(.8)">' + dessin(20) + '</g>';
+      if (i % 2) {
+        fil.push(lumiere);
+      } else {
+        autres.push(lumiere);
+      }
+    }
+  });
+  return [fil, autres].map(function (parts) {
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + LARGEUR_FESTONS + '" height="' + per + '" viewBox="0 0 ' + LARGEUR_FESTONS + ' ' + per + '">' + parts.join('') + '</svg>';
+    return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
+  });
 }
 // les règles CSS de toutes les guirlandes (étagère en tranches : rayons de 182 px ; vitrine : 126 px)
 function preparerStylesGuirlandes() {
@@ -3124,14 +3151,15 @@ function preparerStylesGuirlandes() {
   }
   var css = '';
   Object.keys(FORMES_GUIRLANDE).forEach(function (f) {
-    [['rangs', 168, 182], ['vitrine', 112, 126]].forEach(function (z) {
-      var m = masqueGuirlande(f, z[1], z[2]);
+    [['rangs', 182], ['vitrine', 126]].forEach(function (z) {
+      var m = masquesFestons(f, z[1]);
       var sel = '.m-orne[data-g="' + f + '"] .' + z[0];
-      css += sel + '::before,' + sel + '::after{-webkit-mask:' + m + ' 0 0/24px var(--per) repeat;mask:' + m + ' 0 0/24px var(--per) repeat}';
+      var taille = ' 0 0/' + LARGEUR_FESTONS + 'px ' + z[1] + 'px repeat';
+      css += sel + '::before{-webkit-mask:' + m[0] + taille + ';mask:' + m[0] + taille + '}' + sel + '::after{-webkit-mask:' + m[1] + taille + ';mask:' + m[1] + taille + '}';
     });
   });
   css += '.m-orne .rangs::before,.m-orne .vitrine::before{background:var(--g1,var(--gold));filter:drop-shadow(0 0 3px var(--g1,var(--gold)))}' +
-    '.m-orne .rangs::after,.m-orne .vitrine::after{background:var(--g2,var(--accent));-webkit-mask-position:12px 0;mask-position:12px 0;filter:drop-shadow(0 0 3px var(--g2,var(--accent)))}';
+    '.m-orne .rangs::after,.m-orne .vitrine::after{background:var(--g2,var(--accent));filter:drop-shadow(0 0 3px var(--g2,var(--accent)))}';
   var st = document.createElement('style');
   st.id = 'stylesGuirlandes';
   st.textContent = css;
@@ -13725,7 +13753,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 10:15:15';
+var VERSION_APPLI = '2026-10-06 10:25:05';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
