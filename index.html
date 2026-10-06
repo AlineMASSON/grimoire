@@ -355,11 +355,20 @@ header,main{position:relative;z-index:1}
 .fete-banniere{display:flex;flex-direction:column;align-items:center;gap:2px;margin:14px 0 0;padding:10px 14px;border-radius:18px;background:linear-gradient(135deg,var(--accent-soft),var(--lav-soft));text-align:center;font-size:13px;color:var(--muted)}
 .fete-banniere b{font:700 19px "Cormorant Garamond",Georgia,serif;color:var(--ink)}
 
+/* le titre, « + » et ⚙️ restent en haut de l'écran : à leur place, sans fond, en haut de la page ; sur un fond, un peu
+   plus serrés, dès que la page défile (body.defile) ; l'en-tête garde leur place (42 px de boutons) */
+.tete-n{position:fixed;top:0;left:0;right:0;z-index:9;max-width:760px;margin:0 auto;padding:calc(22px + env(safe-area-inset-top)) 16px 0;transition:padding .2s ease}
+.tete-n::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);z-index:-1;background:var(--card);border-bottom:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.1);opacity:0;transition:opacity .2s ease;pointer-events:none}
+body.defile .tete-n{padding-top:calc(8px + env(safe-area-inset-top));padding-bottom:8px}
+body.defile .tete-n::before{opacity:1}
+body.defile .tete-n h1{font-size:22px}
+body.defile .tete-n h1 span{font-size:19px}
+html{scroll-padding-top:calc(70px + env(safe-area-inset-top))}
 /* téléphones étroits (Flip 7 ouvert, ~410 px de large) */
-header{padding-top:calc(22px + env(safe-area-inset-top))}
+header{padding-top:calc(22px + 42px + env(safe-area-inset-top))}
 @media (max-width:440px){
-  header h1{font-size:27px}
-  header h1 span{font-size:23px}
+  .tete-n h1{font-size:27px}
+  .tete-n h1 span{font-size:23px}
   main{padding:0 12px 100px}
   .card{padding:14px 13px;border-radius:20px}
   .card h2{font-size:20px}
@@ -374,10 +383,14 @@ header{padding-top:calc(22px + env(safe-area-inset-top))}
 }
 /* petit écran presque carré (écran externe du Flip, paysage) */
 @media (max-height:620px){
-  header{padding-top:calc(10px + env(safe-area-inset-top));padding-bottom:0}
+  header{padding-top:calc(10px + 36px + env(safe-area-inset-top));padding-bottom:0}
+  .tete-n{padding-top:calc(10px + env(safe-area-inset-top))}
+  body.defile .tete-n{padding-top:calc(5px + env(safe-area-inset-top));padding-bottom:5px}
+  body.defile .tete-n h1{font-size:19px}
+  body.defile .tete-n h1 span{font-size:16px}
   header .moon,header .orn{display:none}
-  header h1{font-size:22px}
-  header h1 span{display:inline;font-size:20px}
+  .tete-n h1{font-size:22px}
+  .tete-n h1 span{display:inline;font-size:20px}
     main{padding-bottom:78px}
   nav button{padding:6px 2px 7px;font-size:11px}
   nav button span{font-size:18px}
@@ -656,8 +669,8 @@ function saisir(message, valeur, options) {
 </script>
 
 <div class="etoiles" aria-hidden="true"></div>
-<header>
 <div class="tete-n"><h1>Mon grimoire <span>de lectures</span></h1><button class="rond ajout-haut" data-act="ajouter" aria-label="Ajouter un livre"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button><button class="rond" id="reglagesBtn" data-act="reglages" aria-label="Réglages"><svg class="ic" aria-hidden="true"><use href="#i-settings"/></svg></button></div>
+<header>
 <div id="puceFete"></div>
 <div class="src" id="src"></div>
 <input type="file" id="fichierImport" accept="application/zip,application/x-zip-compressed,application/octet-stream,application/x-sqlite3,application/json,.zip,.db,.json" hidden>
@@ -879,10 +892,16 @@ function cacherBulle() {
   }
   document.querySelectorAll('.actif').forEach(function (x) { x.classList.remove('actif'); });
 }
-// au défilement : rien à faire tant qu'aucune bulle n'est ouverte
+// au défilement : rien à faire tant qu'aucune bulle n'est ouverte ; la barre du titre prend un fond dès que la page descend
+var pageDefile = false;
 window.addEventListener('scroll', function () {
   if (bulleOuverte) {
     cacherBulle();
+  }
+  var d = window.scrollY > 8;
+  if (d !== pageDefile) {
+    pageDefile = d;
+    document.body.classList.toggle('defile', d);
   }
 }, {passive: true});
 function seg(groupe, items) {
@@ -13893,7 +13912,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 10:43:38';
+var VERSION_APPLI = '2026-10-06 10:49:21';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
