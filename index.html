@@ -6046,12 +6046,69 @@ ACTIONS.filtreHibou = function (el) {
     l.push(el.dataset.v);
   }
   c[el.dataset.g] = l;
+  enregistrerFiltresHibou(c);
+};
+// les filtres changent : la carte se redessine derrière la feuille, et la feuille aussi
+function enregistrerFiltresHibou(c) {
   regler('hibou', c).then(function () {
     planifierSauvegarde();
     hibou.lettre = null;
     rendre();
+    var z = document.getElementById('affichageHibou');
+    if (z) {
+      z.innerHTML = htmlFiltresHibou();
+    }
   }).catch(erreurEcriture);
+}
+ACTIONS.toutTirerHibou = function () {
+  enregistrerFiltresHibou({});
 };
+// ---------- le réglage du tirage : comme l'affichage des autres pages, un bouton à droite du titre ouvre une feuille ----------
+function compteHibou(n) {
+  if (!n) {
+    return 'Aucun livre de ta PAL ne correspond : enlève un filtre.';
+  }
+  return '✨ ' + n + ' livre' + (n > 1 ? 's' : '') + ' de ta PAL correspond' + (n > 1 ? 'ent' : '') + ' · aucun filtre coché = tous';
+}
+function htmlFiltresHibou() {
+  var c = choixHibou();
+  function groupe(g, liste) {
+    return liste.map(function (x) {
+      var on = (c[g] || []).indexOf(x[0]) >= 0;
+      var cls = 'chip';
+      if (on) {
+        cls += ' on';
+      }
+      return '<button class="' + cls + '" data-act="filtreHibou" data-g="' + g + '" data-v="' + x[0] + '" aria-pressed="' + on + '">' + x[1] + '</button>';
+    }).join('');
+  }
+  return '<h4>Format</h4><div class="filtres-hibou">' + groupe('fmts', FILTRES_FORMAT) + '</div>' +
+    '<h4>Longueur</h4><div class="filtres-hibou">' + groupe('tailles', FILTRES_TAILLE) + '</div>' +
+    '<div class="compte-hibou">' + compteHibou(candidatsHibou().length) + '</div>';
+}
+ACTIONS.affichageHibou = function () {
+  ouvrirFeuille('<h3>Le tirage de Bergamote</h3><p class="small muted" style="margin:0 0 8px">Les livres de ta PAL qu\'elle peut t\'apporter. Touche un ou plusieurs choix.</p><div id="affichageHibou">' + htmlFiltresHibou() + '</div>' +
+    '<div class="row" style="margin-top:14px"><button class="act" data-act="fermer">' + ic('check') + ' Voir</button></div>');
+};
+// en haut de la carte, seulement si un filtre est choisi : ce qui est choisi, le nombre de livres, et « Tout afficher »
+function resumeHibou(n) {
+  var c = choixHibou();
+  var choisis = (c.fmts || []).concat(c.tailles || []);
+  var morceaux = [];
+  FILTRES_FORMAT.concat(FILTRES_TAILLE).forEach(function (x) {
+    if (choisis.indexOf(x[0]) >= 0) {
+      morceaux.push(x[1].split(' · ')[0]);
+    }
+  });
+  if (!morceaux.length) {
+    return '';
+  }
+  var nombre = n + ' livre' + (n > 1 ? 's' : '');
+  if (!n) {
+    nombre = 'aucun livre';
+  }
+  return '<div class="resume-affichage" data-act="affichageHibou">' + ic('list') + '<b>' + esc(morceaux.join(', ') + ' · ' + nombre) + '</b><button class="chip" data-act="toutTirerHibou">Tout afficher</button></div>';
+}
 // ---------- ce que Bergamote écrit ----------
 // La lettre change à chaque courrier : formule d'appel, trouvaille, depuis quand le livre attend, un mot de saison ou d'heure,
 // formule de politesse, p.-s. selon le format et la taille. Rien n'est genré pour la personne qui lit (Bergamote, elle, est une chouette).
@@ -6284,30 +6341,16 @@ function classeSceneHibou() {
   return 'hibou-scene';
 }
 function carteHibou() {
-  var c = choixHibou();
-  function groupe(g, liste) {
-    return liste.map(function (x) {
-      var cls = 'chip';
-      if ((c[g] || []).indexOf(x[0]) >= 0) {
-        cls += ' on';
-      }
-      return '<button class="' + cls + '" data-act="filtreHibou" data-g="' + g + '" data-v="' + x[0] + '">' + x[1] + '</button>';
-    }).join('');
-  }
   var n = candidatsHibou().length;
-  var compte = '✨ ' + n + ' livre' + (n > 1 ? 's' : '') + ' de ta PAL correspond' + (n > 1 ? 'ent' : '') + ' · aucun filtre coché = tous';
-  if (!n) {
-    compte = 'Aucun livre de ta PAL ne correspond : enlève un filtre.';
-  }
   // affichée sans animation : un vol ou une chute en cours sont terminés (enveloppe posée)
   if (hibou.lettre && !hibou.ouverte) {
     hibou.etat = 'posee';
   }
-  var corps = '<div class="filtres-hibou">' + groupe('fmts', FILTRES_FORMAT) + groupe('tailles', FILTRES_TAILLE) + '</div><div class="compte-hibou">' + compte + '</div>' +
+  var corps = resumeHibou(n) +
     '<div class="' + classeSceneHibou() + '" id="hibouScene">' + sceneHibou(false) + '</div><div class="bas-hibou" id="hibouBas">' + basHibou(n) + '</div>';
   // la carte vient d'être écrite dans la page : on anime Bergamote juste après
   setTimeout(animerHibou, 0);
-  return card('Le courrier de Bergamote', corps, 'elle t\'apporte un livre de ta PAL');
+  return card('Le courrier de Bergamote' + boutonCarte('affichageHibou', 'sliders-horizontal', 'Le tirage de Bergamote'), corps, 'elle t\'apporte un livre de ta PAL');
 }
 function majHibou(vole) {
   var s = document.getElementById('hibouScene');
@@ -15160,7 +15203,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 17:14:44';
+var VERSION_APPLI = '2026-10-06 17:18:25';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
