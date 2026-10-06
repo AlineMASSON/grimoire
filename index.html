@@ -6652,6 +6652,8 @@ function opsEtatAchats() {
   }
   return ops;
 }
+// (Les corrections d'achats et de reventes de l'utilisatrice ne sont plus dans le code : elles passent par un
+// fichier de propositions privé, importé avec 📥 ; voir propChoixAchats dans Propositions.html.)
 // Plusieurs migrations peuvent modifier le même enregistrement au même démarrage : chacune part de la base
 // d'avant et renvoie l'objet entier. On ne garde de chacune que ce qu'elle change, dans l'ordre, pour
 // qu'une migration n'efface pas ce qu'une autre a fait juste avant (ex. la langue puis la revente d'un livre).
@@ -10948,7 +10950,10 @@ ACTIONS.ocrTout = function () {
 // Fichier JSON reçu par 📥 ou par le partage :
 // {format: 'grimoire-propositions', date, livres: [{id, titre, genres[], tropes[], traducteurs[], roles[{nom, role}],
 //  langue, source, confiance, note, couverture: {image: 'data:image/…' ou 'https://…', source},
-//  infos: {parution: 'AAAA-MM-JJ', editeur, isbn, langue, resume, unite: 'pages'}}]}
+//  infos: {parution: 'AAAA-MM-JJ', editeur, isbn, langue, resume, unite: 'pages'},
+//  achats: [{id, etat: 'neuf'|'occasion', cadeau, boutique, prix, memo, date: 'AAAA-MM-JJ', format}],
+//  revente: {prix, date: 'AAAA-MM-JJ', lieu}, possession: 'possede'|'envie'|'emprunte'}]}
+// (un achat qui existe déjà, retrouvé par son id, n'est que complété ; une revente ne touche pas un livre déjà revendu)
 // (langue = langue d'origine d'une traduction ; infos.langue = langue de l'édition du livre)
 // Les infos ne remplissent que ce qui manque au livre (une date plus précise que l'année seule compte comme manquante).
 // Une couverture en data: est rangée dans la table photos (elle ne peut plus casser), une adresse est gardée telle quelle.
@@ -11083,7 +11088,90 @@ function propChoix(l, p) {
       choix.push({type: 'role', etat: 'ajout', nom: r.nom, vers: r.role, on: true});
     }
   });
-  return choix.concat(propChoixInfos(l, p.infos || {}));
+  return choix.concat(propChoixInfos(l, p.infos || {}), propChoixAchats(l, p));
+}
+
+// « AAAA-MM-JJ » → midi ce jour-là (ou null)
+function dateMidi(s) {
+  var j = String(s || '').split('-');
+  if (j.length !== 3) {
+    return null;
+  }
+  return new Date(parseInt(j[0], 10), parseInt(j[1], 10) - 1, parseInt(j[2], 10), 12).getTime();
+}
+// « ✨ neuf · 🎁 cadeau · Vinted · 6,75 € »
+function texteAchatProp(a) {
+  var t = [];
+  var e = ETATS_ACHAT.find(function (x) { return x[0] === a.etat; });
+  if (e) {
+    t.push(e[1].toLowerCase());
+  }
+  if (a.cadeau) {
+    t.push('🎁 cadeau');
+  }
+  if (a.boutique) {
+    t.push(a.boutique);
+  }
+  if (a.prix) {
+    t.push(prix(a.prix, a.devise || 'EUR'));
+  }
+  return t.join(' · ') || 'achat';
+}
+// achats, revente et possession : seulement ce qui manque (jamais de retrait)
+function propChoixAchats(l, p) {
+  var choix = [];
+  var achatsLivre = valeurs(D.achats).filter(function (x) { return x.livreId === l.id; });
+  (Array.isArray(p.achats) ? p.achats : []).forEach(function (a) {
+    if (!a || typeof a !== 'object') {
+      return;
+    }
+    var ex = a.id && D.achats[a.id];
+    if (ex) {
+      var manque = {};
+      if (!achatEtat(ex) && a.etat) {
+        manque.etat = a.etat;
+      }
+      if (!achatCadeau(ex) && a.cadeau) {
+        manque.cadeau = true;
+      }
+      if (!ex.boutique && a.boutique) {
+        manque.boutique = a.boutique;
+      }
+      if (!ex.prix && a.prix) {
+        manque.prix = a.prix;
+      }
+      if (!ex.memo && a.memo) {
+        manque.memo = a.memo;
+      }
+      if (Object.keys(manque).length) {
+        choix.push({type: 'achat', etat: 'change', achat: a, texte: 'achat : ' + texteAchatProp(Object.assign({}, manque, {devise: ex.devise})), nom: 'achat ' + a.id, on: true});
+      }
+      return;
+    }
+    // le même achat déjà noté autrement (même état, même boutique, même prix) : rien à ajouter
+    var pareil = achatsLivre.some(function (x) { return achatEtat(x) === (a.etat || '') && slug(x.boutique) === slug(a.boutique) && (x.prix || 0) === (a.prix || 0); });
+    if (!pareil) {
+      choix.push({type: 'achat', etat: 'ajout', achat: a, texte: 'achat : ' + texteAchatProp(a), nom: 'achat ' + (a.id || texteAchatProp(a)), on: true});
+    }
+  });
+  var r = p.revente;
+  if (r && typeof r === 'object' && l.possession !== 'revendu') {
+    var rv = {prix: Number(r.prix) || 0, devise: r.devise || 'EUR', date: dateMidi(r.date) || Date.now(), lieu: String(r.lieu || '')};
+    var t = ['💸 revendu'];
+    if (rv.prix) {
+      t.push(prix(rv.prix, rv.devise));
+    }
+    if (rv.lieu) {
+      t.push(rv.lieu);
+    }
+    t.push(fdate(rv.date));
+    choix.push({type: 'revente', etat: 'ajout', revente: rv, texte: t.join(' · '), nom: 'revente ' + (r.date || ''), on: true});
+  }
+  var po = POSSESSIONS.find(function (x) { return x[0] === p.possession; });
+  if (po && p.possession && !r && l.possession !== 'revendu' && (l.possession || '') !== p.possession) {
+    choix.push({type: 'possession', etat: 'change', valeur: p.possession, texte: 'chez moi : ' + po[1], nom: 'possession ' + p.possession, on: true});
+  }
+  return choix;
 }
 
 // infos de l'édition : {type: 'info', champ, valeur, texte}, seulement si le livre ne les a pas déjà (jamais de retrait)
@@ -11232,6 +11320,9 @@ function htmlPropLivre(it, i) {
   }
   h += groupe('role', trad, lien);
   h += groupe('info', 'Infos de l\'édition');
+  h += groupe('achat', 'Achats');
+  h += groupe('revente', 'Revente');
+  h += groupe('possession', 'Chez moi');
   it.choix.forEach(function (c) {
     if (c.type === 'info' && c.champ === 'resume') {
       h += '<details class="prop-note small muted"><summary>lire le résumé proposé</summary>' + esc(c.valeur) + '</details>';
@@ -11241,7 +11332,7 @@ function htmlPropLivre(it, i) {
   return h;
 }
 function textePuceProp(c) {
-  if (c.type === 'info') {
+  if (c.type === 'info' || c.type === 'achat' || c.type === 'revente' || c.type === 'possession') {
     if (c.etat === 'change') {
       return c.texte;
     }
@@ -11376,7 +11467,7 @@ function propOperations(blobs) {
   ['genres', 'tropes'].forEach(function (t) {
     ordres[t] = valeurs(D[t]).reduce(function (m, x) { return Math.max(m, x.ordre || 0); }, -1);
   });
-  var n = {changements: 0, livres: 0, genres: 0, retraits: 0, tropes: 0, roles: 0, couvertures: 0, infos: 0};
+  var n = {changements: 0, livres: 0, genres: 0, retraits: 0, tropes: 0, roles: 0, couvertures: 0, infos: 0, achats: 0, reventes: 0};
   function idListe(t, nom) {
     var x = propParNom(t, nom);
     if (x) {
@@ -11432,6 +11523,10 @@ function propOperations(blobs) {
     var livreChange = false;
     var avisChange = false;
     var infos = {};
+    var revente = null;
+    var possession = '';
+    var acquis = false;
+    var achatsChange = false;
     it.choix.forEach(function (c) {
       if (c.etat === 'deja') {
         return;
@@ -11494,9 +11589,57 @@ function propOperations(blobs) {
         infos[c.champ] = c.valeur;
         livreChange = true;
         n.infos++;
+      } else if (c.type === 'achat' && c.on) {
+        var a = c.achat;
+        var ex = a.id && D.achats[a.id];
+        if (ex) {
+          var maj = Object.assign({}, ex);
+          if (!achatEtat(ex) && a.etat) {
+            maj.etat = a.etat;
+          }
+          if (!achatCadeau(ex) && a.cadeau) {
+            maj.cadeau = true;
+          }
+          if (!ex.boutique && a.boutique) {
+            maj.boutique = a.boutique;
+          }
+          if (!ex.prix && a.prix) {
+            maj.prix = a.prix;
+          }
+          if (!ex.memo && a.memo) {
+            maj.memo = a.memo;
+          }
+          ops.push({t: 'achats', o: maj, garderDate: true});
+        } else {
+          // sans date : l'achat compte à la date d'ajout du livre
+          ops.push({t: 'achats', o: {id: a.id || nouvelId(), livreId: it.id, prix: Number(a.prix) || 0, devise: a.devise || 'EUR', date: dateMidi(a.date), format: a.format || l.format || 'papier', boutique: a.boutique || '', etat: a.etat || '', cadeau: !!a.cadeau, memo: a.memo || '', origine: 'propositions', creeLe: l.creeLe}});
+          acquis = true;
+        }
+        achatsChange = true;
+        n.achats++;
+      } else if (c.type === 'revente' && c.on) {
+        revente = c.revente;
+        livreChange = true;
+        n.reventes++;
+      } else if (c.type === 'possession' && c.on) {
+        possession = c.valeur;
+        livreChange = true;
+        n.infos++;
       }
     });
     var champs = {};
+    // un achat ajouté met le livre dans la bibliothèque ; une revente le passe « revendu »
+    if (acquis && (!l.possession || l.possession === 'envie')) {
+      champs.possession = 'possede';
+      livreChange = true;
+    }
+    if (possession) {
+      champs.possession = possession;
+    }
+    if (revente) {
+      champs.possession = 'revendu';
+      champs.revente = revente;
+    }
     if (infos.parution) {
       champs.parution = infos.parution;
       champs.annee = anneeParution(infos.parution);
@@ -11527,11 +11670,11 @@ function propOperations(blobs) {
         ops.push({t: 'avis', o: {id: it.id, notes: {}, humeurIds: [], tropeIds: tropeIds, mot: ''}});
       }
     }
-    if (livreChange || avisChange) {
+    if (livreChange || avisChange || achatsChange) {
       n.livres++;
     }
   });
-  n.changements = n.genres + n.retraits + n.tropes + n.roles + n.couvertures + n.infos;
+  n.changements = n.genres + n.retraits + n.tropes + n.roles + n.couvertures + n.infos + n.achats + n.reventes;
   var morceaux = [];
   if (n.genres) {
     morceaux.push(n.genres + ' genre' + (n.genres > 1 ? 's' : '') + ' ajouté' + (n.genres > 1 ? 's' : ''));
@@ -11550,6 +11693,12 @@ function propOperations(blobs) {
   }
   if (n.infos) {
     morceaux.push(n.infos + ' info' + (n.infos > 1 ? 's' : '') + ' d\'édition');
+  }
+  if (n.achats) {
+    morceaux.push(n.achats + ' achat' + (n.achats > 1 ? 's' : ''));
+  }
+  if (n.reventes) {
+    morceaux.push(n.reventes + ' revente' + (n.reventes > 1 ? 's' : ''));
   }
   return {ops: ops, changements: n.changements, livres: n.livres, resume: morceaux.join(', ')};
 }
@@ -12465,7 +12614,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 09:32:48';
+var VERSION_APPLI = '2026-10-06 09:37:56';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
