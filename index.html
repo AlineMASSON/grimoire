@@ -5520,109 +5520,306 @@ function lignePari() {
 .compte-hibou{font-size:12px;color:var(--muted);margin:2px 0 4px}
 .hibou-scene{position:relative;height:250px;border-radius:16px;overflow:hidden;margin:8px 0 4px;background:radial-gradient(120% 80% at 50% 0%,color-mix(in srgb,var(--lav) 28%,var(--card)),var(--card) 75%);border:1px solid var(--line)}
 .hibou-scene::before{content:"";position:absolute;right:26px;top:20px;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#fff7d6,#e7c36b);box-shadow:0 0 18px color-mix(in srgb,var(--gold) 60%,transparent);opacity:.85}
-.hibou-attente{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px;padding:16px;color:var(--muted);font-size:13px;text-align:center}
-.hibou-attente .branche{width:130px;height:8px;border-radius:4px;background:linear-gradient(90deg,#6a3f22,#a87346,#6a3f22);margin-top:-14px}
-/* le vol : avance horizontale et hauteur animées séparément (trajectoire en courbe douce), uniquement en transform */
-.hibou-vol{position:absolute;left:-170px;top:6px;width:160px;z-index:2;will-change:transform;animation:hibou-avance 3.2s forwards}
-.hibou-vol .haut{will-change:transform;animation:hibou-monte 3.2s forwards}
-.hibou-vol svg{display:block;width:100%;height:auto;animation:hibou-balance .3s ease-in-out infinite alternate}
-.hibou-vol .aile{transform-box:fill-box}
-.hibou-vol .aile.g{transform-origin:100% 85%;animation:hibou-bat-g .3s ease-in-out infinite alternate}
-.hibou-vol .aile.d{transform-origin:0% 85%;animation:hibou-bat-d .3s ease-in-out infinite alternate}
-.hibou-vol .lettre-portee{animation:hibou-lache 3.2s linear forwards}
-.enveloppe-h{position:absolute;left:50%;top:40px;width:150px;margin-left:-75px;padding:0;border:0;background:none;cursor:pointer;opacity:0;will-change:transform;animation:hibou-tombe 1.6s ease-in-out forwards 1.42s}
-.enveloppe-h.posee{opacity:1;animation:none;transform:translateY(60px) rotate(-4deg)}
-.enveloppe-h svg{display:block;width:150px;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
-.indice-sceau{position:absolute;left:0;right:0;bottom:14px;text-align:center;font:700 12.5px Nunito,sans-serif;color:var(--gold);opacity:0;animation:jeu-fondu .5s ease forwards 3s,hibou-pulse 2s ease-in-out infinite 3.5s}
+.hibou-attente{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:12px 16px 14px;color:var(--muted);font-size:13px;text-align:center}
+.hibou-attente .chouette-p{width:104px;height:130px;display:block;margin-bottom:-14px;position:relative;z-index:1}
+.hibou-attente .branche-h{width:170px;display:block}
+/* la chouette qui attend : elle respire, cligne des yeux, penche la tête, s'ébouriffe de temps en temps */
+.chouette-p{transform-origin:50% 100%;animation:ch-ebouriffe 13s ease-in-out infinite}
+.chouette-p .souffle{transform-box:fill-box;transform-origin:50% 100%;animation:ch-souffle 3.6s ease-in-out infinite}
+.chouette-p .tete{transform-box:fill-box;transform-origin:50% 90%;animation:ch-tete 9s ease-in-out infinite}
+.chouette-p .paupiere,.chouette-v .paupiere{transform-box:fill-box;transform-origin:50% 0;transform:scaleY(0);animation:ch-cligne 5.3s ease-in-out infinite}
+@keyframes ch-souffle{0%,100%{transform:scale(1,1)}50%{transform:scale(1.012,1.028)}}
+@keyframes ch-tete{0%,55%,100%{transform:rotate(0)}62%,72%{transform:rotate(-11deg)}78%,84%{transform:rotate(6deg)}90%{transform:rotate(0)}}
+@keyframes ch-cligne{0%,88%,100%{transform:scaleY(0)}91%{transform:scaleY(1)}94%{transform:scaleY(0)}}
+@keyframes ch-ebouriffe{0%,86%,100%{transform:none}88%{transform:scale(1.07,.96)}90%{transform:scale(.97,1.03)}92%{transform:scale(1.03,.99)}94%{transform:none}}
+/* le vol : battements, battements, plané ; la main de l'aile suit le bras avec un temps de retard ; tout en transform */
+.hibou-vol{position:absolute;left:-190px;top:10px;width:176px;z-index:3;will-change:transform;animation:vol-avance 3.4s forwards}
+.hibou-vol .haut{will-change:transform;animation:vol-monte 3.4s forwards}
+.hibou-vol .chouette-v{display:block;width:100%;height:auto;overflow:visible;animation:vol-corps 1.5s ease-in-out infinite}
+.chouette-v .bras{transform-box:fill-box;transform-origin:100% 78%;animation:vol-bras 1.5s ease-in-out infinite}
+.chouette-v .main{transform-box:fill-box;transform-origin:95% 66%;animation:vol-main 1.5s ease-in-out infinite;animation-delay:-.06s}
+.hibou-vol .lettre-portee{animation:vol-lache 3.4s linear forwards}
+@keyframes vol-bras{0%{transform:rotate(24deg)}15%{transform:rotate(-24deg)}30%{transform:rotate(24deg)}45%{transform:rotate(-24deg)}60%,100%{transform:rotate(5deg)}}
+@keyframes vol-main{0%{transform:rotate(16deg)}16%{transform:rotate(-20deg)}31%{transform:rotate(16deg)}46%{transform:rotate(-20deg)}62%,100%{transform:rotate(-5deg)}}
+@keyframes vol-corps{0%,30%{transform:translateY(3px) rotate(-3deg)}15%,45%{transform:translateY(-3px) rotate(-1deg)}60%,100%{transform:translateY(0) rotate(-2deg)}}
+@keyframes vol-avance{0%{transform:translateX(0);animation-timing-function:cubic-bezier(.25,.6,.4,1)}46%{transform:translateX(calc(var(--l,340px) / 2 + 100px));animation-timing-function:cubic-bezier(.6,0,.8,.45)}100%{transform:translateX(calc(var(--l,340px) + 220px))}}
+@keyframes vol-monte{0%{transform:translateY(80px) rotate(-6deg);animation-timing-function:cubic-bezier(.3,.6,.4,1)}38%{transform:translateY(-4px) rotate(-2deg)}46%{transform:translateY(14px) rotate(4deg);animation-timing-function:ease-in-out}60%{transform:translateY(0) rotate(-6deg);animation-timing-function:cubic-bezier(.5,0,.8,.5)}100%{transform:translateY(-90px) rotate(-12deg)}}
+@keyframes vol-lache{0%,45%{opacity:1}46%,100%{opacity:0}}
+/* l'enveloppe : elle tombe en feuille morte, puis s'ouvre (sceau brisé, ruban qui s'efface, rabat qui bascule) */
+.enveloppe-h{position:absolute;left:50%;top:44px;width:170px;margin-left:-85px;padding:0;border:0;background:none;cursor:pointer;opacity:0;z-index:2;will-change:transform;animation:env-tombe 1.7s ease-in-out forwards 1.55s}
+.enveloppe-h.posee{opacity:1;animation:none;transform:translateY(58px) rotate(-4deg)}
+.enveloppe-h .enveloppe-svg{display:block;width:170px;overflow:visible;filter:drop-shadow(0 8px 14px rgba(0,0,0,.4))}
+@keyframes env-tombe{0%{opacity:1;transform:translate(0,6px) rotate(-8deg) scale(.2)}22%{opacity:1;transform:translate(-18px,18px) rotate(16deg) scale(.5)}45%{transform:translate(14px,32px) rotate(-13deg) scale(.75)}68%{transform:translate(-8px,46px) rotate(8deg) scale(.92)}86%{transform:translate(3px,55px) rotate(-6deg) scale(1)}100%{opacity:1;transform:translate(0,58px) rotate(-4deg) scale(1)}}
+.enveloppe-h .sceau .moitie{transform-box:fill-box;transform-origin:50% 50%}
+.enveloppe-h.ouvre{animation:env-secoue .3s ease-in-out}
+.enveloppe-h.ouvre .sceau .moitie.g{animation:sc-g .55s ease-in forwards}
+.enveloppe-h.ouvre .sceau .moitie.d{animation:sc-d .55s ease-in forwards}
+.enveloppe-h .ruban{transition:opacity .3s}
+.enveloppe-h.ouvre .ruban{opacity:0;transition-delay:.15s}
+.enveloppe-h .rabat{transform-box:fill-box;transform-origin:50% 0}
+.enveloppe-h.ouvre .rabat{animation:rabat .55s cubic-bezier(.4,0,.3,1) .3s forwards}
+@keyframes sc-g{0%{transform:none;opacity:1}30%{transform:translate(-2px,-2px) rotate(-6deg)}100%{transform:translate(-14px,34px) rotate(-50deg);opacity:0}}
+@keyframes sc-d{0%{transform:none;opacity:1}30%{transform:translate(2px,-2px) rotate(6deg)}100%{transform:translate(16px,38px) rotate(45deg);opacity:0}}
+@keyframes rabat{0%{transform:scaleY(1)}55%{transform:scaleY(0);filter:brightness(1)}100%{transform:scaleY(-1);filter:brightness(.88)}}
+@keyframes env-secoue{0%,100%{transform:translateY(58px) rotate(-4deg)}35%{transform:translateY(58px) rotate(-7deg)}70%{transform:translateY(58px) rotate(-1deg)}}
+.etincelles-h{position:absolute;left:50%;top:120px;width:0;height:0;z-index:4;pointer-events:none}
+.etincelles-h i{position:absolute;font-style:normal;color:var(--gold);font-size:14px;opacity:0;animation:etincelle-h .9s ease-out forwards}
+@keyframes etincelle-h{0%{opacity:0;transform:translate(0,0) scale(.4)}20%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(1.1) rotate(90deg)}}
+.indice-sceau{position:absolute;left:0;right:0;bottom:12px;text-align:center;font:700 12.5px Nunito,sans-serif;color:var(--gold);opacity:0;animation:jeu-fondu .5s ease forwards 3.2s,hibou-pulse 2s ease-in-out infinite 3.7s}
 .indice-sceau.vite{animation:hibou-pulse 1.6s ease-in-out infinite;opacity:1}
-.lettre-h{position:absolute;left:50%;top:18px;width:260px;max-width:88%;transform:translateX(-50%);padding:14px 14px 12px;border-radius:8px;background:linear-gradient(#fbf3e1,#f0e2c2);color:#3a2618;box-shadow:0 10px 24px rgba(0,0,0,.45);text-align:center;animation:hibou-deplie .6s cubic-bezier(.3,1.3,.5,1) both}
-.lettre-h .ecrit{font:700 20px "Dancing Script",cursive}
+@keyframes hibou-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+/* la lettre, qui sort de l'enveloppe : parchemin, liseré doré, sceau aux couleurs du thème */
+.lettre-h{position:absolute;left:50%;top:18px;width:270px;max-width:90%;transform:translateX(-50%);padding:16px 16px 10px;border-radius:6px;background:linear-gradient(170deg,#fcf4e2,#efdcb6);color:#3a2618;box-shadow:0 12px 26px rgba(0,0,0,.35),inset 0 0 0 1px #d8bd8a;outline:1px solid color-mix(in srgb,var(--gold) 55%,transparent);outline-offset:-7px;text-align:center;animation:lettre-sort .7s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes lettre-sort{0%{opacity:0;transform:translateX(-50%) translateY(70px) scale(.7)}60%{opacity:1}100%{opacity:1;transform:translateX(-50%)}}
+.lettre-h .sceau-l{position:absolute;top:-16px;left:50%;margin-left:-16px;width:32px;height:32px}
+.lettre-h .ecrit{font:700 21px "Dancing Script",cursive;margin-top:4px}
 .lettre-h .contenu{display:flex;gap:12px;align-items:center;text-align:left;margin-top:8px}
-.lettre-h .contenu img,.lettre-h .contenu .ph{width:60px;height:90px;flex:none;object-fit:cover;border-radius:4px;box-shadow:0 4px 10px rgba(0,0,0,.35);font-size:11px}
+.lettre-h .contenu img,.lettre-h .contenu .ph{width:58px;height:87px;flex:none;object-fit:cover;border-radius:4px;box-shadow:0 4px 10px rgba(0,0,0,.35);font-size:11px}
 .lettre-h .titre-l{font:700 19px/1.15 "Cormorant Garamond",Georgia,serif}
 .lettre-h .info-l{font-size:12px;color:#7a5a3a}
-.lettre-h .sceau-l{position:absolute;top:-14px;left:50%;margin-left:-14px;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffb3c4,#c2385d 60%,#701a33);color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}
+.lettre-h .signe{font:700 15px "Dancing Script",cursive;text-align:right;margin-top:4px;color:#7a5a3a}
 .bas-hibou .pari-tirage{margin-top:8px}
 .bas-hibou .row{justify-content:center}
-@keyframes hibou-avance{0%{transform:translateX(0);animation-timing-function:cubic-bezier(.25,.6,.4,1)}45%{transform:translateX(calc(var(--l,340px) / 2 + 90px));animation-timing-function:cubic-bezier(.6,0,.8,.45)}100%{transform:translateX(calc(var(--l,340px) + 210px))}}
-@keyframes hibou-monte{0%{transform:translateY(70px);animation-timing-function:cubic-bezier(.3,.6,.4,1)}45%{transform:translateY(0);animation-timing-function:ease-in-out}60%{transform:translateY(-10px);animation-timing-function:cubic-bezier(.5,0,.8,.5)}100%{transform:translateY(-80px)}}
-@keyframes hibou-balance{from{transform:translateY(3px) rotate(-4deg)}to{transform:translateY(-3px) rotate(-2deg)}}
-@keyframes hibou-bat-g{from{transform:rotate(16deg)}to{transform:rotate(-30deg)}}
-@keyframes hibou-bat-d{from{transform:rotate(-16deg)}to{transform:rotate(30deg)}}
-@keyframes hibou-lache{0%,44%{opacity:1}45%,100%{opacity:0}}
-@keyframes hibou-tombe{0%{opacity:1;transform:translate(0,8px) rotate(-6deg) scale(.22)}25%{opacity:1;transform:translate(-14px,19px) rotate(13deg) scale(.55)}50%{opacity:1;transform:translate(12px,33px) rotate(-11deg) scale(.8)}75%{opacity:1;transform:translate(-6px,48px) rotate(6deg) scale(.95)}100%{opacity:1;transform:translate(0,60px) rotate(-4deg) scale(1)}}
-@keyframes hibou-deplie{0%{opacity:0;transform:translateX(-50%) translateY(50px) scaleY(.2)}100%{opacity:1;transform:translateX(-50%)}}
-@keyframes hibou-pulse{0%,100%{opacity:1}50%{opacity:.45}}
-@media (prefers-reduced-motion:reduce){.hibou-vol{display:none}.enveloppe-h{animation:none;opacity:1;transform:translateY(60px) rotate(-4deg)}.indice-sceau{animation:none;opacity:1}.lettre-h{animation:none}}
-@media (max-height:620px){.hibou-scene{height:210px}.enveloppe-h{top:24px}.lettre-h{top:12px;padding:10px}.lettre-h .contenu img,.lettre-h .contenu .ph{width:46px;height:69px}}
+@media (prefers-reduced-motion:reduce){.chouette-p,.chouette-p *,.chouette-v,.chouette-v *,.enveloppe-h,.enveloppe-h *,.lettre-h,.etincelles-h i,.indice-sceau{animation:none !important}.hibou-vol{display:none}.enveloppe-h{opacity:1;transform:translateY(58px) rotate(-4deg)}.indice-sceau{opacity:1}}
+@media (max-height:620px){.hibou-scene{height:210px}.hibou-attente .chouette-p{width:84px;height:105px}.enveloppe-h{top:24px}.lettre-h{top:12px;padding:12px 12px 8px}.lettre-h .contenu img,.lettre-h .contenu .ph{width:46px;height:69px}.lettre-h .signe{display:none}}
 </style>
 <script>
 // ---------- À lire : le courrier du hibou (il apporte un livre de ta PAL) ----------
 var hibou = {lettre: null, ouverte: false, dernier: null};
 var FILTRES_FORMAT = [['paperBook', '📖 papier'], ['eBook', '📱 ebook'], ['audioBook', '🎧 audio']];
 var FILTRES_TAILLE = [['court', '🍬 court · < 250 p.'], ['moyen', '📗 moyen'], ['pave', '📚 pavé · > 450 p.']];
-// la chouette des neiges (façon Hedwige) : perchée sur sa branche, et en vol ailes levées, la lettre dans les serres
-var NEIGE = {corps: '#f7f6f0', aile: '#e6e3d8', ventre: '#ffffff', motif: '#d8d4c6', face: '#ffffff', iris: '#f2c230', bec: '#3a3a40', pattes: '#c9c4b4'};
+// la chouette enchantée : ses plumes prennent les couleurs du thème (lavande, accent, or), comme les meubles ; dessinée en SVG
+// (dégradés, plumes en écailles, lune et étoiles dorées). Perchée, elle respire, cligne des yeux, penche la tête ; en vol, ses
+// ailes battent en deux temps (le bras, puis la main) et planent ; l'enveloppe se brise, s'ouvre, et la lettre en sort.
+var COULEURS_CHOUETTE = {
+  plume1: 'color-mix(in srgb,var(--lav) 45%,#fff)', plume2: 'color-mix(in srgb,var(--lav) 80%,#1b1330)',
+  aile1: 'color-mix(in srgb,var(--accent) 55%,var(--lav))', aile2: 'color-mix(in srgb,var(--accent) 60%,#1b1330)',
+  ventre1: 'color-mix(in srgb,var(--gold) 18%,#fff)', ventre2: 'color-mix(in srgb,var(--gold) 40%,var(--lav))',
+  or: 'var(--gold)', face1: 'color-mix(in srgb,var(--lav) 15%,#fff)', face2: 'color-mix(in srgb,var(--lav) 45%,#fff)',
+  iris1: '#fff6c9', iris2: 'var(--gold)', bec1: 'var(--gold)', bec2: 'color-mix(in srgb,var(--gold) 60%,#3a2410)',
+  pattes: 'color-mix(in srgb,var(--gold) 70%,#6b4a2a)'
+};
+// chaque dessin a ses propres identifiants de dégradés (plusieurs dessins peuvent être à l'écran)
+var numeroSvgHibou = 0;
+function cssSvg(propriete, valeur) {
+  return ' style="' + propriete + ':' + valeur + '"';
+}
+function degradeSvg(id, type, arrets, attrs) {
+  return '<' + type + 'Gradient id="' + id + '" gradientUnits="userSpaceOnUse" ' + attrs + '>' + arrets.map(function (a) {
+    return '<stop offset="' + a[0] + '"' + cssSvg('stop-color', a[1]) + '/>';
+  }).join('') + '</' + type + 'Gradient>';
+}
+function etoileSvg(x, y, t) {
+  return '<path d="M' + x + ' ' + (y - 2.4 * t) + ' l' + t + ' ' + (1.4 * t) + ' ' + (1.4 * t) + ' ' + t + ' ' + (-1.4 * t) + ' ' + t + ' ' + (-t) + ' ' + (1.4 * t) + ' ' + (-t) + ' ' + (-1.4 * t) + ' ' + (-1.4 * t) + ' ' + (-t) + ' ' + (1.4 * t) + ' ' + (-t) + ' Z"' + cssSvg('fill', COULEURS_CHOUETTE.or) + '/>';
+}
+// les yeux : iris en dégradé, pupille, deux reflets, et une paupière qui descend pour cligner
+function yeuxChouette(u, cx1, cx2, cy, r) {
+  var p = COULEURS_CHOUETTE;
+  return [cx1, cx2].map(function (cx) {
+    return '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r + 1.6) + '"' + cssSvg('fill', p.or) + ' opacity=".55"/>' +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="url(#' + u + 'iris)"/>' +
+      '<circle cx="' + (cx + r * 0.06) + '" cy="' + (cy + r * 0.06) + '" r="' + (r * 0.55) + '" fill="#160f22"/>' +
+      '<circle cx="' + (cx + r * 0.32) + '" cy="' + (cy - r * 0.32) + '" r="' + (r * 0.24) + '" fill="#fff"/>' +
+      '<circle cx="' + (cx - r * 0.28) + '" cy="' + (cy + r * 0.3) + '" r="' + (r * 0.1) + '" fill="#fff" opacity=".85"/>' +
+      '<ellipse class="paupiere" cx="' + cx + '" cy="' + cy + '" rx="' + (r + 1.8) + '" ry="' + (r + 1.8) + '" fill="url(#' + u + 'face)"/>';
+  }).join('');
+}
 function chouettePerchee() {
-  var p = NEIGE;
-  var plumes = '';
-  for (var r = 0; r < 3; r++) {
-    for (var c = 0; c < 4 - (r % 2); c++) {
-      var x = 44 + c * 11 + (r % 2) * 5.5;
-      var y = 90 + r * 10;
-      plumes += '<path d="M' + (x - 4) + ' ' + y + ' q4 5 8 0" stroke="' + p.motif + '" stroke-width="1.6" fill="none" stroke-linecap="round"/>';
+  var p = COULEURS_CHOUETTE;
+  var u = 'chp' + (++numeroSvgHibou) + '-';
+  var defs = '<defs>' +
+    degradeSvg(u + 'corps', 'radial', [[0, p.plume1], [1, p.plume2]], 'cx="48" cy="48" r="96"') +
+    degradeSvg(u + 'aile', 'linear', [[0, p.aile1], [1, p.aile2]], 'x1="0" y1="70" x2="0" y2="138"') +
+    degradeSvg(u + 'ventre', 'linear', [[0, p.ventre1], [1, p.ventre2]], 'x1="0" y1="72" x2="0" y2="134"') +
+    degradeSvg(u + 'face', 'radial', [[0, p.face1], [1, p.face2]], 'cx="60" cy="54" r="30"') +
+    degradeSvg(u + 'iris', 'radial', [[0, p.iris1], [0.75, p.iris2]], 'cx="60" cy="56" r="40"') +
+    degradeSvg(u + 'bec', 'linear', [[0, p.bec1], [1, p.bec2]], 'x1="0" y1="64" x2="0" y2="78"') +
+    '</defs>';
+  // queue, corps, ailes repliées (pointes en festons, une étoile), ventre en écailles dorées et une lune
+  var corps = '<path d="M50 126 L44 146 L54 141 L60 148 L66 141 L76 146 L70 126 Z" fill="url(#' + u + 'aile)"/>' +
+    '<path d="M60 34 C 94 34, 106 64, 103 94 C 100 124, 83 138, 60 138 C 37 138, 20 124, 17 94 C 14 64, 26 34, 60 34 Z" fill="url(#' + u + 'corps)"/>';
+  function aileRepliee(sens) {
+    var m = function (x) {
+      if (sens < 0) {
+        return x;
+      }
+      return 120 - x;
+    };
+    return '<path d="M' + m(24) + ' 70 C ' + m(8) + ' 90, ' + m(10) + ' 120, ' + m(32) + ' 134 Q ' + m(35) + ' 129, ' + m(38) + ' 134 Q ' + m(40) + ' 127, ' + m(44) + ' 131 C ' + m(36) + ' 110, ' + m(36) + ' 88, ' + m(24) + ' 70 Z" fill="url(#' + u + 'aile)"/>' +
+      '<path d="M' + m(20) + ' 86 C ' + m(18) + ' 100, ' + m(22) + ' 114, ' + m(32) + ' 124"' + cssSvg('stroke', p.aile2) + ' stroke-width="1.2" fill="none" opacity=".45"/>' +
+      '<path d="M' + m(27) + ' 82 C ' + m(26) + ' 96, ' + m(29) + ' 110, ' + m(37) + ' 120"' + cssSvg('stroke', p.aile2) + ' stroke-width="1.2" fill="none" opacity=".35"/>' +
+      etoileSvg(m(22), 100, 1.5) + '<circle cx="' + m(29) + '" cy="114" r="1.3"' + cssSvg('fill', p.or) + '/>';
+  }
+  var ventre = '<path d="M60 74 C 80 74, 88 92, 87 106 C 86 124, 74 133, 60 133 C 46 133, 34 124, 33 106 C 32 92, 40 74, 60 74 Z" fill="url(#' + u + 'ventre)"/>';
+  var ecailles = '';
+  for (var r = 0; r < 5; r++) {
+    for (var c = 0; c < 5; c++) {
+      var x = 40 + c * 10 + (r % 2) * 5;
+      var y = 86 + r * 9;
+      if (x <= 82 && x >= 37) {
+        ecailles += '<path d="M' + (x - 4) + ' ' + y + ' q4 4.5 8 0"' + cssSvg('stroke', p.or) + ' stroke-width="1.3" fill="none" stroke-linecap="round" opacity=".75"/>';
+      }
     }
   }
-  var taches = [[30, 60], [88, 62], [24, 88], [94, 90], [34, 108], [84, 110], [60, 40], [50, 30], [70, 32]].map(function (t) {
-    return '<ellipse cx="' + t[0] + '" cy="' + t[1] + '" rx="2.2" ry="1.4" fill="#2b2b33" opacity=".75"/>';
-  }).join('');
-  return '<svg viewBox="0 0 120 150" width="104" height="130" aria-hidden="true">' +
-    '<path d="M60 20 C 96 20, 108 56, 104 92 C 100 124, 82 136, 60 136 C 38 136, 20 124, 16 92 C 12 56, 24 20, 60 20 Z" fill="' + p.corps + '"/>' +
-    '<path d="M20 72 C 6 92, 12 120, 36 130 C 30 108, 30 88, 20 72 Z" fill="' + p.aile + '"/><path d="M100 72 C 114 92, 108 120, 84 130 C 90 108, 90 88, 100 72 Z" fill="' + p.aile + '"/>' +
-    '<ellipse cx="60" cy="100" rx="27" ry="30" fill="' + p.ventre + '"/>' + plumes + taches +
-    '<circle cx="44" cy="58" r="20" fill="' + p.face + '"/><circle cx="76" cy="58" r="20" fill="' + p.face + '"/><path d="M40 40 Q60 50 80 40" stroke="' + p.aile + '" stroke-width="3" fill="none" stroke-linecap="round" opacity=".55"/>' +
-    '<circle cx="44" cy="58" r="12.5" fill="#fffaf0"/><circle cx="76" cy="58" r="12.5" fill="#fffaf0"/>' +
-    '<circle cx="45" cy="59" r="9" fill="' + p.iris + '"/><circle cx="75" cy="59" r="9" fill="' + p.iris + '"/>' +
-    '<circle cx="45.5" cy="59.5" r="5.5" fill="#1d1430"/><circle cx="74.5" cy="59.5" r="5.5" fill="#1d1430"/>' +
-    '<circle cx="48" cy="56" r="2.4" fill="#fff"/><circle cx="77" cy="56" r="2.4" fill="#fff"/><circle cx="43" cy="62" r="1.2" fill="#fff"/><circle cx="72" cy="62" r="1.2" fill="#fff"/>' +
-    '<ellipse cx="32" cy="74" rx="6" ry="3.5" fill="#ff9fb8" opacity=".45"/><ellipse cx="88" cy="74" rx="6" ry="3.5" fill="#ff9fb8" opacity=".45"/>' +
-    '<path d="M55 68 Q60 66 65 68 L60 78 Z" fill="' + p.bec + '"/>' +
-    '<path d="M46 134 q-2 6 -6 8 M50 135 q0 6 -2 9 M54 135 q2 6 1 9 M66 135 q-1 6 -1 9 M70 135 q1 6 3 9 M74 134 q2 6 6 8" stroke="' + p.pattes + '" stroke-width="3" fill="none" stroke-linecap="round"/></svg>';
+  ecailles += '<path d="M64 100 a9 9 0 1 1 -6 -15 a7 7 0 1 0 6 15 Z"' + cssSvg('fill', p.or) + ' opacity=".9"/>';
+  // la tête, à part : elle se penche
+  var tete = '<g class="tete">' +
+    '<path d="M33 30 L27 8 L46 24 Z" fill="url(#' + u + 'corps)"/><path d="M87 30 L93 8 L74 24 Z" fill="url(#' + u + 'corps)"/>' +
+    '<ellipse cx="60" cy="52" rx="38" ry="31" fill="url(#' + u + 'corps)"/>' +
+    '<path d="M60 74 C 46 76, 25 70, 25 54 C 25 40, 40 33, 50 38 C 54 40, 58 44, 60 47 C 62 44, 66 40, 70 38 C 80 33, 95 40, 95 54 C 95 70, 74 76, 60 74 Z" fill="url(#' + u + 'face)"' + cssSvg('stroke', p.or) + ' stroke-width="1.6" stroke-opacity=".6"/>' +
+    '<path d="M36 46 Q46 41 56 48 M84 46 Q74 41 64 48"' + cssSvg('stroke', p.or) + ' stroke-width="1.4" fill="none" opacity=".5" stroke-linecap="round"/>' +
+    yeuxChouette(u, 45, 75, 56, 10.5) +
+    '<path d="M56 64 Q60 61 64 64 Q62 72 60 77 Q58 72 56 64 Z" fill="url(#' + u + 'bec)"/>' +
+    '<ellipse cx="33" cy="68" rx="5.5" ry="3" fill="#ff9fb8" opacity=".35"/><ellipse cx="87" cy="68" rx="5.5" ry="3" fill="#ff9fb8" opacity=".35"/>' +
+    '</g>';
+  var pattes = '<path d="M47 134 q-2 6 -6 8 M51 135 q0 6 -2 9 M55 135 q2 6 1 9 M65 135 q-1 6 -1 9 M69 135 q1 6 3 9 M73 134 q2 6 6 8"' + cssSvg('stroke', p.pattes) + ' stroke-width="3" fill="none" stroke-linecap="round"/>';
+  return '<svg class="chouette-p" viewBox="0 0 120 150" aria-hidden="true">' + defs + '<g class="souffle">' + corps + aileRepliee(-1) + aileRepliee(1) + ventre + ecailles + '</g>' + tete + pattes + '</svg>';
 }
+// en vol, vue de face : ailes en deux parties (la main se plie après le bras), queue en éventail, la lettre dans les serres
 function chouetteVol() {
-  var p = NEIGE;
-  // aile levée, bord de fuite en festons arrondis
+  var p = COULEURS_CHOUETTE;
+  var u = 'chv' + (++numeroSvgHibou) + '-';
+  var defs = '<defs>' +
+    degradeSvg(u + 'corps', 'radial', [[0, p.plume1], [1, p.plume2]], 'cx="104" cy="56" r="60"') +
+    degradeSvg(u + 'aile', 'linear', [[0, p.aile1], [1, p.aile2]], 'x1="0" y1="20" x2="0" y2="80"') +
+    degradeSvg(u + 'plume', 'linear', [[0, p.aile1], [0.6, p.aile1], [1, p.aile2]], 'x1="64" y1="0" x2="6" y2="0"') +
+    degradeSvg(u + 'ventre', 'linear', [[0, p.ventre1], [1, p.ventre2]], 'x1="0" y1="66" x2="0" y2="112"') +
+    degradeSvg(u + 'face', 'radial', [[0, p.face1], [1, p.face2]], 'cx="110" cy="52" r="20"') +
+    degradeSvg(u + 'iris', 'radial', [[0, p.iris1], [0.75, p.iris2]], 'cx="110" cy="54" r="24"') +
+    degradeSvg(u + 'bec', 'linear', [[0, p.bec1], [1, p.bec2]], 'x1="0" y1="56" x2="0" y2="66"') +
+    '</defs>';
   function aile(sens) {
-    var m = function (x) { return sens < 0 ? x : 200 - x; };
-    var P = function (l) { return l.map(function (c) { return m(c[0]) + ' ' + c[1]; }); };
-    var d = P([[86, 52], [70, 40], [48, 22], [30, 4], [26, 14], [28, 20], [36, 22], [32, 28], [35, 33], [44, 33], [42, 39], [47, 43], [56, 42], [56, 48], [62, 52], [70, 51], [72, 58], [79, 61], [86, 64]]);
-    var chemin = 'M' + d[0];
-    for (var i = 1; i < d.length; i += 3) {
-      chemin += ' C ' + d[i] + ', ' + d[i + 1] + ', ' + d[i + 2];
+    // dessinée pour la gauche, la droite est la même retournée. Main : 6 rémiges larges aux bouts arrondis, en éventail, une
+    // couverture cache leur base ; bras : couverture et rémiges secondaires en festons
+    var pointes = [[34, 70], [20, 64], [10, 54], [6, 43], [8, 32], [16, 22]];
+    var primaires = pointes.map(function (t, i) {
+      var by = 62 - i * 3.4;
+      var mx = (64 + t[0]) / 2;
+      var my = (by + t[1]) / 2;
+      var plume = '<path d="M64 ' + (by - 4) + ' C ' + mx + ' ' + (my - 6) + ', ' + (t[0] + 6) + ' ' + (t[1] - 6) + ', ' + t[0] + ' ' + t[1] +
+        ' C ' + (t[0] - 3) + ' ' + (t[1] + 6) + ', ' + mx + ' ' + (my + 7) + ', 64 ' + (by + 4) + ' Z" fill="url(#' + u + 'plume)"' + cssSvg('stroke', p.aile2) + ' stroke-width=".7" stroke-opacity=".55"/>';
+      if (i === 3) {
+        plume += etoileSvg(t[0] + 10, t[1] + 1, 1.2);
+      }
+      return plume;
+    }).join('');
+    var couverture = '<path d="M70 38 C 56 33, 42 38, 32 48 C 42 54, 56 58, 70 58 Z" fill="url(#' + u + 'aile)"/>' +
+      '<path d="M66 40 C 56 37, 45 40, 36 48"' + cssSvg('stroke', p.or) + ' stroke-width="1" fill="none" opacity=".9"/>';
+    var festons = '';
+    for (var k = 0; k < 5; k++) {
+      var fx = 66 + k * 7.5;
+      var fy = 58 + k * 3;
+      festons += '<path d="M' + (fx - 4) + ' ' + (fy - 2) + ' Q ' + fx + ' ' + (fy + 9) + ', ' + (fx + 5) + ' ' + (fy + 1) + '" fill="url(#' + u + 'aile)"' + cssSvg('stroke', p.aile2) + ' stroke-width=".6" stroke-opacity=".5"/>';
     }
-    var cv = P([[84, 54], [72, 46], [56, 32], [42, 18], [44, 30], [56, 42], [82, 60]]);
-    var traits = [[[40, 22], [58, 40]], [[50, 30], [66, 46]], [[62, 40], [74, 52]]].map(function (t) {
-      return '<path d="M' + m(t[0][0]) + ' ' + t[0][1] + ' L' + m(t[1][0]) + ' ' + t[1][1] + '" stroke="' + p.corps + '" stroke-width="1.4" opacity=".5" stroke-linecap="round"/>';
-    }).join('');
-    var mouches = [[52, 40], [40, 34], [30, 46], [44, 26], [60, 47], [34, 16]].map(function (t) {
-      return '<ellipse cx="' + m(t[0]) + '" cy="' + t[1] + '" rx="2.2" ry="1.4" fill="#2b2b33" opacity=".75"/>';
-    }).join('');
-    return '<g class="aile ' + (sens < 0 ? 'g' : 'd') + '"><path d="' + chemin + ' Z" fill="' + p.aile + '"/><path d="M' + cv[0] + ' C ' + cv[1] + ', ' + cv[2] + ', ' + cv[3] + ' C ' + cv[4] + ', ' + cv[5] + ', ' + cv[6] + ' Z" fill="' + p.corps + '" opacity=".55"/>' + traits + mouches + '</g>';
+    var bras = '<path d="M102 60 C 92 46, 78 40, 64 40 C 60 48, 62 56, 66 60 C 78 66, 90 70, 102 74 Z" fill="url(#' + u + 'aile)"/>' + festons +
+      '<path d="M96 60 C 86 52, 76 48, 68 48"' + cssSvg('stroke', p.aile2) + ' stroke-width="1.1" fill="none" opacity=".4"/>';
+    var g = '<g class="bras"><g class="main">' + primaires + couverture + '</g>' + bras + '</g>';
+    if (sens > 0) {
+      return '<g transform="translate(220 0) scale(-1 1)"><g class="aile d">' + g + '</g></g>';
+    }
+    return '<g class="aile g">' + g + '</g>';
   }
-  var taches = [[94, 80], [106, 86], [100, 90], [94, 35], [106, 35]].map(function (t) {
-    return '<ellipse cx="' + t[0] + '" cy="' + t[1] + '" rx="2.2" ry="1.4" fill="#2b2b33" opacity=".75"/>';
-  }).join('');
-  return '<svg viewBox="0 0 200 130" aria-hidden="true">' + aile(-1) + aile(1) +
-    '<path d="M100 32 C 120 32, 126 52, 124 70 C 122 88, 112 96, 100 96 C 88 96, 78 88, 76 70 C 74 52, 80 32, 100 32 Z" fill="' + p.corps + '"/>' +
-    '<ellipse cx="100" cy="76" rx="15" ry="17" fill="' + p.ventre + '"/>' + taches +
-    '<circle cx="92" cy="50" r="11" fill="' + p.face + '"/><circle cx="108" cy="50" r="11" fill="' + p.face + '"/>' +
-    '<circle cx="92" cy="50" r="7" fill="#fffaf0"/><circle cx="108" cy="50" r="7" fill="#fffaf0"/><circle cx="92.5" cy="50.5" r="5" fill="' + p.iris + '"/><circle cx="107.5" cy="50.5" r="5" fill="' + p.iris + '"/><circle cx="92.8" cy="50.8" r="3" fill="#1d1430"/><circle cx="107.2" cy="50.8" r="3" fill="#1d1430"/><circle cx="94.5" cy="49" r="1.3" fill="#fff"/><circle cx="109" cy="49" r="1.3" fill="#fff"/>' +
-    '<path d="M97 56 Q100 55 103 56 L100 62 Z" fill="' + p.bec + '"/>' +
-    '<path d="M92 94 l-4 10 M100 96 v10 M108 94 l4 10" stroke="' + p.aile + '" stroke-width="5" stroke-linecap="round"/>' +
-    '<g class="lettre-portee" transform="translate(80 100) rotate(-6)"><rect width="40" height="26" rx="3" fill="#f4e6cf" stroke="#c9a77a" stroke-width="1.5"/><path d="M0 2 L20 15 L40 2" fill="#ead6a8" stroke="#c9a77a" stroke-width="1.5"/><circle cx="20" cy="15" r="4.5" fill="#c2385d"/></g>' +
-    '<path d="M93 98 q-3 4 -1 6 M100 100 q0 4 1 6 M107 98 q3 4 1 6" stroke="' + p.pattes + '" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>';
+  var queue = '<path d="M100 98 L90 124 L100 120 L110 128 L120 120 L130 124 L120 98 Z" fill="url(#' + u + 'aile)"/>';
+  var corps = '<ellipse cx="110" cy="80" rx="22" ry="28" fill="url(#' + u + 'corps)"/>' +
+    '<path d="M110 66 C 122 66, 126 78, 125 88 C 124 100, 117 106, 110 106 C 103 106, 96 100, 95 88 C 94 78, 98 66, 110 66 Z" fill="url(#' + u + 'ventre)"/>';
+  var ecailles = '';
+  for (var r = 0; r < 3; r++) {
+    for (var c = 0; c < 3; c++) {
+      var x = 102 + c * 8 + (r % 2) * 2;
+      var y = 80 + r * 8;
+      ecailles += '<path d="M' + (x - 3) + ' ' + y + ' q3 3.5 6 0"' + cssSvg('stroke', p.or) + ' stroke-width="1.1" fill="none" opacity=".7"/>';
+    }
+  }
+  var tete = '<path d="M96 40 L91 24 L104 35 Z" fill="url(#' + u + 'corps)"/><path d="M124 40 L129 24 L116 35 Z" fill="url(#' + u + 'corps)"/>' +
+    '<ellipse cx="110" cy="50" rx="21" ry="18" fill="url(#' + u + 'corps)"/>' +
+    '<path d="M110 64 C 102 65, 92 61, 92 52 C 92 44, 100 40, 105 43 C 107 44, 109 46, 110 48 C 111 46, 113 44, 115 43 C 120 40, 128 44, 128 52 C 128 61, 118 65, 110 64 Z" fill="url(#' + u + 'face)"' + cssSvg('stroke', p.or) + ' stroke-width="1" stroke-opacity=".6"/>' +
+    yeuxChouette(u, 102.5, 117.5, 53, 5.6) +
+    '<path d="M108 58 Q110 56.5 112 58 Q111 62 110 64.5 Q109 62 108 58 Z" fill="url(#' + u + 'bec)"/>';
+  var serres = '<path d="M103 106 l-3 7 M110 108 v7 M117 106 l3 7"' + cssSvg('stroke', p.pattes) + ' stroke-width="3" stroke-linecap="round"/>';
+  var lettre = '<g class="lettre-portee" transform="translate(94 111) rotate(-5)"><rect width="34" height="23" rx="2" fill="#f6e6c4" stroke="#c8a774" stroke-width="1.2"/>' +
+    '<path d="M0 2 L17 13 L34 2" fill="#ead2a2" stroke="#c8a774" stroke-width="1.2"/><circle cx="17" cy="13" r="4"' + cssSvg('fill', 'var(--accent)') + '/></g>';
+  return '<svg class="chouette-v" viewBox="0 0 220 140" aria-hidden="true">' + defs + aile(-1) + aile(1) + queue + corps + ecailles + tete + serres + lettre + '</svg>';
 }
-var ENVELOPPE = '<svg viewBox="0 0 150 100" aria-hidden="true"><rect x="2" y="2" width="146" height="96" rx="6" fill="#f4e6cf" stroke="#c9a77a" stroke-width="2"/><path d="M2 8 L75 60 L148 8" fill="#ead6a8" stroke="#c9a77a" stroke-width="2"/><path d="M2 96 L58 50 M148 96 L92 50" stroke="#e0caa0" stroke-width="2"/><circle cx="75" cy="58" r="15" fill="#c2385d"/><circle cx="75" cy="58" r="11" fill="none" stroke="#ffb3c4" stroke-width="1.5"/><text x="75" y="63" text-anchor="middle" font-size="13" fill="#fff">✦</text></svg>';
+// la branche où elle attend
+var BRANCHE_HIBOU = '<svg class="branche-h" viewBox="0 0 170 34" aria-hidden="true"><defs><linearGradient id="hbBois" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8774a"/><stop offset="1" stop-color="#5e3a22"/></linearGradient></defs>' +
+  '<path d="M2 18 C 40 10, 90 14, 168 10 L168 18 C 120 22, 60 22, 2 26 Z" fill="url(#hbBois)"/><path d="M120 13 C 132 4, 146 2, 156 4" stroke="#6b4428" stroke-width="3" fill="none" stroke-linecap="round"/>' +
+  '<path d="M150 4 C 158 -2, 166 2, 164 8 C 158 10, 152 8, 150 4 Z" fill="#6aa86a"/><path d="M134 7 C 136 -1, 145 -2, 146 4 C 142 8, 137 9, 134 7 Z" fill="#7fbf7a"/><path d="M18 20 C 10 28, 14 34, 22 32 C 24 28, 22 24, 18 20 Z" fill="#6aa86a"/></svg>';
+// ---------- l'enveloppe : parchemin aux bords irréguliers, liseré doré, ruban et sceau de cire en relief (couleurs du thème) ----------
+// un rectangle dont les bords ondulent un peu (toujours le même dessin)
+function bordIrregulier(x, y, l, h, pas, amp) {
+  var pts = [];
+  var graine = 7;
+  function bruit() {
+    graine = (graine * 9301 + 49297) % 233280;
+    return graine / 233280 - 0.5;
+  }
+  var i;
+  for (i = 0; i <= l; i += pas) {
+    pts.push([x + i, y + bruit() * amp]);
+  }
+  for (i = 0; i <= h; i += pas) {
+    pts.push([x + l + bruit() * amp, y + i]);
+  }
+  for (i = l; i >= 0; i -= pas) {
+    pts.push([x + i, y + h + bruit() * amp]);
+  }
+  for (i = h; i >= 0; i -= pas) {
+    pts.push([x + bruit() * amp, y + i]);
+  }
+  return 'M' + pts.map(function (q) { return q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join(' L') + ' Z';
+}
+// une goutte de cire aux bords coulés, l'empreinte d'une lune et d'une étoile ; en deux moitiés le long d'une fêlure (elle se brise)
+function sceauCire(u, cx, cy, r) {
+  var foncee = 'color-mix(in srgb,var(--accent) 50%,#2a0a18)';
+  var bosses = [];
+  for (var i = 0; i < 9; i++) {
+    var a = i / 9 * Math.PI * 2;
+    var rr = r * [1.12, 0.98, 1.05][i % 3];
+    bosses.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]);
+  }
+  var d = 'M' + bosses[0][0].toFixed(1) + ' ' + bosses[0][1].toFixed(1);
+  for (var j = 1; j <= bosses.length; j++) {
+    var b = bosses[j % bosses.length];
+    var a2 = (j - 0.5) / 9 * Math.PI * 2;
+    d += ' Q ' + (cx + Math.cos(a2) * r * 1.16).toFixed(1) + ' ' + (cy + Math.sin(a2) * r * 1.16).toFixed(1) + ' ' + b[0].toFixed(1) + ' ' + b[1].toFixed(1);
+  }
+  var lune = 'M' + (cx + r * 0.22) + ' ' + (cy + r * 0.42) + ' a' + (r * 0.5) + ' ' + (r * 0.5) + ' 0 1 1 ' + (-r * 0.36) + ' ' + (-r * 0.86) + ' a' + (r * 0.4) + ' ' + (r * 0.4) + ' 0 1 0 ' + (r * 0.36) + ' ' + (r * 0.86) + ' Z';
+  var e = cx + r * 0.3;
+  var f = cy - r * 0.18;
+  var t = r * 0.16;
+  var etoile = 'M' + e + ' ' + (f - t * 1.6) + ' l' + (t * 0.45) + ' ' + (t * 1.15) + ' ' + (t * 1.15) + ' ' + (t * 0.45) + ' ' + (-t * 1.15) + ' ' + (t * 0.45) + ' ' + (-t * 0.45) + ' ' + (t * 1.15) + ' ' + (-t * 0.45) + ' ' + (-t * 1.15) + ' ' + (-t * 1.15) + ' ' + (-t * 0.45) + ' ' + (t * 1.15) + ' ' + (-t * 0.45) + ' Z';
+  var cire = '<path d="' + d + '" fill="url(#' + u + 'cire)"/><circle cx="' + cx + '" cy="' + cy + '" r="' + (r * 0.72) + '" fill="none"' + cssSvg('stroke', foncee) + ' stroke-width="1.6" opacity=".7"/>' +
+    '<path d="' + lune + '"' + cssSvg('fill', foncee) + '/><path d="' + etoile + '"' + cssSvg('fill', foncee) + '/>' +
+    '<path d="M' + (cx - r * 0.75) + ' ' + (cy - r * 0.35) + ' A' + (r * 0.8) + ' ' + (r * 0.8) + ' 0 0 1 ' + (cx - r * 0.1) + ' ' + (cy - r * 0.8) + '" stroke="#fff" stroke-width="1.6" fill="none" opacity=".45" stroke-linecap="round"/>';
+  var R = r * 1.5;
+  var felure = [[cx + r * 0.1, cy - R], [cx - r * 0.2, cy - r * 0.45], [cx + r * 0.25, cy - r * 0.05], [cx - r * 0.15, cy + r * 0.4], [cx + r * 0.1, cy + R]].map(function (q) {
+    return q[0].toFixed(1) + ' ' + q[1].toFixed(1);
+  }).join(' L');
+  var defs = '<defs>' + degradeSvg(u + 'cire', 'radial', [[0, 'color-mix(in srgb,var(--accent) 55%,#fff)'], [0.55, 'var(--accent)'], [1, 'color-mix(in srgb,var(--accent) 55%,#2a0a18)']], 'cx="' + (cx - r * 0.3) + '" cy="' + (cy - r * 0.3) + '" r="' + (r * 1.5) + '"') +
+    '<clipPath id="' + u + 'cg"><path d="M' + (cx - R) + ' ' + (cy - R) + ' L' + felure + ' L' + (cx - R) + ' ' + (cy + R) + ' Z"/></clipPath>' +
+    '<clipPath id="' + u + 'cd"><path d="M' + (cx + R) + ' ' + (cy - R) + ' L' + felure + ' L' + (cx + R) + ' ' + (cy + R) + ' Z"/></clipPath></defs>';
+  return defs + '<g class="sceau"><g class="moitie g" clip-path="url(#' + u + 'cg)">' + cire + '</g><g class="moitie d" clip-path="url(#' + u + 'cd)">' + cire + '</g></g>';
+}
+function enveloppeSvg() {
+  var u = 'env' + (++numeroSvgHibou) + '-';
+  var defs = '<defs>' +
+    degradeSvg(u + 'papier', 'linear', [[0, '#fbf1db'], [1, '#e8d2a6']], 'x1="0" y1="0" x2="0" y2="118"') +
+    degradeSvg(u + 'rabat', 'linear', [[0, '#f6e6c4'], [1, '#e2c995']], 'x1="0" y1="6" x2="0" y2="70"') +
+    degradeSvg(u + 'ruban', 'linear', [[0, 'color-mix(in srgb,var(--accent) 80%,#fff)'], [0.5, 'var(--accent)'], [1, 'color-mix(in srgb,var(--accent) 70%,#2a0a18)']], 'x1="0" y1="58" x2="0" y2="68"') +
+    '</defs>';
+  var corps = '<path d="' + bordIrregulier(5, 6, 160, 106, 8, 2.2) + '" fill="url(#' + u + 'papier)" stroke="#c8a774" stroke-width="1.2"/>' +
+    '<rect x="11" y="12" width="148" height="94" rx="3" fill="none"' + cssSvg('stroke', 'var(--gold)') + ' stroke-width="1" opacity=".55"/>' +
+    '<path d="M6 112 L66 66 M164 112 L104 66" stroke="#d9be8c" stroke-width="1.6"/><path d="M5 112 L66 66 L104 66 L165 112 Z" fill="#000" opacity=".04"/>';
+  var ruban = '<rect class="ruban" x="5" y="58" width="160" height="10" fill="url(#' + u + 'ruban)" opacity=".9"/>';
+  var rabat = '<g class="rabat"><path d="M5 7 L85 68 L165 7 Z" fill="url(#' + u + 'rabat)" stroke="#c8a774" stroke-width="1.2" stroke-linejoin="round"/>' +
+    '<path d="M14 12 L85 63 L156 12" fill="none"' + cssSvg('stroke', 'var(--gold)') + ' stroke-width=".8" opacity=".45"/></g>';
+  return '<svg class="enveloppe-svg" viewBox="0 0 170 120" aria-hidden="true">' + defs + corps + ruban + rabat + sceauCire(u, 85, 63, 15) + '</svg>';
+}
+// le petit sceau au haut de la lettre
+function sceauLettre() {
+  var u = 'scl' + (++numeroSvgHibou) + '-';
+  return '<svg class="sceau-l" viewBox="0 0 40 40" aria-hidden="true">' + sceauCire(u, 20, 20, 13) + '</svg>';
+}
 
 // les filtres du hibou (formats, tailles) : dans la base, réglage « hibou »
 function choixHibou() {
@@ -5674,7 +5871,7 @@ ACTIONS.filtreHibou = function (el) {
   }).catch(erreurEcriture);
 };
 function attenteHibou() {
-  return '<div class="hibou-attente">' + chouettePerchee() + '<div class="branche"></div><div>Le hibou attend sur sa branche.<br>Appelle-le : il t\'apportera un livre de ta PAL.</div></div>';
+  return '<div class="hibou-attente">' + chouettePerchee() + BRANCHE_HIBOU + '<div>Le hibou attend sur sa branche.<br>Appelle-le : il t\'apportera un livre de ta PAL.</div></div>';
 }
 function enveloppeHibou(vole, largeur) {
   var vol = '';
@@ -5686,7 +5883,7 @@ function enveloppeHibou(vole, largeur) {
     cls += ' posee';
     indice += ' vite';
   }
-  return vol + '<button class="' + cls + '" data-act="ouvrirLettre" aria-label="Ouvrir la lettre">' + ENVELOPPE + '</button><div class="' + indice + '">touche le sceau pour ouvrir la lettre</div>';
+  return vol + '<button class="' + cls + '" data-act="ouvrirLettre" aria-label="Ouvrir la lettre">' + enveloppeSvg() + '</button><div class="' + indice + '">touche le sceau pour ouvrir la lettre</div>';
 }
 function lettreHibou(b) {
   var info = [];
@@ -5700,7 +5897,7 @@ function lettreHibou(b) {
     info.push(b.total_page + ' p.');
   }
   info.push('dans ta PAL depuis ' + depuis(b.created_at));
-  return '<div class="lettre-h"><span class="sceau-l">✦</span><div class="ecrit">Chère lectrice,</div><div class="contenu">' + cover(b) + '<div><div class="info-l">le destin te propose</div><div class="titre-l">' + esc(titreTranche(b)) + '</div><div class="info-l">' + esc((b.authors || []).join(', ')) + '</div><div class="info-l">' + esc(info.join(' · ')) + '</div></div></div></div>';
+  return '<div class="lettre-h">' + sceauLettre() + '<div class="ecrit">Chère lectrice,</div><div class="contenu">' + cover(b) + '<div><div class="info-l">le destin te propose</div><div class="titre-l">' + esc(titreTranche(b)) + '</div><div class="info-l">' + esc((b.authors || []).join(', ')) + '</div><div class="info-l">' + esc(info.join(' · ')) + '</div></div></div><div class="signe">— le hibou</div></div>';
 }
 function basHibou(n) {
   if (hibou.lettre && hibou.ouverte && M.parId[hibou.lettre]) {
@@ -5766,12 +5963,35 @@ ACTIONS.appelerHibou = function () {
   hibou.dernier = b.id;
   hibou.ouverte = false;
   majHibou(true);
-  setTimeout(function () { vibrerFete([30]); }, 2950);
+  setTimeout(function () { vibrerFete([30]); }, 3200);
 };
-ACTIONS.ouvrirLettre = function () {
-  hibou.ouverte = true;
-  majHibou(false);
+// ouvrir : le sceau se brise, le ruban s'efface, le rabat bascule, des étincelles ; la lettre sort ensuite
+ACTIONS.ouvrirLettre = function (el) {
+  if (hibou.ouverte || el.classList.contains('ouvre')) {
+    return;
+  }
   vibrerFete([40, 30, 40]);
+  function montrerLettre() {
+    hibou.ouverte = true;
+    majHibou(false);
+  }
+  if (mouvementReduit()) {
+    montrerLettre();
+    return;
+  }
+  el.classList.add('posee', 'ouvre');
+  var scene = document.getElementById('hibouScene');
+  var indice = scene.querySelector('.indice-sceau');
+  if (indice) {
+    indice.remove();
+  }
+  var h = '<div class="etincelles-h">';
+  for (var k = 0; k < 9; k++) {
+    var a = k / 9 * Math.PI * 2;
+    h += '<i style="--x:' + Math.round(Math.cos(a) * 70) + 'px;--y:' + Math.round(Math.sin(a) * 50 - 20) + 'px;animation-delay:' + (0.25 + k * 0.03).toFixed(2) + 's">✦</i>';
+  }
+  scene.insertAdjacentHTML('beforeend', h + '</div>');
+  setTimeout(montrerLettre, 950);
 };
 </script>
 
@@ -14117,7 +14337,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 11:11:35';
+var VERSION_APPLI = '2026-10-06 11:20:49';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
