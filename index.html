@@ -12,7 +12,7 @@
 <link rel="apple-touch-icon" href="icone2-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500;1,600&family=Dancing+Script:wght@600;700&family=Nunito:wght@400;600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500;1,600&family=Cormorant+SC:wght@600;700&family=Dancing+Script:wght@600;700&family=Nunito:wght@400;600;700;800;900&display=swap">
 <style>
 /* Thèmes : « rose féerique » (clair), « nuit enchantée » (sombre), « automne cosy » */
 :root{
@@ -5594,7 +5594,12 @@ function lignePari() {
 .lettre-h .photo-l img{display:block;width:46px;height:69px;object-fit:cover;border-radius:3px;box-shadow:0 3px 8px rgba(0,0,0,.35)}
 .lettre-h .photo-l .ph{width:46px;height:69px;padding:3px;overflow:hidden;border-radius:3px;box-shadow:0 3px 8px rgba(0,0,0,.35);font:600 11px/1.1 Nunito,sans-serif}
 .lettre-h .trombone{position:absolute;left:18px;top:-9px;width:10px;height:24px;z-index:1}
-.lettre-h .titre-l{text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--accent) 70%,transparent);text-decoration-thickness:1.5px;text-underline-offset:2px}
+/* le titre du livre sur sa ligne, au milieu, en petites capitales entre deux fleurons dorés ; l'auteur·ice en italique dessous */
+.lettre-h .bloc-titre{text-align:center;text-indent:0;margin:6px 0}
+.lettre-h .titre-l{display:block;font:700 18px/1.12 "Cormorant SC","Cormorant Garamond",Georgia,serif;letter-spacing:.03em;color:#2e1a10}
+.lettre-h .auteur-l{display:block;font:italic 600 14px "Cormorant Garamond",Georgia,serif;color:#7a5a3a;margin-top:1px}
+.lettre-h .fleuron{display:block;width:120px;height:10px;margin:2px auto}
+.lettre-h .suite-l{text-indent:14px}
 .lettre-h .salut{text-align:right;margin-top:6px}
 .lettre-h .signe{text-align:right;font-size:22px;line-height:1.05;color:color-mix(in srgb,var(--accent) 55%,#3a2618)}
 .lettre-h .ps{clear:both;font-size:13.5px;color:#7a5a3a;margin-top:5px;padding-top:3px;border-top:1px dashed #d8bd8a}
@@ -6168,31 +6173,32 @@ function ecrireLettre(livre, d) {
     bonjour = 'Bonsoir à toi,';
   }
   var appel = hasardLettre(['Chère âme lectrice,', bonjour, 'Cher cœur de lecture,', 'Chère tête de lune,', 'Hou-hou, c\'est moi&nbsp;!'], 'appel');
-  var titreLivre = '<span class="titre-l">' + esc(livre.titre) + '</span>';
-  if (livre.auteur) {
-    titreLivre += ', ' + esc(deElision(livre.auteur));
-  }
-  var corps = hasardLettre([
-    'J\'ai fouillé ta pile à lire et je t\'en rapporte ' + titreLivre + '.',
-    'Cette nuit, en survolant tes étagères, un livre m\'a fait de l\'œil&nbsp;: ' + titreLivre + '.',
-    'J\'ai tiré au sort parmi tes livres en attente, et le destin a choisi ' + titreLivre + '.',
-    'Un petit vent m\'a soufflé un titre à l\'oreille&nbsp;: ' + titreLivre + '.',
-    'Je t\'apporte, tout droit de ta pile à lire, ' + titreLivre + '.',
-    'Devine ce que j\'ai trouvé en rangeant ta pile à lire&nbsp;? ' + titreLivre + '&nbsp;!'
+  // la trouvaille annonce le titre, qui vient ensuite sur sa ligne
+  var trouvaille = hasardLettre([
+    'J\'ai fouillé ta pile à lire et je t\'en rapporte&nbsp;:',
+    'Cette nuit, en survolant tes étagères, un livre m\'a fait de l\'œil&nbsp;:',
+    'J\'ai tiré au sort parmi tes livres en attente, et le destin a choisi&nbsp;:',
+    'Un petit vent m\'a soufflé un titre à l\'oreille&nbsp;:',
+    'Je t\'apporte, tout droit de ta pile à lire&nbsp;:',
+    'Devine ce que j\'ai trouvé en rangeant ta pile à lire&nbsp;?'
   ], 'trouvaille');
-  var attente = depuisQuandLettre(livre, d);
-  if (attente) {
-    corps += ' ' + attente;
+  var titreLivre = FLEURON_LETTRE + '<span class="titre-l">' + esc(livre.titre) + '</span>';
+  if (livre.auteur) {
+    titreLivre += '<span class="auteur-l">' + esc(deElision(livre.auteur)) + '</span>';
   }
-  if (!attente || Math.random() < 0.5) {
-    corps += ' ' + ambianceLettre(livre, d);
+  titreLivre += FLEURON_LETTRE;
+  var suite = depuisQuandLettre(livre, d);
+  if (!suite || Math.random() < 0.5) {
+    suite += ' ' + ambianceLettre(livre, d);
   }
   var saluts = ['Hou-hou, tendrement,', 'Avec toute ma tendresse à plumes,', 'Bonne lecture, et à très vite sur ma branche,', 'Je veille sur ta pile en attendant,', 'Plume au vent et cœur au chaud,', 'Ton amie à plumes,'];
   if (appel.indexOf('Hou-hou') === 0) {
     saluts = saluts.slice(1);
   }
-  return {date: dateLettre(d), appel: appel, corps: corps, salut: hasardLettre(saluts, 'salut'), ps: postScriptum(livre)};
+  return {date: dateLettre(d), appel: appel, trouvaille: trouvaille, blocTitre: titreLivre, suite: suite.trim(), salut: hasardLettre(saluts, 'salut'), ps: postScriptum(livre)};
 }
+// un fleuron doré : deux traits, un losange, deux perles
+var FLEURON_LETTRE = '<svg class="fleuron" viewBox="0 0 120 10" aria-hidden="true"><path d="M4 5 H48 M72 5 H116" stroke="#b08a52" stroke-width="1" stroke-linecap="round"/><path d="M60 1 l2.2 4 -2.2 4 -2.2 -4 Z" fill="#b08a52"/><circle cx="53" cy="5" r="1.2" fill="#b08a52"/><circle cx="67" cy="5" r="1.2" fill="#b08a52"/></svg>';
 var TROMBONE_SVG = '<svg class="trombone" viewBox="0 0 10 24" aria-hidden="true"><path d="M3 21 V6 a2.6 2.6 0 0 1 5.2 0 V18 a4 4 0 0 1 -8 0 V8" fill="none" stroke="#8e98a3" stroke-width="1.4" stroke-linecap="round"/></svg>';
 function lettreHibou(b) {
   if (!hibou.texte) {
@@ -6200,7 +6206,8 @@ function lettreHibou(b) {
   }
   var l = hibou.texte;
   return '<div class="lettre-h"><div class="date-l">' + l.date + '</div><div class="cher">' + l.appel + '</div>' +
-    '<div class="corps-l"><div class="photo-l">' + TROMBONE_SVG + cover(b) + '</div>' + l.corps + '</div>' +
+    '<div class="corps-l"><div class="photo-l">' + TROMBONE_SVG + cover(b) + '</div>' + l.trouvaille + '</div>' +
+    '<div class="bloc-titre">' + l.blocTitre + '</div><div class="suite-l">' + l.suite + '</div>' +
     '<div class="salut">' + l.salut + '</div><div class="signe">Bergamote</div><div class="ps">P.-S. ' + l.ps + '</div></div>';
 }
 
@@ -15119,7 +15126,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 16:21:14';
+var VERSION_APPLI = '2026-10-06 16:31:45';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
