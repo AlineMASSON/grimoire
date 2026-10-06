@@ -6068,7 +6068,13 @@ function compteHibou(n) {
   if (!n) {
     return 'Aucun livre de ta PAL ne correspond : enlève un filtre.';
   }
-  return '✨ ' + n + ' livre' + (n > 1 ? 's' : '') + ' de ta PAL correspond' + (n > 1 ? 'ent' : '') + ' · aucun filtre coché = tous';
+  var c = choixHibou();
+  var tous = '';
+  // la précision n'a de sens que quand rien n'est coché
+  if (!(c.fmts || []).length && !(c.tailles || []).length) {
+    tous = ' · aucun filtre coché = tous';
+  }
+  return '✨ ' + n + ' livre' + (n > 1 ? 's' : '') + ' de ta PAL correspond' + (n > 1 ? 'ent' : '') + tous;
 }
 function htmlFiltresHibou() {
   var c = choixHibou();
@@ -6313,7 +6319,7 @@ function sceneHibou(vole) {
   }
   var h = BRANCHE_HIBOU + '<div class="bergamote queue-b"' + place + '>' + dessin.queue + '</div><div class="bergamote" data-act="toucherBergamote"' + place + '>' + dessin.corps + '</div>';
   if (!b) {
-    return h + '<div class="texte-attente">Bergamote attend sur sa branche.<br>Appelle-la : elle t\'apportera un livre de ta PAL.</div>';
+    return h + '<div class="texte-attente">Bergamote a toujours une lettre sous l\'aile.<br>Il suffit de la lui demander.</div>';
   }
   if (hibou.ouverte) {
     return h + lettreHibou(b);
@@ -6332,7 +6338,7 @@ function basHibou(n) {
   if (hibou.lettre) {
     return '';
   }
-  return '<div class="row" style="margin-top:8px"><button class="act" data-act="appelerHibou"' + (n ? '' : ' disabled') + '>🦉 Appeler Bergamote</button></div>';
+  return '<div class="row" style="margin-top:8px"><button class="act" data-act="appelerHibou"' + (n ? '' : ' disabled') + '>📜 Recevoir une lettre</button></div>';
 }
 function classeSceneHibou() {
   if (hibou.lettre && hibou.ouverte) {
@@ -15203,7 +15209,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 17:18:25';
+var VERSION_APPLI = '2026-10-06 17:22:34';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
