@@ -3131,6 +3131,8 @@ function ornementSaison(saison, n) {
 // ---------- guirlande : en festons de tailles variées, accrochée sous chaque planche (et sous le haut du meuble) ----------
 // Une forme de lumière par thème, découpée par deux masques SVG : ::before porte le fil et une lumière sur deux (couleur 1),
 // ::after les autres lumières (couleur 2). Le motif fait 350 px de large et la hauteur d'un rayon : il se répète.
+// Chaque lumière a un halo et une lueur plus large (dégradés dans le masque : un filtre serait coupé par le masque),
+// et le calque est en mode « screen » : la lumière éclaircit les livres et le fond en dessous.
 var FORMES_GUIRLANDE = {
   ampoule: function (y) { return '<rect x="10.6" y="' + (y - 8) + '" width="2.8" height="3" rx=".6"/><ellipse cx="12" cy="' + (y + 1) + '" rx="3.6" ry="5"/>'; },
   etoile: function (y) { return '<path d="M12 ' + (y - 7) + 'l2.1 4.6 5 .5-3.8 3.3 1.1 4.9L12 ' + (y + 4.8) + 'l-4.4 2.5 1.1-4.9-3.8-3.3 5-.5z"/>'; },
@@ -3149,6 +3151,7 @@ function masquesFestons(forme, per) {
   var dessin = FORMES_GUIRLANDE[forme];
   var fil = [];
   var autres = [];
+  var defs = '<defs><radialGradient id="h"><stop offset="0" stop-opacity=".75"/><stop offset="1" stop-opacity="0"/></radialGradient><radialGradient id="l"><stop offset="0" stop-opacity=".34"/><stop offset="1" stop-opacity="0"/></radialGradient></defs>';
   FESTONS.forEach(function (f) {
     var y = 2;
     var cx = (f[0] + f[1]) / 2;
@@ -3158,7 +3161,8 @@ function masquesFestons(forme, per) {
       var s = i / (f[3] + 1);
       var px = (1 - s) * (1 - s) * f[0] + 2 * (1 - s) * s * cx + s * s * f[1];
       var py = (1 - s) * (1 - s) * y + 2 * (1 - s) * s * cy + s * s * y + 5;
-      var lumiere = '<g transform="translate(' + (px - 9.6).toFixed(1) + ' ' + (py - 16).toFixed(1) + ') scale(.8)">' + dessin(20) + '</g>';
+      var lumiere = '<circle cx="' + px.toFixed(1) + '" cy="' + (py + 6).toFixed(1) + '" r="30" fill="url(#l)"/><circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="10" fill="url(#h)"/>' +
+        '<g transform="translate(' + (px - 9.6).toFixed(1) + ' ' + (py - 16).toFixed(1) + ') scale(.8)">' + dessin(20) + '</g>';
       if (i % 2) {
         fil.push(lumiere);
       } else {
@@ -3167,40 +3171,44 @@ function masquesFestons(forme, per) {
     }
   });
   return [fil, autres].map(function (parts) {
-    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + LARGEUR_FESTONS + '" height="' + per + '" viewBox="0 0 ' + LARGEUR_FESTONS + ' ' + per + '">' + parts.join('') + '</svg>';
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + LARGEUR_FESTONS + '" height="' + per + '" viewBox="0 0 ' + LARGEUR_FESTONS + ' ' + per + '">' + defs + parts.join('') + '</svg>';
     return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
   });
 }
-// les règles CSS de toutes les guirlandes (étagère en tranches : rayons de 182 px ; vitrine : 126 px)
-function preparerStylesGuirlandes() {
-  if (document.getElementById('stylesGuirlandes')) {
+// les règles CSS de la guirlande d'une forme (étagère en tranches : rayons de 182 px ; vitrine : 126 px) ; une forme n'est
+// préparée qu'à son premier usage (un thème n'en utilise qu'une, et chaque forme pèse ~35 Ko de masques)
+var formesGuirlandePretes = {};
+function preparerStylesGuirlandes(forme) {
+  var st = document.getElementById('stylesGuirlandes');
+  if (!st) {
+    st = document.createElement('style');
+    st.id = 'stylesGuirlandes';
+    st.textContent = '.m-orne .rangs::before,.m-orne .vitrine::before{background:var(--g1,var(--gold));mix-blend-mode:screen}' +
+      '.m-orne .rangs::after,.m-orne .vitrine::after{background:var(--g2,var(--accent));mix-blend-mode:screen}';
+    document.head.appendChild(st);
+  }
+  if (formesGuirlandePretes[forme] || !FORMES_GUIRLANDE[forme]) {
     return;
   }
+  formesGuirlandePretes[forme] = 1;
   var css = '';
-  Object.keys(FORMES_GUIRLANDE).forEach(function (f) {
-    [['rangs', 182], ['vitrine', 126]].forEach(function (z) {
-      var m = masquesFestons(f, z[1]);
-      var sel = '.m-orne[data-g="' + f + '"] .' + z[0];
-      var taille = ' 0 0/' + LARGEUR_FESTONS + 'px ' + z[1] + 'px repeat';
-      css += sel + '::before{-webkit-mask:' + m[0] + taille + ';mask:' + m[0] + taille + '}' + sel + '::after{-webkit-mask:' + m[1] + taille + ';mask:' + m[1] + taille + '}';
-    });
+  [['rangs', 182], ['vitrine', 126]].forEach(function (z) {
+    var m = masquesFestons(forme, z[1]);
+    var sel = '.m-orne[data-g="' + forme + '"] .' + z[0];
+    var taille = ' 0 0/' + LARGEUR_FESTONS + 'px ' + z[1] + 'px repeat';
+    css += sel + '::before{-webkit-mask:' + m[0] + taille + ';mask:' + m[0] + taille + '}' + sel + '::after{-webkit-mask:' + m[1] + taille + ';mask:' + m[1] + taille + '}';
   });
-  css += '.m-orne .rangs::before,.m-orne .vitrine::before{background:var(--g1,var(--gold));filter:drop-shadow(0 0 3px var(--g1,var(--gold)))}' +
-    '.m-orne .rangs::after,.m-orne .vitrine::after{background:var(--g2,var(--accent));filter:drop-shadow(0 0 3px var(--g2,var(--accent)))}';
-  var st = document.createElement('style');
-  st.id = 'stylesGuirlandes';
-  st.textContent = css;
-  document.head.appendChild(st);
+  st.appendChild(document.createTextNode(css));
 }
 
 // ---------- ce qu'il faut à un meuble : classes, attributs et ornements ----------
 // n : numéro du meuble (varie la place des étoiles)
 function habillageMeuble(plaque, n) {
   preparerDefsMeubles();
-  preparerStylesGuirlandes();
   var style = styleMeuble();
   var saison = saisonMeuble();
   var g = GUIRLANDES[themeMeuble()] || ['ampoule'];
+  preparerStylesGuirlandes(g[0]);
   var couleurs = '';
   if (g[1]) {
     couleurs = ' style="--g1:' + g[1] + ';--g2:' + g[2] + '"';
@@ -13873,7 +13881,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 10:32:39';
+var VERSION_APPLI = '2026-10-06 10:35:52';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
