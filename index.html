@@ -274,16 +274,11 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .deco-e{margin-left:4px}
 .deco-e .deco-emoji{font-size:46px;margin-bottom:-2px}
 .deco-e .deco-st img{width:56px;height:56px;margin-bottom:-2px}
-/* décos accrochées en haut du rayon, au bout d'un fil ; décos sur le dessus du meuble */
+/* décos accrochées en haut du rayon, au bout d'un fil */
 .deco-e.haut{flex-direction:column;align-items:center;justify-content:flex-start}
 .deco-e.haut::before{content:"";width:1.5px;height:16px;flex:none;background:linear-gradient(#e8d2a8,#a07a4a)}
 .deco-e.haut .deco-st img{width:48px;height:48px;margin-bottom:0}
 .deco-e.haut .deco-emoji{font-size:40px;margin-bottom:0}
-.dessus-meuble{display:flex;align-items:flex-end;gap:14px;padding:0 22px;margin:-4px 0 -5px;position:relative;z-index:1}
-.dessus-meuble .deco-e{height:auto;margin:0}
-.dessus-meuble .deco-st img{width:50px;height:50px}
-.dessus-meuble .deco-emoji{font-size:42px}
-.dessus-meuble .fente-dessus{height:46px;width:30px;align-self:flex-end;margin-bottom:6px}
 /* mode « Disposer » : les places libres entre les livres, et les décos à toucher */
 .fente{height:168px;width:22px;flex:none;align-self:flex-end;display:flex;align-items:center;justify-content:center;border:1.5px dashed rgba(255,220,170,.55);border-radius:8px;background:rgba(255,220,170,.06);color:#ffe9c4;font:800 16px Nunito,sans-serif;padding:0;cursor:pointer}
 .rangs .deco-e[data-act]{cursor:pointer;outline:1.5px dashed rgba(255,220,170,.6);outline-offset:2px;border-radius:8px}
@@ -2287,24 +2282,35 @@ ACTIONS.vueEtagere = function (el) {
   lsSet('bm_vue_etagere', el.dataset.v);
   rendre();
 };
-// un meuble : livres = [{b, star}] ; les décorations sont posées après l'affichage (placerDecos)
-function meuble(livres) {
+// un meuble : livres = [{b, star}], plaque = le texte de sa plaque dorée, n = son numéro ; il est habillé selon le
+// thème (Meubles.html) ; les décorations sont posées après l'affichage (placerDecos)
+function meuble(livres, plaque, n) {
   if (!livres.length) {
     return '<p class="small muted">Rien sur cette étagère pour l\'instant.</p>';
   }
+  var hab = habillageMeuble(plaque, n);
+  var contenu;
   if (vueEtagere() === 'couvertures') {
-    return '<div class="meuble"><div class="fond-meuble"><div class="vitrine">' + livres.map(function (x) { return couvertureVitrine(x.b, x.star); }).join('') + '</div></div></div>';
+    contenu = '<div class="vitrine">' + livres.map(function (x) { return couvertureVitrine(x.b, x.star); }).join('') + '</div>';
+  } else {
+    contenu = '<div class="rangs">' + livres.map(function (x) { return tranche(x.b, x.star, false); }).join('') + '</div>';
   }
-  return '<div class="dessus-meuble"></div><div class="meuble"><div class="fond-meuble"><div class="rangs">' + livres.map(function (x) { return tranche(x.b, x.star, false); }).join('') + '</div></div></div>';
+  return hab.debut + '<div class="fond-meuble">' + contenu + '</div>' + hab.fin;
+}
+// le début d'un rayon de l'étagère : la place pour le fronton du meuble, et le titre caché (la plaque le remplace)
+function debutEtagere(titreH4, avecLivres) {
+  if (!avecLivres) {
+    return '<div class="etagere"><h4>' + titreH4 + '</h4>';
+  }
+  return '<div class="etagere e-' + styleMeuble() + '"><h4 class="cache-meuble">' + titreH4 + '</h4>';
 }
 
-// ---------- décorations : sur les rayons (une par rayon au plus) et sur le dessus des meubles (3 au plus) ----------
+// ---------- décorations : une par rayon au plus, glissées entre les livres ----------
 // Les décos cochées dans « 🪴 Décos » sont réparties par un tirage stable : la graine (réglage decosGraine) ne change
-// qu'avec « 🎲 Redisposer ». Sur un rayon, une déco se glisse entre deux livres, posée sur la planche ou accrochée en haut
-// (HAUTEUR_DECOS). Une déco épinglée à la main (réglage decosPlaces : {déco: {avant: livre, haut} | {dessus: livre}}, ou
-// l'id du livre seul) garde sa place si son livre est affiché, sinon elle repart dans le tirage.
+// qu'avec « 🎲 Redisposer ». Une déco se glisse entre deux livres, posée sur la planche ou accrochée en haut du rayon
+// (HAUTEUR_DECOS). Une déco épinglée à la main (réglage decosPlaces : {déco: {avant: livre, haut}}, ou l'id du livre seul)
+// garde sa place si son livre est affiché, sinon elle repart dans le tirage.
 // Tout se fait après l'affichage, car les rayons dépendent de la largeur de l'écran.
-var DESSUS_MAX = 3;
 var modeDisposer = false;
 var observateurDecos = null;
 function hasardDecos(graine) {
@@ -2322,8 +2328,8 @@ function placeDeco(v) {
   }
   return v || null;
 }
-// haut : accrochée en haut du rayon ; dessus : sur le dessus du meuble
-function elementDeco(id, epinglee, haut, dessus) {
+// haut : accrochée en haut du rayon
+function elementDeco(id, epinglee, haut) {
   var d = document.createElement('div');
   d.className = 'deco-e';
   if (haut) {
@@ -2333,22 +2339,11 @@ function elementDeco(id, epinglee, haut, dessus) {
     d.className += ' epinglee';
   }
   d.dataset.deco = id;
-  if (dessus) {
-    d.dataset.dessus = '1';
-  }
   if (modeDisposer) {
     d.dataset.act = 'choisirDecoPosee';
   }
   d.innerHTML = svgDeco(id, false);
   return d;
-}
-function dessusDuMeuble(el) {
-  var m = el.closest('.meuble');
-  var d = m && m.previousElementSibling;
-  if (d && d.classList.contains('dessus-meuble')) {
-    return d;
-  }
-  return null;
 }
 // les rayons d'un meuble, de haut en bas : [{places: [.place-l…], occupe}] (occupe = une déco y est déjà)
 function rayonsDuMeuble(rangs) {
@@ -2378,10 +2373,6 @@ function placerDecos() {
       p.classList.remove('penche');
       p.style.margin = '';
     });
-    var dessus = dessusDuMeuble(r);
-    if (dessus) {
-      dessus.innerHTML = '';
-    }
   });
   var places = reglage('decosPlaces', {}) || {};
   var hasard = hasardDecos(reglage('decosGraine', 1));
@@ -2389,22 +2380,15 @@ function placerDecos() {
   var libres = [];
   decosPosees().forEach(function (id) {
     var p = placeDeco(places[id]);
-    var livre = p && (p.avant || p.dessus);
-    var tr = livre && document.querySelector('.rangs .tr-l[data-id="' + CSS.escape(livre) + '"]');
-    if (tr && p.dessus) {
-      var dessus = dessusDuMeuble(tr);
-      if (dessus && dessus.children.length < DESSUS_MAX && HAUTEUR_DECOS[id] !== 'haut') {
-        dessus.appendChild(elementDeco(id, true, false, true));
-        return;
-      }
-    } else if (tr) {
+    var tr = p && p.avant && document.querySelector('.rangs .tr-l[data-id="' + CSS.escape(p.avant) + '"]');
+    if (tr) {
       var haut = HAUTEUR_DECOS[id] === 'haut' || (HAUTEUR_DECOS[id] === 'haut-bas' && !!p.haut);
-      tr.closest('.place-l').before(elementDeco(id, true, haut, false));
-      return;
+      tr.closest('.place-l').before(elementDeco(id, true, haut));
+    } else {
+      libres.push(id);
     }
-    libres.push(id);
   });
-  // les autres, mélangées : sur un rayon (réparties sur toute l'étagère) ou, parfois, sur le dessus d'un meuble
+  // les autres, mélangées, sur des rayons répartis sur toute l'étagère
   for (var i = libres.length - 1; i > 0; i--) {
     var j = Math.floor(hasard() * (i + 1));
     var x = libres[i];
@@ -2412,33 +2396,14 @@ function placerDecos() {
     libres[j] = x;
   }
   var rayons = [];
-  var dessusLibres = [];
   meubles.forEach(function (r) {
     rayonsDuMeuble(r).forEach(function (ray) {
       if (!ray.occupe && ray.places.length >= 2) {
         rayons.push(ray);
       }
     });
-    var dessus = dessusDuMeuble(r);
-    if (dessus) {
-      dessusLibres.push({el: dessus, n: dessus.children.length, decos: []});
-    }
   });
-  var placeDessus = dessusLibres.reduce(function (t, d) { return t + DESSUS_MAX - d.n; }, 0);
-  var surRayons = [];
-  libres.forEach(function (id) {
-    var peutDessus = HAUTEUR_DECOS[id] !== 'haut' && placeDessus > 0;
-    if (peutDessus && (hasard() < 0.3 || surRayons.length >= rayons.length)) {
-      // sur le meuble le moins garni (au hasard entre les ex aequo)
-      var min = Math.min.apply(null, dessusLibres.map(function (d) { return d.n + d.decos.length; }));
-      var candidats = dessusLibres.filter(function (d) { return d.n + d.decos.length === min; });
-      candidats[Math.floor(hasard() * candidats.length)].decos.push(id);
-      placeDessus--;
-    } else if (surRayons.length < rayons.length) {
-      surRayons.push(id);
-    }
-  });
-  var n = surRayons.length;
+  var n = Math.min(libres.length, rayons.length);
   var choisis = [];
   for (var k = 0; k < n; k++) {
     var idx = Math.min(rayons.length - 1, Math.floor((k + 0.1 + hasard() * 0.8) * rayons.length / n));
@@ -2449,25 +2414,20 @@ function placerDecos() {
   }
   var poses = choisis.map(function (idx, k) {
     var ray = rayons[idx];
-    var id = surRayons[k];
+    var id = libres[k];
     var pos = 1 + Math.floor(hasard() * (ray.places.length - 1));
     var haut = HAUTEUR_DECOS[id] === 'haut' || (HAUTEUR_DECOS[id] === 'haut-bas' && hasard() < 0.5);
     return {avant: ray.places[pos], apres: ray.places[pos - 1], id: id, haut: haut, penche: !haut && hasard() < 0.35};
   });
   // de bas en haut : une déco ajoutée ne décale que les rayons du dessous, déjà servis
   poses.reverse().forEach(function (p) {
-    p.avant.before(elementDeco(p.id, false, p.haut, false));
+    p.avant.before(elementDeco(p.id, false, p.haut));
     // parfois, le livre d'à côté s'appuie sur une déco posée
     var tr = p.apres.querySelector('.tr-l');
     if (p.penche && tr) {
       p.apres.classList.add('penche');
       p.apres.style.margin = '0 ' + (Math.round(tr.offsetHeight * 0.23) + 2) + 'px 0 6px';
     }
-  });
-  var alignements = ['flex-start', 'center', 'flex-end'];
-  dessusLibres.forEach(function (d) {
-    d.decos.forEach(function (id) { d.el.appendChild(elementDeco(id, false, false, true)); });
-    d.el.style.justifyContent = alignements[Math.floor(hasard() * alignements.length)];
   });
   if (modeDisposer) {
     meubles.forEach(function (r) {
@@ -2481,16 +2441,6 @@ function placerDecos() {
         fente.textContent = '+';
         p.before(fente);
       });
-      var dessus = dessusDuMeuble(r);
-      if (dessus && dessus.children.length < DESSUS_MAX) {
-        var f = document.createElement('button');
-        f.className = 'fente fente-dessus';
-        f.dataset.act = 'fenteDeco';
-        f.dataset.dessus = r.querySelector('.tr-l').dataset.id;
-        f.setAttribute('aria-label', 'Poser une décoration sur le dessus du meuble');
-        f.textContent = '+';
-        dessus.appendChild(f);
-      }
     });
   }
   animerDecosVisibles();
@@ -2501,7 +2451,7 @@ function animerDecosVisibles() {
     observateurDecos.disconnect();
     observateurDecos = null;
   }
-  if (!('IntersectionObserver' in window) || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+  if (!('IntersectionObserver' in window) || mouvementReduit()) {
     return;
   }
   observateurDecos = new IntersectionObserver(function (entrees) {
@@ -2517,7 +2467,7 @@ function animerDecosVisibles() {
       }
     });
   }, {rootMargin: '120px'});
-  document.querySelectorAll('.rangs .deco-e, .dessus-meuble .deco-e').forEach(function (d) { observateurDecos.observe(d); });
+  document.querySelectorAll('.rangs .deco-e').forEach(function (d) { observateurDecos.observe(d); });
 }
 var minuteurPlacerDecos = null;
 window.addEventListener('resize', function () {
@@ -2547,41 +2497,28 @@ ACTIONS.disposerDecos = function () {
   }
   rendre();
 };
-// une place « + » touchée (entre deux livres, ou sur le dessus d'un meuble) : quelle déco y poser ?
+// une place « + » touchée entre deux livres : quelle déco y poser ?
 ACTIONS.fenteDeco = function (el) {
-  var livre = el.dataset.livre || el.dataset.dessus;
-  var dessus = !!el.dataset.dessus;
+  var livre = el.dataset.livre;
   var b = M.parId[livre];
   var choix = [];
   decosGagnees().forEach(function (id) {
     var h = HAUTEUR_DECOS[id];
-    if (dessus) {
-      if (h !== 'haut') {
-        choix.push([id, nomDecoAffiche(id), '']);
-      }
-    } else if (h === 'haut-bas') {
+    if (h === 'haut-bas') {
       choix.push([id, nomDecoAffiche(id) + ' · en bas', '']);
       choix.push([id, nomDecoAffiche(id) + ' · en haut', '1']);
     } else {
       choix.push([id, nomDecoAffiche(id) + (h === 'haut' ? ' · en haut' : ''), h === 'haut' ? '1' : '']);
     }
   });
-  var ou = 'juste avant « ' + esc(b ? titre(b) : '') + ' »';
-  if (dessus) {
-    ou = 'sur le dessus de ce meuble (' + DESSUS_MAX + ' au plus)';
-  }
-  ouvrirFeuille('<h3>Que poser ici ?</h3><p class="small muted" style="margin:0 0 10px">' + ou + '</p><div class="decos-g">' + choix.map(function (c) {
-    return '<button class="deco-g" data-act="epinglerDeco" data-deco="' + c[0] + '" data-' + (dessus ? 'dessus' : 'livre') + '="' + esc(livre) + '" data-haut="' + c[2] + '"><span class="img-d">' + svgDeco(c[0], false) + '</span><b>' + esc(c[1]) + '</b></button>';
+  ouvrirFeuille('<h3>Que poser ici ?</h3><p class="small muted" style="margin:0 0 10px">juste avant « ' + esc(b ? titre(b) : '') + ' »</p><div class="decos-g">' + choix.map(function (c) {
+    return '<button class="deco-g" data-act="epinglerDeco" data-deco="' + c[0] + '" data-livre="' + esc(livre) + '" data-haut="' + c[2] + '"><span class="img-d">' + svgDeco(c[0], false) + '</span><b>' + esc(c[1]) + '</b></button>';
   }).join('') + '</div>');
 };
 ACTIONS.epinglerDeco = function (el) {
   var places = Object.assign({}, reglage('decosPlaces', {}) || {});
-  if (el.dataset.dessus) {
-    places[el.dataset.deco] = {dessus: el.dataset.dessus};
-  } else {
-    places[el.dataset.deco] = {avant: el.dataset.livre, haut: el.dataset.haut === '1'};
-  }
-  var posees = decosPosees();
+  places[el.dataset.deco] = {avant: el.dataset.livre, haut: el.dataset.haut === '1'};
+  var posees = decosPosees().slice();
   if (posees.indexOf(el.dataset.deco) < 0) {
     posees.push(el.dataset.deco);
   }
@@ -2593,24 +2530,17 @@ ACTIONS.choisirDecoPosee = function (el) {
   var id = el.dataset.deco;
   var places = reglage('decosPlaces', {}) || {};
   var h = '<div class="tete"><span class="img-d" style="font-size:40px">' + svgDeco(id, false) + '</span><div><h3>' + esc(nomDecoAffiche(id)) + '</h3><div class="small muted">' + (places[id] ? 'épinglée ici à la main' : 'placée par le tirage') + '</div></div></div><div class="row" style="flex-direction:column;align-items:stretch">';
-  if (el.dataset.dessus) {
-    var r = el.closest('.dessus-meuble').nextElementSibling.querySelector('.tr-l');
-    if (!places[id] && r) {
-      h += '<button class="act" data-act="epinglerDeco" data-deco="' + id + '" data-dessus="' + esc(r.dataset.id) + '">📌 La garder sur ce meuble</button>';
-    }
-  } else {
-    var suivant = el.nextElementSibling;
-    while (suivant && !suivant.classList.contains('place-l')) {
-      suivant = suivant.nextElementSibling;
-    }
-    var livre = suivant && suivant.querySelector('.tr-l').dataset.id;
-    var haut = el.classList.contains('haut');
-    if (livre && !places[id]) {
-      h += '<button class="act" data-act="epinglerDeco" data-deco="' + id + '" data-livre="' + esc(livre) + '" data-haut="' + (haut ? '1' : '') + '">📌 La garder à cette place</button>';
-    }
-    if (livre && HAUTEUR_DECOS[id] === 'haut-bas') {
-      h += '<button class="act doux" data-act="epinglerDeco" data-deco="' + id + '" data-livre="' + esc(livre) + '" data-haut="' + (haut ? '' : '1') + '">' + (haut ? '⬇️ La poser sur la planche' : '⬆️ L\'accrocher en haut') + '</button>';
-    }
+  var suivant = el.nextElementSibling;
+  while (suivant && !suivant.classList.contains('place-l')) {
+    suivant = suivant.nextElementSibling;
+  }
+  var livre = suivant && suivant.querySelector('.tr-l').dataset.id;
+  var haut = el.classList.contains('haut');
+  if (livre && !places[id]) {
+    h += '<button class="act" data-act="epinglerDeco" data-deco="' + id + '" data-livre="' + esc(livre) + '" data-haut="' + (haut ? '1' : '') + '">📌 La garder à cette place</button>';
+  }
+  if (livre && HAUTEUR_DECOS[id] === 'haut-bas') {
+    h += '<button class="act doux" data-act="epinglerDeco" data-deco="' + id + '" data-livre="' + esc(livre) + '" data-haut="' + (haut ? '' : '1') + '">' + (haut ? '⬇️ La poser sur la planche' : '⬆️ L\'accrocher en haut') + '</button>';
   }
   if (places[id]) {
     h += '<button class="act doux" data-act="libererDeco" data-deco="' + id + '">' + ic('shuffle') + ' La laisser se placer toute seule</button>';
@@ -2792,9 +2722,9 @@ function vShelf() {
       }
       parAn[y].push(r);
     });
-    Object.keys(parAn).sort().reverse().forEach(function (y) {
+    Object.keys(parAn).sort().reverse().forEach(function (y, n) {
       var l = parAn[y].sort(function (a, b) { return a.end - b.end; });
-      rayons += '<div class="etagere"><h4>' + y + ' <span class="small muted">· ' + l.length + ' livres</span></h4>' + meuble(l.map(function (r) { return {b: r.book, star: r.star}; })) + '</div>';
+      rayons += debutEtagere(y + ' <span class="small muted">· ' + l.length + ' livres</span>', l.length) + meuble(l.map(function (r) { return {b: r.book, star: r.star}; }), y + ' <small>· ' + l.length + '</small>', n) + '</div>';
     });
   } else {
     var envie = filtreEtagere === 'envies';
@@ -2803,7 +2733,11 @@ function vShelf() {
     if (envie) {
       nom = 'Tes envies';
     }
-    rayons = '<div class="etagere"><h4>' + nom + ' <span class="small muted">· ' + l.length + ' livres</span></h4><p class="small muted" style="margin:-2px 0 8px">Les plus anciens en premier.</p>' + meuble(l.map(function (b) { return {b: b, star: 0}; })) + '</div>';
+    var court = 'Pile à lire';
+    if (envie) {
+      court = 'Envies';
+    }
+    rayons = debutEtagere(nom + ' <span class="small muted">· ' + l.length + ' livres</span>', l.length) + '<p class="small muted" style="margin:-2px 0 8px">Les plus anciens en premier.</p>' + meuble(l.map(function (b) { return {b: b, star: 0}; }), court + ' <small>· ' + l.length + '</small>', 0) + '</div>';
   }
   var vue = vueEtagere();
   var bascule = '<div class="bascule-vue">' + [['tranches', 'library-big', 'Tranches'], ['couvertures', 'image', 'Couvertures']].map(function (v) {
@@ -2907,6 +2841,311 @@ function vSeries() {
     }
     return '<div style="margin:10px 0 16px' + (abandonnee ? ';opacity:.6' : '') + '"><b style="font:700 18px Cormorant Garamond,Georgia,serif">' + esc(s.name) + '</b> <button class="mini-btn" data-act="formSerie" data-id="' + esc(k) + '">' + ic('pencil') + '</button><div class="meuble" style="margin:6px 0 8px"><div class="fond-meuble"><div class="rangs">' + l.map(function (x) { return tranche(x.b, 0); }).join('') + '</div></div></div><div class="prog"><div style="width:' + (100 * lus / l.length) + '%"></div></div><div class="small muted">' + info + '</div></div>';
   }).join(''));
+}
+</script>
+
+<style>
+/* ---------- meubles de l'étagère : un style ancien par thème, ornements SVG aux couleurs du thème ---------- */
+.etagere>h4.cache-meuble{display:none}
+.meuble.m-orne{--bois:color-mix(in srgb,#8e5c35 64%,var(--accent));--boisC:color-mix(in srgb,#c58f5a 60%,var(--accent));--boisF:color-mix(in srgb,#3a210d 82%,var(--accent));--dore:color-mix(in srgb,var(--gold) 85%,#7a5a10);--peint:color-mix(in srgb,#f3ead8 70%,var(--bg2));--patine:color-mix(in srgb,#cbbfa8 70%,var(--accent));position:relative;overflow:visible;box-shadow:0 10px 22px rgba(0,0,0,.45),0 0 26px color-mix(in srgb,var(--accent) 22%,transparent)}
+#defsMeubles{--bois:color-mix(in srgb,#8e5c35 64%,var(--accent));--boisC:color-mix(in srgb,#c58f5a 60%,var(--accent));--boisF:color-mix(in srgb,#3a210d 82%,var(--accent));--dore:color-mix(in srgb,var(--gold) 85%,#7a5a10);position:absolute;width:0;height:0;overflow:hidden}
+.m-orne .fond-meuble{background:linear-gradient(180deg,rgba(0,0,0,.5),transparent 26px),linear-gradient(90deg,rgba(0,0,0,.45),transparent 16px,transparent calc(100% - 16px),rgba(0,0,0,.45)),radial-gradient(120% 70% at 50% 0%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 70%),repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0 2px,transparent 2px 12px,rgba(0,0,0,.08) 12px 14px,transparent 14px 25px),color-mix(in srgb,#2e1b0f 80%,var(--accent))}
+.m-orne .rangs,.m-orne .vitrine{background:repeating-linear-gradient(180deg,transparent 0 var(--haut),color-mix(in srgb,#e0a86d 70%,var(--gold)) var(--haut) calc(var(--haut) + 1.5px),var(--boisC) calc(var(--haut) + 1.5px) calc(var(--haut) + 7px),var(--bois) calc(var(--haut) + 7px) calc(var(--haut) + 11px),var(--boisF) calc(var(--haut) + 11px) var(--per))}
+.orn-m{position:absolute;pointer-events:none;z-index:2;display:block}
+.orn-m svg{display:block;width:100%;height:100%;overflow:visible}
+.plaque-meuble{position:absolute;left:50%;transform:translateX(-50%);z-index:3;white-space:nowrap;font:800 12px "Cormorant Garamond",Georgia,serif;letter-spacing:1px;color:#3a220f;padding:2px 13px;border-radius:999px;background:linear-gradient(180deg,#fff4c2,var(--dore) 45%,#8a6418 55%,#f3d27a);box-shadow:0 2px 4px rgba(0,0,0,.45),inset 0 1px 0 #fff8dd}
+.plaque-meuble small{font:700 10px Nunito,sans-serif;letter-spacing:0;opacity:.75}
+/* la place au-dessus de chaque meuble, pour son fronton */
+.etagere.e-bombe{margin-top:58px}.etagere.e-victorienne{margin-top:56px}.etagere.e-neoclassique{margin-top:76px}.etagere.e-gothique{margin-top:100px}.etagere.e-rococo{margin-top:84px}.etagere.e-artnouveau{margin-top:90px}.etagere.e-campagne{margin-top:64px}
+.etagere.e-bombe:first-of-type,.etagere[class*="e-"]{scroll-margin-top:110px}
+/* les meubles */
+.m-bombe{background:linear-gradient(90deg,var(--boisF),var(--bois) 6%,var(--boisC) 9%,var(--bois) 12%,var(--bois) 88%,var(--boisC) 91%,var(--bois) 94%,var(--boisF))}
+.m-victorienne{border-radius:3px;background:repeating-linear-gradient(90deg,var(--bois) 0 3px,var(--boisC) 3px 4px,var(--bois) 4px 6px) 0 0/15px 100% no-repeat,repeating-linear-gradient(90deg,var(--bois) 0 3px,var(--boisC) 3px 4px,var(--bois) 4px 6px) 100% 0/15px 100% no-repeat,var(--bois)}
+.m-neoclassique{border-radius:3px;background:repeating-linear-gradient(90deg,var(--boisC) 0 2px,var(--bois) 2px 5px) 4px 0/14px 100% no-repeat,repeating-linear-gradient(90deg,var(--boisC) 0 2px,var(--bois) 2px 5px) calc(100% - 4px) 0/14px 100% no-repeat,var(--bois)}
+.m-gothique{border-radius:3px;background:linear-gradient(90deg,var(--boisF),var(--bois) 5%,var(--boisF) 7%,var(--bois) 9%,var(--bois) 91%,var(--boisF) 93%,var(--bois) 95%,var(--boisF))}
+.m-rococo{border-radius:12px 12px 8px 8px;background:linear-gradient(90deg,var(--boisF),var(--bois) 6%,var(--boisC) 9%,var(--bois) 13%,var(--bois) 87%,var(--boisC) 91%,var(--bois) 94%,var(--boisF));box-shadow:0 10px 22px rgba(0,0,0,.5),inset 0 0 0 2px color-mix(in srgb,var(--gold) 55%,transparent),0 0 26px color-mix(in srgb,var(--accent) 25%,transparent)}
+.m-artnouveau{border-radius:18px 18px 8px 8px;background:linear-gradient(90deg,var(--boisF),var(--bois) 5%,var(--boisC) 8%,var(--bois) 12%,var(--bois) 88%,var(--boisC) 92%,var(--bois) 95%,var(--boisF))}
+.m-campagne{border-radius:6px;background:radial-gradient(60% 30% at 20% 80%,color-mix(in srgb,var(--patine) 60%,transparent),transparent 70%),radial-gradient(50% 20% at 85% 20%,color-mix(in srgb,var(--patine) 55%,transparent),transparent 70%),var(--peint);box-shadow:0 10px 20px rgba(0,0,0,.25),inset 0 0 0 2px color-mix(in srgb,#fff 55%,transparent),inset 0 0 0 5px color-mix(in srgb,var(--patine) 40%,transparent)}
+.m-campagne .fond-meuble{background:linear-gradient(180deg,rgba(0,0,0,.2),transparent 22px),repeating-linear-gradient(90deg,rgba(0,0,0,.025) 0 2px,transparent 2px 26px),color-mix(in srgb,var(--accent) 14%,#f7f1e6)}
+.m-campagne .rangs,.m-campagne .vitrine{background:repeating-linear-gradient(180deg,transparent 0 var(--haut),#fff var(--haut) calc(var(--haut) + 1.5px),var(--peint) calc(var(--haut) + 1.5px) calc(var(--haut) + 8px),color-mix(in srgb,var(--patine) 70%,#000) calc(var(--haut) + 8px) calc(var(--haut) + 10px),transparent calc(var(--haut) + 10px) var(--per))}
+/* ornements de saison : neige sur le haut du fronton, toile d'araignée, étoiles au fond, feuilles mortes */
+.orn-m .neige{display:none}
+.saison-neige .orn-m .neige{display:inline;fill:none;stroke:#fff;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 2px 1px rgba(0,0,0,.25))}
+.etoile-meuble{position:absolute;z-index:1;pointer-events:none;color:var(--gold);font-size:11px;line-height:1;animation:scintille 2.8s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.etoile-meuble{animation:none}}
+</style>
+<script>
+// ---------- Meubles de l'étagère : un style ancien selon le thème ----------
+// Chaque meuble reçoit un fronton, des moulures et des pieds dessinés en SVG, aux couleurs du thème (variables --bois,
+// --boisC, --boisF, --dore calculées à partir de --accent, --bg et --gold). Le style dépend du thème en cours (fête ou
+// thème choisi) : STYLES_MEUBLE. S'y ajoutent un ornement de saison et la forme de la guirlande (GUIRLANDES).
+var STYLES_MEUBLE = {
+  gothique: ['halloween', 'vendredi13', 'pleinelune', 'dark'],
+  rococo: ['noel', 'nouvelan', 'valentin'],
+  victorienne: ['automne', 'autumn', 'hiver', 'rentree'],
+  neoclassique: ['livre', 'musique'],
+  artnouveau: ['printemps', 'paques', 'ete', 'poisson'],
+  campagne: ['chandeleur', 'chat', 'light'],
+  bombe: ['imaginaire', 'etoiles', 'auto']
+};
+// forme de la guirlande et ses deux couleurs, par thème (sinon des ampoules dorées et de la couleur d'accent)
+var GUIRLANDES = {
+  imaginaire: ['etoile'], etoiles: ['etoile'], nouvelan: ['etoile'], dark: ['etoile'],
+  halloween: ['citrouille', 'var(--accent)', 'var(--lav)'],
+  noel: ['ampoule', 'var(--accent)', 'var(--lav)'],
+  valentin: ['coeur'], light: ['coeur'],
+  printemps: ['fleur'], paques: ['fleur'], ete: ['fleur'],
+  automne: ['feuille', 'var(--accent)', 'var(--gold)'], autumn: ['feuille', 'var(--accent)', 'var(--gold)'],
+  hiver: ['flocon', '#fff', 'var(--accent)'],
+  pleinelune: ['lune', 'var(--gold)', 'var(--lav)']
+};
+// le thème en cours : la fête active, sinon le thème choisi (light, dark, autumn, auto)
+function themeMeuble() {
+  if (feteActive) {
+    return feteActive;
+  }
+  if (themeChoisi === 'light' || themeChoisi === 'dark' || themeChoisi === 'autumn') {
+    return themeChoisi;
+  }
+  return 'auto';
+}
+function styleMeuble() {
+  var t = themeMeuble();
+  var s = Object.keys(STYLES_MEUBLE).filter(function (k) { return STYLES_MEUBLE[k].indexOf(t) >= 0; })[0];
+  return s || 'bombe';
+}
+function saisonMeuble() {
+  var t = themeMeuble();
+  if (t === 'noel' || t === 'hiver') {
+    return 'neige';
+  }
+  if (t === 'halloween' || t === 'vendredi13') {
+    return 'toile';
+  }
+  if (t === 'imaginaire' || t === 'etoiles' || t === 'pleinelune' || t === 'nouvelan' || t === 'dark') {
+    return 'etoiles';
+  }
+  if (t === 'automne' || t === 'autumn') {
+    return 'feuilles';
+  }
+  return '';
+}
+function guirlandeMeuble() {
+  return (GUIRLANDES[themeMeuble()] || ['ampoule'])[0];
+}
+
+// ---------- dégradés SVG communs (une seule fois dans la page) ----------
+function preparerDefsMeubles() {
+  if (document.getElementById('defsMeubles')) {
+    return;
+  }
+  var d = document.createElement('div');
+  d.id = 'defsMeubles';
+  d.innerHTML = '<svg width="0" height="0" aria-hidden="true"><defs>' +
+    '<linearGradient id="mBois" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--boisC)"/><stop offset=".55" style="stop-color:var(--bois)"/><stop offset="1" style="stop-color:var(--boisF)"/></linearGradient>' +
+    '<linearGradient id="mBoisH" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:var(--boisF)"/><stop offset=".3" style="stop-color:var(--boisC)"/><stop offset=".7" style="stop-color:var(--bois)"/><stop offset="1" style="stop-color:var(--boisF)"/></linearGradient>' +
+    '<linearGradient id="mOr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4c2"/><stop offset=".4" style="stop-color:var(--dore)"/><stop offset=".6" stop-color="#8a6418"/><stop offset="1" stop-color="#f3d27a"/></linearGradient>' +
+    '<radialGradient id="mVitrail"><stop offset="0" stop-color="#fff8d8"/><stop offset=".45" style="stop-color:var(--gold)"/><stop offset="1" style="stop-color:var(--accent)"/></radialGradient>' +
+    '</defs></svg>';
+  document.body.appendChild(d);
+}
+
+// ---------- petits dessins réutilisés ----------
+function fleurSvg(cx, cy, r, c) {
+  var s = '';
+  for (var k = 0; k < 5; k++) {
+    var a = k * Math.PI * 2 / 5 - Math.PI / 2;
+    var x = (cx + Math.cos(a) * r * 0.55).toFixed(1);
+    var y = (cy + Math.sin(a) * r * 0.55).toFixed(1);
+    s += '<ellipse cx="' + x + '" cy="' + y + '" rx="' + (r * 0.5).toFixed(1) + '" ry="' + (r * 0.36).toFixed(1) + '" transform="rotate(' + (a * 57.3 + 90).toFixed(0) + ' ' + x + ' ' + y + ')" style="fill:' + c + '"/>';
+  }
+  return s + '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r * 0.22).toFixed(1) + '" style="fill:var(--gold)"/>';
+}
+function feuilleSvg(x, y, a, l, c) {
+  return '<path d="M0 0Q' + (l / 2) + ' -' + (l / 3) + ' ' + l + ' 0Q' + (l / 2) + ' ' + (l / 3) + ' 0 0Z" transform="translate(' + x + ' ' + y + ') rotate(' + a + ')" style="fill:' + (c || 'color-mix(in srgb,#5a9a4a 70%,var(--lav))') + '"/>';
+}
+// un morceau d'ornement : [position CSS, contenu SVG]
+function partie(style, svg) {
+  return '<span class="orn-m" style="' + style + '">' + svg + '</span>';
+}
+
+// ---------- les ornements de chaque style ----------
+// plaque : le texte de la plaque dorée (l'année et le nombre de livres, ou le nom du rayon)
+function ornementsMeuble(style, plaque) {
+  var h = '';
+  var haut = {bombe: -24, victorienne: -20, neoclassique: -28, gothique: -14, rococo: -26, artnouveau: -18, campagne: -16}[style];
+  if (style === 'bombe') {
+    h += partie('left:-12px;right:-12px;top:-48px;height:52px', '<svg viewBox="0 0 400 52" preserveAspectRatio="none"><path d="M0 52V34Q200 -14 400 34V52Z" fill="url(#mBois)"/><path d="M0 34Q200 -14 400 34" fill="none" stroke="url(#mOr)" stroke-width="2.5"/><path d="M6 40Q200 0 394 40" fill="none" style="stroke:var(--boisF)" stroke-width="1.5" opacity=".7"/><path d="M0 46H400" style="stroke:var(--boisC)" stroke-width="3"/><path d="M0 50H400" style="stroke:var(--boisF)" stroke-width="2"/><path class="neige" d="M0 33Q200 -15 400 33"/></svg>');
+    var epi = '<svg viewBox="0 0 20 34"><ellipse cx="10" cy="14" rx="7" ry="10" fill="url(#mOr)"/><circle cx="10" cy="3" r="3" fill="url(#mOr)"/><rect x="4" y="25" width="12" height="9" rx="2" fill="url(#mBois)"/></svg>';
+    h += partie('left:-14px;top:-34px;width:20px;height:34px', epi) + partie('right:-14px;top:-34px;width:20px;height:34px', epi);
+    var boule = '<svg viewBox="0 0 30 16"><path d="M2 0H28Q30 8 22 14Q15 18 8 14Q0 8 2 0Z" fill="url(#mBois)"/></svg>';
+    h += partie('left:8px;bottom:-16px;width:30px;height:16px', boule) + partie('right:8px;bottom:-16px;width:30px;height:16px', boule);
+  } else if (style === 'victorienne') {
+    var c = '<svg viewBox="0 0 400 40" preserveAspectRatio="none"><rect width="400" height="6" style="fill:var(--boisC)"/><rect y="6" width="400" height="3" style="fill:var(--boisF)"/><rect y="9" width="400" height="10" style="fill:var(--bois)"/>';
+    for (var i = 0; i < 50; i++) {
+      c += '<rect x="' + (i * 8 + 1) + '" y="11" width="5" height="7" style="fill:var(--boisC)"/>';
+    }
+    c += '<rect y="19" width="400" height="2" fill="url(#mOr)"/><rect y="21" width="400" height="12" fill="url(#mBois)"/><rect y="33" width="400" height="3" style="fill:var(--boisF)"/><path class="neige" d="M2 1H398"/></svg>';
+    h += partie('left:-14px;right:-14px;top:-36px;height:40px', c);
+    h += partie('left:50%;transform:translateX(-50%);top:-62px;width:120px;height:30px', '<svg viewBox="0 0 120 30"><path d="M10 30Q20 8 40 18Q50 0 60 0Q70 0 80 18Q100 8 110 30Z" fill="url(#mBois)"/><path d="M60 4Q66 10 60 26Q54 10 60 4Z" fill="url(#mOr)"/><circle cx="35" cy="22" r="3" fill="url(#mOr)"/><circle cx="85" cy="22" r="3" fill="url(#mOr)"/><path class="neige" d="M12 28Q20 8 40 18Q50 0 60 0Q70 0 80 18Q100 8 108 28"/></svg>');
+    var chap = '<svg viewBox="0 0 19 16"><path d="M0 16V9Q4 2 9.5 6Q15 2 19 9V16Z" fill="url(#mOr)"/><rect width="19" height="3" style="fill:var(--boisC)"/></svg>';
+    h += partie('left:-2px;top:-4px;width:19px;height:16px', chap) + partie('right:-2px;top:-4px;width:19px;height:16px', chap);
+    h += partie('left:4px;right:4px;bottom:-12px;height:12px', '<svg viewBox="0 0 400 12" preserveAspectRatio="none"><rect width="400" height="8" fill="url(#mBois)"/><rect y="8" width="400" height="4" style="fill:var(--boisF)"/></svg>');
+  } else if (style === 'neoclassique') {
+    h += partie('left:-14px;right:-14px;top:-70px;height:74px', '<svg viewBox="0 0 400 74" preserveAspectRatio="none"><path d="M0 60L200 0L400 60V74H0Z" fill="url(#mBois)"/><path d="M0 60L200 0L400 60" fill="none" stroke="url(#mOr)" stroke-width="3"/><path d="M40 58L200 12L360 58Z" style="fill:var(--boisF)" opacity=".85"/><rect y="62" width="400" height="4" fill="url(#mOr)"/><rect y="66" width="400" height="8" style="fill:var(--boisC)"/><path class="neige" d="M1 59L200 -1L399 59"/></svg>');
+    var laurier = '';
+    for (var k = 0; k < 7; k++) {
+      var a = Math.PI * (0.15 + k * 0.11);
+      var xg = (43 - Math.cos(a) * 36).toFixed(1);
+      var xd = (43 + Math.cos(a) * 36).toFixed(1);
+      var y = (38 - Math.sin(a) * 30).toFixed(1);
+      laurier += '<ellipse cx="' + xg + '" cy="' + y + '" rx="6" ry="3" transform="rotate(' + (-a * 57 + 60).toFixed(0) + ' ' + xg + ' ' + y + ')" fill="url(#mOr)"/><ellipse cx="' + xd + '" cy="' + y + '" rx="6" ry="3" transform="rotate(' + (a * 57 - 60).toFixed(0) + ' ' + xd + ' ' + y + ')" fill="url(#mOr)"/>';
+    }
+    h += partie('left:50%;transform:translateX(-50%);top:-48px;width:86px;height:40px', '<svg viewBox="0 0 86 40">' + laurier + '</svg>');
+    var ionique = '<svg viewBox="0 0 24 14"><circle cx="5" cy="7" r="4.5" fill="none" stroke="url(#mOr)" stroke-width="2"/><circle cx="19" cy="7" r="4.5" fill="none" stroke="url(#mOr)" stroke-width="2"/><rect x="2" width="20" height="3" fill="url(#mOr)"/></svg>';
+    h += partie('left:-3px;top:-2px;width:24px;height:14px', ionique) + partie('right:-3px;top:-2px;width:24px;height:14px', ionique);
+    h += partie('left:-6px;right:-6px;bottom:-12px;height:12px', '<svg viewBox="0 0 400 12" preserveAspectRatio="none"><rect width="400" height="4" fill="url(#mOr)"/><rect y="4" width="400" height="8" fill="url(#mBois)"/></svg>');
+  } else if (style === 'gothique') {
+    h += partie('left:-12px;right:-12px;top:-96px;height:100px', '<svg viewBox="0 0 400 100" preserveAspectRatio="none"><path d="M0 100V70C70 70 150 40 200 0C250 40 330 70 400 70V100Z" fill="url(#mBois)"/><path d="M14 100V76C80 74 155 46 200 12C245 46 320 74 386 76V100Z" style="fill:var(--boisF)"/><path d="M0 70C70 70 150 40 200 0C250 40 330 70 400 70" fill="none" stroke="url(#mOr)" stroke-width="2.5"/><rect y="94" width="400" height="6" style="fill:var(--boisC)"/><path class="neige" d="M1 69C70 69 150 39 200 -1C250 39 330 69 399 69"/></svg>');
+    var rosace = '<svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="21" fill="url(#mVitrail)" stroke="url(#mOr)" stroke-width="3"/>';
+    for (var r = 0; r < 8; r++) {
+      var ar = r * Math.PI / 4;
+      rosace += '<line x1="23" y1="23" x2="' + (23 + Math.cos(ar) * 21).toFixed(1) + '" y2="' + (23 + Math.sin(ar) * 21).toFixed(1) + '" stroke="url(#mOr)" stroke-width="1.6"/>';
+    }
+    h += partie('left:50%;transform:translateX(-50%);top:-62px;width:46px;height:46px', rosace + '<circle cx="23" cy="23" r="7" fill="none" stroke="url(#mOr)" stroke-width="2"/></svg>');
+    var pinacle = '<svg viewBox="0 0 20 62"><path d="M10 0L16 22H4Z" fill="url(#mOr)"/><path d="M4 20Q1 18 2 15M16 20Q19 18 18 15M5 12Q2 10 3 7M15 12Q18 10 17 7" fill="none" stroke="url(#mOr)" stroke-width="1.5"/><rect x="3" y="22" width="14" height="40" fill="url(#mBoisH)"/><path d="M7 30h6v12h-6z" style="fill:var(--boisF)"/></svg>';
+    h += partie('left:-16px;top:-58px;width:20px;height:62px', pinacle) + partie('right:-16px;top:-58px;width:20px;height:62px', pinacle);
+    var pg = '<svg viewBox="0 0 24 14"><path d="M0 0H24L18 14H6Z" fill="url(#mBois)"/></svg>';
+    h += partie('left:6px;bottom:-14px;width:24px;height:14px', pg) + partie('right:6px;bottom:-14px;width:24px;height:14px', pg);
+  } else if (style === 'rococo') {
+    h += partie('left:-8px;right:-8px;top:-12px;height:14px', '<svg viewBox="0 0 400 14" preserveAspectRatio="none"><rect width="400" height="14" rx="6" fill="url(#mBois)"/><rect y="10" width="400" height="2.5" fill="url(#mOr)"/><path class="neige" d="M3 2H397"/></svg>');
+    var crete = '<svg viewBox="0 0 330 72"><g fill="none" stroke="url(#mOr)" stroke-width="5" stroke-linecap="round"><path d="M165 66C120 66 98 50 92 36C86 22 100 14 110 22C118 28 112 38 104 34"/><path d="M165 66C210 66 232 50 238 36C244 22 230 14 220 22C212 28 218 38 226 34"/><path d="M92 50C70 64 38 66 20 58C6 52 8 38 20 40C28 42 26 52 18 52"/><path d="M238 50C260 64 292 66 310 58C324 52 322 38 310 40C302 42 304 52 312 52"/></g><path d="M165 4C186 4 196 20 196 36C196 52 182 62 165 62C148 62 134 52 134 36C134 20 144 4 165 4Z" fill="url(#mOr)"/>';
+    for (var s = 0; s < 7; s++) {
+      var as = Math.PI * (0.1 + s * 0.133);
+      crete += '<line x1="165" y1="58" x2="' + (165 - Math.cos(as) * 30).toFixed(1) + '" y2="' + (58 - Math.sin(as) * 50).toFixed(1) + '" stroke="#8a6418" stroke-width="1.5" opacity=".6"/>';
+    }
+    crete += '<path d="M120 60Q132 44 140 56M210 60Q198 44 190 56" fill="none" stroke="url(#mOr)" stroke-width="3"/><path class="neige" d="M146 10C156 2 174 2 184 10"/></svg>';
+    h += partie('left:50%;transform:translateX(-50%);top:-80px;width:min(92%,330px);height:72px', crete);
+    var galbe = '<svg viewBox="0 0 30 24"><path d="M6 0H26C26 8 20 12 16 16C13 19 13 22 17 22C19 22 19 24 15 24C9 24 8 18 11 14C14 10 8 6 6 0Z" fill="url(#mBois)" stroke="url(#mOr)" stroke-width="1.2"/></svg>';
+    h += partie('left:-6px;bottom:-22px;width:30px;height:24px', galbe) + partie('right:-6px;bottom:-22px;width:30px;height:24px;transform:scaleX(-1)', galbe);
+  } else if (style === 'artnouveau') {
+    h += partie('left:-10px;right:-10px;top:-44px;height:48px', '<svg viewBox="0 0 400 48" preserveAspectRatio="none"><path d="M0 48V30C70 30 120 6 200 4C280 6 330 30 400 30V48Z" fill="url(#mBois)"/><path d="M0 30C70 30 120 6 200 4C280 6 330 30 400 30" fill="none" stroke="url(#mOr)" stroke-width="2.5"/><path class="neige" d="M1 29C70 29 120 5 200 3C280 5 330 29 399 29"/></svg>');
+    var vit = '<svg viewBox="0 0 150 80"><path d="M15 78A60 60 0 0 1 135 78Z" fill="url(#mVitrail)" stroke="url(#mOr)" stroke-width="3"/>';
+    for (var v = 1; v < 6; v++) {
+      var av = Math.PI * v / 6;
+      vit += '<line x1="75" y1="78" x2="' + (75 - Math.cos(av) * 60).toFixed(1) + '" y2="' + (78 - Math.sin(av) * 60).toFixed(1) + '" stroke="url(#mOr)" stroke-width="1.4"/>';
+    }
+    vit += '<path d="M75 76C75 60 62 52 58 40C70 44 74 54 75 62C76 54 80 44 92 40C88 52 75 60 75 76Z" style="fill:var(--accent)" stroke="url(#mOr)" stroke-width="1"/><path d="M75 40C70 30 72 22 75 16C78 22 80 30 75 40Z" style="fill:color-mix(in srgb,var(--accent) 70%,#fff)"/><g fill="none" stroke="url(#mOr)" stroke-width="3" stroke-linecap="round"><path d="M15 78C2 70 -4 54 6 46C14 40 22 48 16 54"/><path d="M135 78C148 70 154 54 144 46C136 40 128 48 134 54"/></g><path class="neige" d="M18 70A60 60 0 0 1 132 70"/></svg>';
+    h += partie('left:50%;transform:translateX(-50%);top:-86px;width:150px;height:80px', vit);
+    var tige = '<svg viewBox="0 0 22 400" preserveAspectRatio="none"><path d="M11 400C4 330 18 270 11 200C4 130 18 70 11 0" fill="none" stroke="url(#mOr)" stroke-width="2"/></svg>';
+    var tete = '<svg viewBox="0 0 22 70">' + feuilleSvg(11, 30, -130, 16) + feuilleSvg(11, 46, -60, 14) + feuilleSvg(11, 60, -140, 12) + fleurSvg(11, 12, 12, 'var(--accent)') + '</svg>';
+    h += partie('left:-6px;top:6px;bottom:20px;width:22px', tige) + partie('right:-6px;top:6px;bottom:20px;width:22px', tige);
+    h += partie('left:-6px;top:0;width:22px;height:70px', tete) + partie('right:-6px;top:0;width:22px;height:70px;transform:scaleX(-1)', tete);
+    var pan = '<svg viewBox="0 0 34 18"><path d="M0 0H34C30 6 20 8 16 12C13 15 15 18 10 18C4 18 2 12 6 8C9 5 4 3 0 0Z" fill="url(#mBois)" stroke="url(#mOr)" stroke-width="1"/></svg>';
+    h += partie('left:6px;bottom:-16px;width:34px;height:18px', pan) + partie('right:6px;bottom:-16px;width:34px;height:18px;transform:scaleX(-1)', pan);
+  } else if (style === 'campagne') {
+    h += partie('left:-8px;right:-8px;top:-14px;height:16px', '<svg viewBox="0 0 400 16" preserveAspectRatio="none"><rect width="400" height="16" rx="4" style="fill:var(--peint)"/><rect y="11" width="400" height="2" style="fill:var(--patine)"/><path class="neige" d="M3 2H397"/></svg>');
+    var g = '<svg viewBox="0 0 220 60"><path d="M20 44C60 60 90 30 110 40C130 30 160 60 200 44" fill="none" style="stroke:color-mix(in srgb,#6a9a55 70%,var(--lav))" stroke-width="3"/>';
+    [[30, 44, 'var(--accent)'], [62, 46, 'color-mix(in srgb,var(--accent) 60%,#fff)'], [158, 46, 'color-mix(in srgb,var(--accent) 60%,#fff)'], [190, 44, 'var(--accent)']].forEach(function (f) {
+      g += feuilleSvg(f[0] - 8, f[1] + 4, 150, 11) + fleurSvg(f[0], f[1], 13, f[2]);
+    });
+    g += '<path d="M110 30C96 18 84 22 88 32C92 40 104 36 110 30C116 36 128 40 132 32C136 22 124 18 110 30Z" style="fill:color-mix(in srgb,var(--accent) 75%,#fff)" stroke="url(#mOr)" stroke-width="1.2"/><path d="M110 30L100 52M110 30L120 52" style="stroke:color-mix(in srgb,var(--accent) 75%,#fff)" stroke-width="3" stroke-linecap="round"/>' + fleurSvg(110, 30, 12, 'var(--accent)') + '</svg>';
+    h += partie('left:50%;transform:translateX(-50%);top:-58px;width:220px;height:60px', g);
+    h += partie('left:4px;right:4px;bottom:-18px;height:20px', '<svg viewBox="0 0 400 20" preserveAspectRatio="none"><path d="M0 0H400V6Q380 6 370 12Q350 20 330 12Q300 4 270 10Q235 18 200 10Q165 18 130 10Q100 4 70 12Q50 20 30 12Q20 6 0 6Z" style="fill:var(--peint)"/></svg>');
+    var pc = '<svg viewBox="0 0 22 26"><path d="M2 0H20C20 8 14 14 12 18C11 21 13 24 16 24V26H8C5 26 4 22 6 18C8 14 3 8 2 0Z" style="fill:var(--peint);stroke:var(--patine)" stroke-width="1"/></svg>';
+    h += partie('left:2px;bottom:-26px;width:22px;height:26px', pc) + partie('right:2px;bottom:-26px;width:22px;height:26px;transform:scaleX(-1)', pc);
+  }
+  if (plaque) {
+    h += '<span class="plaque-meuble" style="top:' + haut + 'px">' + plaque + '</span>';
+  }
+  return h;
+}
+// ornement de saison posé sur le meuble (la neige passe par les tracés .neige des frontons)
+function ornementSaison(saison, n) {
+  if (saison === 'toile') {
+    var t = '<svg viewBox="0 0 50 50"><g fill="none" stroke="rgba(255,255,255,.45)" stroke-width="1">';
+    for (var k = 0; k <= 4; k++) {
+      var a = k * Math.PI / 8;
+      t += '<line x1="0" y1="0" x2="' + (Math.cos(a) * 50).toFixed(1) + '" y2="' + (Math.sin(a) * 50).toFixed(1) + '"/>';
+    }
+    [12, 22, 32, 42].forEach(function (r) {
+      var p = [];
+      for (var j = 0; j <= 4; j++) {
+        var aj = j * Math.PI / 8;
+        p.push((Math.cos(aj) * r).toFixed(1) + ' ' + (Math.sin(aj) * r).toFixed(1));
+      }
+      t += '<polyline points="' + p.join(' ') + '"/>';
+    });
+    return partie('left:9px;top:9px;width:50px;height:50px;z-index:1', t + '</g></svg>');
+  }
+  if (saison === 'etoiles') {
+    var e = '';
+    for (var i = 0; i < 6; i++) {
+      e += '<span class="etoile-meuble" style="left:' + (10 + (i * 37 + n * 11) % 78) + '%;top:' + (12 + (i * 23 + n * 7) % 66) + '%;animation-delay:' + (-i * 0.6) + 's">' + (i % 2 ? '✦' : '✧') + '</span>';
+    }
+    return e;
+  }
+  if (saison === 'feuilles') {
+    return partie('left:12%;top:-10px;width:40px;height:16px;z-index:3', '<svg viewBox="0 0 40 16">' + feuilleSvg(4, 12, -10, 14, 'var(--accent)') + feuilleSvg(20, 13, 20, 12, 'var(--gold)') + '</svg>') +
+      partie('right:14%;top:-9px;width:24px;height:14px;z-index:3', '<svg viewBox="0 0 24 14">' + feuilleSvg(3, 10, -25, 14, 'color-mix(in srgb,var(--accent) 70%,#5a2a10)') + '</svg>');
+  }
+  return '';
+}
+
+// ---------- guirlande : une forme par thème, découpée par un masque SVG (24 px de large, une lumière par rayon) ----------
+var FORMES_GUIRLANDE = {
+  ampoule: function (y) { return '<rect x="10.6" y="' + (y - 8) + '" width="2.8" height="3" rx=".6"/><ellipse cx="12" cy="' + (y + 1) + '" rx="3.6" ry="5"/>'; },
+  etoile: function (y) { return '<path d="M12 ' + (y - 7) + 'l2.1 4.6 5 .5-3.8 3.3 1.1 4.9L12 ' + (y + 4.8) + 'l-4.4 2.5 1.1-4.9-3.8-3.3 5-.5z"/>'; },
+  coeur: function (y) { return '<path d="M12 ' + (y + 6) + 's-6-3.8-6-8a3.3 3.3 0 0 1 6-1.9A3.3 3.3 0 0 1 18 ' + (y - 2) + 'c0 4.2-6 8-6 8z"/>'; },
+  citrouille: function (y) { return '<ellipse cx="12" cy="' + (y + 1) + '" rx="6" ry="4.6"/><rect x="11.2" y="' + (y - 6) + '" width="1.6" height="3"/>'; },
+  fleur: function (y) { var s = ''; for (var k = 0; k < 5; k++) { var a = k * Math.PI * 2 / 5; s += '<circle cx="' + (12 + Math.cos(a) * 3.2).toFixed(1) + '" cy="' + (y + Math.sin(a) * 3.2).toFixed(1) + '" r="2.6"/>'; } return s; },
+  feuille: function (y) { return '<path d="M6 ' + (y + 4) + 'Q8 ' + (y - 6) + ' 18 ' + (y - 5) + 'Q17 ' + (y + 5) + ' 6 ' + (y + 4) + 'Z"/>'; },
+  flocon: function (y) { var s = ''; for (var k = 0; k < 3; k++) { s += '<rect x="11.2" y="' + (y - 6) + '" width="1.6" height="12" transform="rotate(' + (k * 60) + ' 12 ' + y + ')"/>'; } return s; },
+  lune: function (y) { return '<path d="M15 ' + (y - 6) + 'A6.5 6.5 0 1 0 15 ' + (y + 6) + 'A5 5 0 1 1 15 ' + (y - 6) + 'Z"/>'; }
+};
+function masqueGuirlande(forme, haut, per) {
+  var y = haut + 8;
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="' + per + '" viewBox="0 0 24 ' + per + '"><path d="M0 ' + (y - 9) + 'Q12 ' + (y - 5) + ' 24 ' + (y - 9) + '" stroke="#000" stroke-width=".8" fill="none" opacity=".55"/>' + FORMES_GUIRLANDE[forme](y) + '</svg>';
+  return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
+}
+// les règles CSS de toutes les guirlandes (étagère en tranches : rayons de 182 px ; vitrine : 126 px)
+function preparerStylesGuirlandes() {
+  if (document.getElementById('stylesGuirlandes')) {
+    return;
+  }
+  var css = '';
+  Object.keys(FORMES_GUIRLANDE).forEach(function (f) {
+    [['rangs', 168, 182], ['vitrine', 112, 126]].forEach(function (z) {
+      var m = masqueGuirlande(f, z[1], z[2]);
+      var sel = '.m-orne[data-g="' + f + '"] .' + z[0];
+      css += sel + '::before,' + sel + '::after{-webkit-mask:' + m + ' 0 0/24px var(--per) repeat;mask:' + m + ' 0 0/24px var(--per) repeat}';
+    });
+  });
+  css += '.m-orne .rangs::before,.m-orne .vitrine::before{background:var(--g1,var(--gold));filter:drop-shadow(0 0 3px var(--g1,var(--gold)))}' +
+    '.m-orne .rangs::after,.m-orne .vitrine::after{background:var(--g2,var(--accent));-webkit-mask-position:12px 0;mask-position:12px 0;filter:drop-shadow(0 0 3px var(--g2,var(--accent)))}';
+  var st = document.createElement('style');
+  st.id = 'stylesGuirlandes';
+  st.textContent = css;
+  document.head.appendChild(st);
+}
+
+// ---------- ce qu'il faut à un meuble : classes, attributs et ornements ----------
+// n : numéro du meuble (varie la place des étoiles)
+function habillageMeuble(plaque, n) {
+  preparerDefsMeubles();
+  preparerStylesGuirlandes();
+  var style = styleMeuble();
+  var saison = saisonMeuble();
+  var g = GUIRLANDES[themeMeuble()] || ['ampoule'];
+  var couleurs = '';
+  if (g[1]) {
+    couleurs = ' style="--g1:' + g[1] + ';--g2:' + g[2] + '"';
+  }
+  var cls = 'meuble m-orne m-' + style;
+  if (saison) {
+    cls += ' saison-' + saison;
+  }
+  return {debut: '<div class="' + cls + '" data-g="' + g[0] + '"' + couleurs + '>', fin: ornementsMeuble(style, plaque) + ornementSaison(saison, n || 0) + '</div>', etagere: 'e-' + style};
 }
 </script>
 
@@ -12969,7 +13208,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 09:57:55';
+var VERSION_APPLI = '2026-10-06 10:02:26';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
