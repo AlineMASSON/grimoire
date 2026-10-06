@@ -279,10 +279,6 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .tr-l.ecoute .t{bottom:27px}
 /* revendu : une marque discrète (le livre a eu une seconde vie) */
 .tr-l.revendu{opacity:.78}
-.tr-l .revendu-l{position:absolute;left:0;right:0;top:-15px;display:flex;justify-content:center;color:var(--muted)}
-.tr-l .revendu-l .ic{width:10px;height:10px;stroke-width:2.4}
-.revendu-v{position:absolute;right:4px;bottom:4px;z-index:3;width:18px;height:18px;border-radius:50%;background:rgba(14,31,29,.85);color:#fff;display:flex;align-items:center;justify-content:center}
-.revendu-v .ic{width:11px;height:11px;stroke-width:2.4}
 .penche .tr-l{transform:rotate(13deg);transform-origin:100% 100%}
 .vitrine{--haut:112px;--per:126px;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:112px;column-gap:10px;row-gap:14px;padding:0 12px 14px}
 .case-v{display:flex;align-items:flex-end;justify-content:center;cursor:pointer}
@@ -296,8 +292,10 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .audio-v{position:absolute;left:4px;bottom:4px;z-index:3;width:18px;height:18px;border-radius:50%;background:rgba(14,31,29,.85);color:#fff;display:flex;align-items:center;justify-content:center}
 .audio-v .ic{width:11px;height:11px;stroke-width:2.4}
 @media (prefers-reduced-motion:reduce){.rangs::before,.rangs::after,.vitrine::before,.vitrine::after{animation:none}}
-/* légende de l'étagère, en haut : les couleurs servent de filtre (les autres livres s'estompent) */
-.leg-couleurs{margin:0 0 12px}
+/* étagère : résumé de l'affichage choisi (feuille « Affichage » : rangement, années, couleurs) ; couleurs qui filtrent */
+.resume-affichage{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:6px 10px;border-radius:12px;border:1px solid color-mix(in srgb,var(--gold) 40%,var(--line));background:color-mix(in srgb,var(--gold) 12%,var(--card));font:600 12.5px Nunito,sans-serif;color:var(--ink);cursor:pointer}
+.resume-affichage b{flex:1;font-weight:700}
+.resume-affichage .chip{margin:0}
 .leg-chip{display:inline-flex;align-items:center;gap:5px}
 .leg-chip i{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
 .leg-symboles{margin-top:6px}
@@ -502,6 +500,7 @@ header{padding-top:calc(22px + 42px + env(safe-area-inset-top))}
 <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" /></symbol>
 <symbol id="i-book-open" viewBox="0 0 24 24"><path d="M12 5v16" /> <path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z" /></symbol>
 <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" /></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v3" /><path d="M16 2v3" /><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18" /></symbol>
 <symbol id="i-camera" viewBox="0 0 24 24"><path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" /> <circle cx="12" cy="13" r="3" /></symbol>
 <symbol id="i-chart-column" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16" /> <path d="M18 17V9" /> <path d="M13 17V5" /> <path d="M8 17v-3" /></symbol>
 <symbol id="i-check-check" viewBox="0 0 24 24"><path d="M18 6 7 17l-5-5" /> <path d="m22 10-7.5 7.5L13 16" /></symbol>
@@ -2298,7 +2297,6 @@ function tranche(b, star, penche) {
   }
   if (b.revendu) {
     cls += ' revendu';
-    plus += '<span class="revendu-l">' + ic('recycle') + '</span>';
   }
   if (p > 450) {
     cls += ' relie';
@@ -2322,9 +2320,6 @@ function couvertureVitrine(b, star) {
   }
   if (b.book_type === 'audioBook') {
     img += '<span class="audio-v">' + ic('headphones') + '</span>';
-  }
-  if (b.revendu) {
-    img += '<span class="revendu-v" title="revendu">' + ic('recycle') + '</span>';
   }
   return '<div class="case-v" data-act="livre" data-id="' + b.id + '" title="' + esc(titre(b)) + '"><div class="cadre-v">' + badges + '<div class="couv-v" style="--c:' + couleurLivre(b) + '"><div class="ph">' + esc(titreTranche(b)) + '</div>' + img + '</div></div></div>';
 }
@@ -2644,7 +2639,181 @@ function appliquerFiltreCouleur() {
 ACTIONS.filtreCouleur = function (el) {
   var i = +el.dataset.i;
   filtreCouleur = i === filtreCouleur ? -1 : i;
-  appliquerFiltreCouleur();
+  majAffichage();
+};
+
+// « 1 livre », « 8 livres »
+function nbLivres(n) {
+  if (n > 1) {
+    return n + ' livres';
+  }
+  return n + ' livre';
+}
+// ---------- affichage de l'étagère : ranger les lus par année ou par genre, années choisies, couleur ----------
+// Le rangement et les années sont gardés d'une ouverture à l'autre (localStorage) ; la couleur, le temps que l'appli reste ouverte.
+function rangementEtagere() {
+  if (lsGet('bm_etagere_rangement') === 'genre') {
+    return 'genre';
+  }
+  return 'annee';
+}
+function anneesLues() {
+  var ans = {};
+  finies().forEach(function (r) { ans[annee(r.end)] = 1; });
+  return Object.keys(ans).sort().reverse();
+}
+// les années cochées qui ont encore des livres ; [] = toutes
+function anneesChoisies() {
+  var choix = [];
+  try {
+    choix = JSON.parse(lsGet('bm_etagere_annees') || '[]');
+  } catch (e) {
+    choix = [];
+  }
+  if (!Array.isArray(choix)) {
+    return [];
+  }
+  var lues = anneesLues();
+  return choix.map(String).filter(function (y) { return lues.indexOf(y) >= 0; });
+}
+function finiesAffichees() {
+  var choix = anneesChoisies();
+  return finies().filter(function (r) { return !choix.length || choix.indexOf(String(annee(r.end))) >= 0; });
+}
+// le groupe de couleur d'un livre (le premier genre reconnu, comme sa couleur) ; GENRES_COULEURS.length = « Autres genres »
+function groupeDuLivre(b) {
+  for (var i = 0; i < GENRES_COULEURS.length; i++) {
+    if (livreDuGroupe(b, i)) {
+      return i;
+    }
+  }
+  return GENRES_COULEURS.length;
+}
+// un meuble par groupe de genre ; un livre relu n'y est qu'une fois ; une couleur choisie ne garde que son meuble
+function rayonsParGenre(lectures) {
+  var groupes = GENRES_COULEURS.map(function (g) { return {nom: g[2], l: []}; }).concat([{nom: 'Autres genres', l: []}]);
+  var vus = {};
+  lectures.slice().sort(function (a, b) { return b.end - a.end; }).forEach(function (r) {
+    if (vus[r.book.id]) {
+      return;
+    }
+    vus[r.book.id] = 1;
+    groupes[groupeDuLivre(r.book)].l.push(r);
+  });
+  var h = '';
+  var n = 0;
+  groupes.forEach(function (g, i) {
+    if (!g.l.length || (filtreCouleur >= 0 && i !== filtreCouleur)) {
+      return;
+    }
+    var l = g.l.sort(function (a, b) { return a.end - b.end; });
+    h += debutEtagere(esc(g.nom) + ' <span class="small muted">· ' + nbLivres(l.length) + '</span>', l.length) + meuble(l.map(function (r) { return {b: r.book, star: r.star}; }), esc(g.nom) + ' <small>· ' + l.length + '</small>', n) + '</div>';
+    n++;
+  });
+  return h;
+}
+// en haut de l'étagère : ce qui est choisi, touchable pour rouvrir la feuille, avec « Tout afficher »
+function resumeAffichage() {
+  var morceaux = [];
+  var lus = filtreEtagere === 'lus';
+  if (lus && rangementEtagere() === 'genre') {
+    morceaux.push('Par genre');
+  }
+  var choix = [];
+  if (lus) {
+    choix = anneesChoisies();
+  }
+  if (choix.length) {
+    morceaux.push(choix.slice().sort().reverse().join(', '));
+  }
+  if (filtreCouleur >= 0) {
+    morceaux.push(GENRES_COULEURS[filtreCouleur][2]);
+  }
+  if (!morceaux.length) {
+    return '';
+  }
+  var raz = '';
+  if (choix.length || filtreCouleur >= 0) {
+    raz = '<button class="chip" data-act="toutAfficher">Tout afficher</button>';
+  }
+  return '<div class="resume-affichage" data-act="affichageEtagere">' + ic('list') + '<b>' + esc(morceaux.join(' · ')) + '</b>' + raz + '</div>';
+}
+function htmlAffichage() {
+  var h = '';
+  var parGenre = filtreEtagere === 'lus' && rangementEtagere() === 'genre';
+  if (filtreEtagere === 'lus') {
+    var r = rangementEtagere();
+    h += '<h4>Ranger par</h4><div class="bascule-vue">' + [['annee', 'calendar', 'Par année'], ['genre', 'tag', 'Par genre']].map(function (x) {
+      var cls = '';
+      if (x[0] === r) {
+        cls = ' class="on"';
+      }
+      return '<button' + cls + ' data-act="rangementEtagere" data-r="' + x[0] + '" aria-pressed="' + (x[0] === r) + '">' + ic(x[1]) + ' ' + x[2] + '</button>';
+    }).join('') + '</div>';
+    var choix = anneesChoisies();
+    var toutes = 'chip';
+    if (!choix.length) {
+      toutes += ' on';
+    }
+    h += '<h4>Années</h4><p class="small muted" style="margin:0 0 4px">Touche une ou plusieurs années.</p><div><button class="' + toutes + '" data-act="anneeEtagere" data-y="" aria-pressed="' + !choix.length + '">Toutes</button>' + anneesLues().map(function (y) {
+      var on = choix.indexOf(y) >= 0;
+      var cls = 'chip';
+      if (on) {
+        cls += ' on';
+      }
+      return '<button class="' + cls + '" data-act="anneeEtagere" data-y="' + y + '" aria-pressed="' + on + '">' + y + '</button>';
+    }).join('') + '</div>';
+  }
+  var aide = 'Touche une couleur pour voir ses livres';
+  if (parGenre) {
+    aide = 'Touche une couleur pour n\'afficher que ce genre';
+  }
+  h += '<h4>Couleurs</h4><p class="small muted" style="margin:0 0 4px">' + aide + '</p><div>' + GENRES_COULEURS.map(function (g, i) {
+    var cls = 'chip leg-chip';
+    if (i === filtreCouleur) {
+      cls += ' on';
+    }
+    return '<button class="' + cls + '" data-act="filtreCouleur" data-i="' + i + '" aria-pressed="' + (i === filtreCouleur) + '"><i style="background:' + g[1] + '"></i>' + g[2] + '</button>';
+  }).join('') + '</div>';
+  var symboles = '★ coup de cœur · ' + ic('headphones') + ' audio';
+  if (vueEtagere() === 'couvertures') {
+    symboles = ic('heart') + ' coup de cœur · ' + ic('headphones') + ' audio · sans couverture : le titre sur la couleur du genre';
+  }
+  h += '<p class="small muted leg-symboles">' + symboles + '</p><div class="row" style="margin-top:14px"><button class="act" data-act="fermer">' + ic('check') + ' Voir</button></div>';
+  return h;
+}
+ACTIONS.affichageEtagere = function () {
+  ouvrirFeuille('<h3>Affichage de l\'étagère</h3><div id="affichageEtagere">' + htmlAffichage() + '</div>');
+};
+// un choix change : l'étagère se redessine derrière la feuille, et la feuille aussi
+function majAffichage() {
+  rendre();
+  var z = document.getElementById('affichageEtagere');
+  if (z) {
+    z.innerHTML = htmlAffichage();
+  }
+}
+ACTIONS.rangementEtagere = function (el) {
+  lsSet('bm_etagere_rangement', el.dataset.r);
+  majAffichage();
+};
+ACTIONS.anneeEtagere = function (el) {
+  var y = el.dataset.y;
+  var choix = anneesChoisies();
+  if (!y) {
+    choix = [];
+  } else if (choix.indexOf(y) >= 0) {
+    choix.splice(choix.indexOf(y), 1);
+  } else {
+    choix.push(y);
+  }
+  lsSet('bm_etagere_annees', JSON.stringify(choix));
+  majAffichage();
+};
+ACTIONS.toutAfficher = function () {
+  lsSet('bm_etagere_annees', '[]');
+  filtreCouleur = -1;
+  majAffichage();
 };
 
 function vEtagere() {
@@ -2800,18 +2969,26 @@ function vShelf() {
   }).join('') + '</div>';
   var rayons = '';
   if (filtreEtagere === 'lus') {
-    var parAn = {};
-    finies().forEach(function (r) {
-      var y = annee(r.end);
-      if (!parAn[y]) {
-        parAn[y] = [];
-      }
-      parAn[y].push(r);
-    });
-    Object.keys(parAn).sort().reverse().forEach(function (y, n) {
-      var l = parAn[y].sort(function (a, b) { return a.end - b.end; });
-      rayons += debutEtagere(y + ' <span class="small muted">· ' + l.length + ' livres</span>', l.length) + meuble(l.map(function (r) { return {b: r.book, star: r.star}; }), y + ' <small>· ' + l.length + '</small>', n) + '</div>';
-    });
+    var lectures = finiesAffichees();
+    if (rangementEtagere() === 'genre') {
+      rayons = rayonsParGenre(lectures);
+    } else {
+      var parAn = {};
+      lectures.forEach(function (r) {
+        var y = annee(r.end);
+        if (!parAn[y]) {
+          parAn[y] = [];
+        }
+        parAn[y].push(r);
+      });
+      Object.keys(parAn).sort().reverse().forEach(function (y, n) {
+        var l = parAn[y].sort(function (a, b) { return a.end - b.end; });
+        rayons += debutEtagere(y + ' <span class="small muted">· ' + nbLivres(l.length) + '</span>', l.length) + meuble(l.map(function (r) { return {b: r.book, star: r.star}; }), y + ' <small>· ' + l.length + '</small>', n) + '</div>';
+      });
+    }
+    if (!rayons) {
+      rayons = '<p class="small muted">Aucun livre lu pour ces choix. <button class="chip" data-act="toutAfficher">Tout afficher</button></p>';
+    }
   } else {
     var envie = filtreEtagere === 'envies';
     var l = M.livres.filter(function (b) { return b.statut === 'NOT_STARTED' && b.wishlist === envie; }).sort(function (a, b) { return a.created_at - b.created_at; });
@@ -2823,7 +3000,7 @@ function vShelf() {
     if (envie) {
       court = 'Envies';
     }
-    rayons = debutEtagere(nom + ' <span class="small muted">· ' + l.length + ' livres</span>', l.length) + '<p class="small muted" style="margin:-2px 0 8px">Les plus anciens en premier.</p>' + meuble(l.map(function (b) { return {b: b, star: 0}; }), court + ' <small>· ' + l.length + '</small>', 0) + '</div>';
+    rayons = debutEtagere(nom + ' <span class="small muted">· ' + nbLivres(l.length) + '</span>', l.length) + '<p class="small muted" style="margin:-2px 0 8px">Les plus anciens en premier.</p>' + meuble(l.map(function (b) { return {b: b, star: 0}; }), court + ' <small>· ' + l.length + '</small>', 0) + '</div>';
   }
   var vue = vueEtagere();
   var bascule = '<div class="bascule-vue">' + [['tranches', 'library-big', 'Tranches'], ['couvertures', 'image', 'Couvertures']].map(function (v) {
@@ -2832,24 +3009,12 @@ function vShelf() {
       cls = ' class="on"';
     }
     return '<button' + cls + ' data-act="vueEtagere" data-v="' + v[0] + '">' + ic(v[1]) + ' ' + v[2] + '</button>';
-  }).join('') + '<button data-act="mesDecos">' + ic('flower-2') + ' Décos</button></div>';
-  // la légende, en haut : les couleurs servent aussi de filtre (filtreCouleur)
-  var symboles = '★ coup de cœur · ' + ic('headphones') + ' audio · ' + ic('recycle') + ' revendu';
-  if (vue === 'couvertures') {
-    symboles = ic('heart') + ' coup de cœur · ' + ic('headphones') + ' audio · sans couverture : le titre sur la couleur du genre';
-  }
-  var legende = '<div class="leg-couleurs"><div class="small muted">Touche une couleur pour voir ses livres</div>' + GENRES_COULEURS.map(function (g, i) {
-    var cls = 'chip leg-chip';
-    if (i === filtreCouleur) {
-      cls += ' on';
-    }
-    return '<button class="' + cls + '" data-act="filtreCouleur" data-i="' + i + '" aria-pressed="' + (i === filtreCouleur) + '"><i style="background:' + g[1] + '"></i>' + g[2] + '</button>';
-  }).join('') + '<div class="small muted leg-symboles">' + symboles + '</div></div>';
+  }).join('') + '<button data-act="mesDecos">' + ic('flower-2') + ' Décos</button><button data-act="affichageEtagere">' + ic('list') + ' Affichage</button></div>';
   var dispo = '';
   if (modeDisposer && vue === 'tranches') {
     dispo = '<div class="bandeau-dispo"><span>' + ic('pencil') + '</span><b>Disposer mes décos : touche un « + » pour y poser une déco, ou une déco pour la garder là, la libérer ou la ranger.</b><button class="act doux" data-act="disposerDecos">Terminé</button></div>';
   }
-  return h + card('Mon étagère magique', bascule + dispo + legende + rayons, 'touche un livre pour l\'ouvrir');
+  return h + card('Mon étagère magique', bascule + resumeAffichage() + dispo + rayons, 'touche un livre pour l\'ouvrir');
 }
 ACTIONS.filtreEtagere = function (el) {
   filtreEtagere = el.dataset.f;
@@ -13952,7 +14117,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 11:04:02';
+var VERSION_APPLI = '2026-10-06 11:11:35';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
