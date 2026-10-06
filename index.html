@@ -940,8 +940,15 @@ function ouvrirFeuille(html) {
 }
 function fermerFeuille() {
   var f = document.getElementById('feuille');
+  if (f && typeof finirAutoForm === 'function') {
+    finirAutoForm();
+  }
   if (f) {
     f.remove();
+  }
+  // une saisie enregistrée sous la feuille sans redessiner la vue (carnet, étoiles) : la vue se met à jour maintenant
+  if (vueARedessiner) {
+    rendre();
   }
 }
 ACTIONS.fermer = fermerFeuille;
@@ -1280,7 +1287,9 @@ document.getElementById('nav').addEventListener('click', function (e) {
     window.scrollTo(0, 0);
   }
 });
+var vueARedessiner = false;
 function rendre() {
+  vueARedessiner = false;
   var vues = {accueil: vAccueil, stats: vStats, etagere: vEtagere, carnet: vCarnet, quetes: vQuetes, bilan: vBilan};
   if (!vues[onglet]) {
     onglet = 'accueil';
@@ -1360,7 +1369,7 @@ function carteEnCours(r) {
   // la couverture en entier, seule (sans recadrage)
   return '<div class="carte-livre"><div class="couv-carte entiere" data-act="livre" data-id="' + b.id + '">' + cover(b) + '</div>' + bouton +
     '<div class="t" data-act="livre" data-id="' + b.id + '">' + esc(titre(b)) + '</div><div class="prog"><div style="width:' + pct + '%"></div></div>' +
-    '<div class="small muted">' + infos.join(' · ') + '</div><div class="carte-actions"><button class="mini-btn" data-act="progression" data-lecture="' + r._id + '">' + ic('bookmark') + ' ' + position + '</button></div></div>';
+    '<div class="small muted">' + infos.join(' · ') + '</div><div class="carte-actions"><button class="mini-btn" data-act="progression" data-lecture="' + r._id + '">' + ic('bookmark') + ' ' + position + '</button><button class="mini-btn" data-act="jaiFini" data-lecture="' + r._id + '">' + ic('check-check') + ' Fini</button></div></div>';
 }
 // durée lisible : « 18 min », « 2 h 30 », « 6 h »
 function dureeCourte(sec) {
@@ -3149,6 +3158,11 @@ function habillageMeuble(plaque, n) {
 }
 </script>
 
+<style>
+/* éditeur du carnet : l'état de l'enregistrement automatique, et « Effacer » */
+.rang-note{margin-top:16px;align-items:center}
+.etat-note{flex:1}
+</style>
 <script>
 // ---------- Carnet : notes détaillées, citations ----------
 var CRITERES = [['perso', '🧙‍♀️', 'Personnages'], ['plume', '🪶', 'Plume'], ['intrigue', '🗝️', 'Intrigue'], ['emotions', '💧', 'Émotions'], ['univers', '🏞️', 'Univers']];
@@ -3232,9 +3246,25 @@ function vCarnet() {
     }).join(''));
   }
 
+  // les étoiles se donnent directement dans la liste ; toucher le livre ouvre toute sa lecture
   var sansEtoiles = fin.filter(function (r) { return !r.star; });
   if (sansEtoiles.length) {
-    h += card('Sans étoiles (' + sansEtoiles.length + ')', sansEtoiles.slice(0, 12).map(function (r) { return ligneLivre(r.book, 'fini le ' + fdate(r.end), 'data-act="formLecture" data-id="' + r._id + '"'); }).join(''), 'touche un livre pour lui donner sa note · les 12 plus récents');
+    var listeSE = sansEtoiles;
+    var legende = 'touche une étoile pour noter le livre (deux fois pour une demi-étoile)';
+    var plusSE = '';
+    if (sansEtoiles.length > 12) {
+      var libSE = 'Voir les ' + sansEtoiles.length + ' livres';
+      if (sansEtoilesTout) {
+        libSE = 'Réduire';
+      } else {
+        listeSE = sansEtoiles.slice(0, 12);
+        legende += ' · les 12 plus récents';
+      }
+      plusSE = '<div class="row" style="margin-top:10px"><button class="act doux" data-act="sansEtoilesTout">' + libSE + '</button></div>';
+    }
+    h += card('Sans étoiles (' + sansEtoiles.length + ')', listeSE.map(function (r) {
+      return ligneLivre(r.book, 'fini le ' + fdate(r.end) + '<div class="etoiles-saisie mini" data-v="0">' + boutonsEtoiles(r._id, 0, 'etoileRapide') + '</div>', 'data-act="formLecture" data-id="' + r._id + '"');
+    }).join('') + plusSE, legende);
   }
 
   h += carteCitations();
@@ -3242,6 +3272,11 @@ function vCarnet() {
 }
 ACTIONS.carnetTout = function () {
   carnetTout = !carnetTout;
+  rendre();
+};
+var sansEtoilesTout = false;
+ACTIONS.sansEtoilesTout = function () {
+  sansEtoilesTout = !sansEtoilesTout;
   rendre();
 };
 
@@ -3288,6 +3323,9 @@ ACTIONS.noter = function (el) {
   var b = M.parId[id];
   if (!b) {
     return;
+  }
+  if (minuteurNote && brouillon) {
+    sauverNote(brouillon);
   }
   var a = D.avis[id] || {};
   brouillon = {id: id, notes: Object.assign({}, a.notes || {}), humeurIds: (a.humeurIds || []).slice(), tropeIds: (a.tropeIds || []).slice(), mot: a.mot || '', nouveau: ''};
@@ -3373,12 +3411,18 @@ function rendreEditeur() {
     return '<button class="' + cls + '" data-act="puce" data-l="tropeIds" data-v="' + esc(x.id) + '" data-s="' + esc(slug(x.nom)) + '">' + esc(libelle(x)) + '</button>';
   }).join('') + '<button class="chip" id="tropeCreer" data-act="creerTropeRecherche" hidden></button>' + zoneNouveau('tropes') + '</div>';
   h += '<h4>Mon petit mot</h4><textarea id="mot" placeholder="Ce que je veux me rappeler de ce livre…">' + esc(b.mot) + '</textarea>';
-  h += '<div class="row" style="margin-top:16px"><button class="act" data-act="enregistrerNote">' + ic('check') + ' Enregistrer</button>';
-  if (D.avis[b.id]) {
-    h += '<button class="act doux" data-act="effacerNote">Effacer</button>';
-  }
-  h += '</div>';
+  h += '<div class="row rang-note" id="rangNote">' + rangNoteHtml(b) + '</div>';
   document.getElementById('editeur').innerHTML = h;
+  var mot = document.getElementById('mot');
+  mot.addEventListener('input', function () {
+    brouillon.mot = mot.value;
+    noteModifiee(1000);
+  });
+  mot.addEventListener('blur', function () {
+    if (minuteurNote) {
+      sauverNote(brouillon);
+    }
+  });
   var q = document.getElementById('qTrope');
   q.addEventListener('input', function () {
     brouillon.qTrope = q.value;
@@ -3438,6 +3482,7 @@ ACTIONS.pip = function (el) {
     brouillon.notes[el.dataset.c] = v;
   }
   rendreEditeur();
+  noteModifiee(0);
 };
 ACTIONS.puce = function (el) {
   garderMot();
@@ -3449,6 +3494,7 @@ ACTIONS.puce = function (el) {
     l.push(el.dataset.v);
   }
   rendreEditeur();
+  noteModifiee(0);
 };
 ACTIONS.ouvrirNouveau = function (el) {
   garderMot();
@@ -3476,11 +3522,45 @@ ACTIONS.creerElement = function (el) {
     }
     brouillon.nouveau = '';
     rendreEditeur();
+    if (t !== 'criteres') {
+      noteModifiee(0);
+    }
   }).catch(erreurEcriture);
 };
-ACTIONS.enregistrerNote = function () {
-  garderMot();
+// ---------- enregistrement automatique : chaque cœur, humeur ou trope tout de suite, le petit mot 1 s après la dernière frappe ----------
+// La note s'écrit sans redessiner l'éditeur ; la vue du dessous se met à jour à la fermeture de la feuille.
+var minuteurNote = null;
+function rangNoteHtml(b) {
+  var etat = b.etat || 'tes changements s\'enregistrent tout seuls';
+  var h = '<span class="small muted etat-note" id="etatNote">' + etat + '</span>';
+  if (D.avis[b.id]) {
+    h += '<button class="act doux" data-act="effacerNote">Effacer</button>';
+  }
+  return h;
+}
+function majRangNote(b) {
+  var r = document.getElementById('rangNote');
+  if (r && brouillon === b) {
+    r.innerHTML = rangNoteHtml(b);
+  }
+}
+function noteModifiee(delai) {
   var b = brouillon;
+  clearTimeout(minuteurNote);
+  minuteurNote = null;
+  b.etat = '…';
+  majRangNote(b);
+  if (delai) {
+    minuteurNote = setTimeout(function () {
+      sauverNote(b);
+    }, delai);
+  } else {
+    sauverNote(b);
+  }
+}
+function sauverNote(b) {
+  clearTimeout(minuteurNote);
+  minuteurNote = null;
   var notes = {};
   Object.keys(b.notes).forEach(function (k) {
     if (b.notes[k]) {
@@ -3488,17 +3568,20 @@ ACTIONS.enregistrerNote = function () {
     }
   });
   var ancien = D.avis[b.id] || {};
-  enregistrer('avis', {id: b.id, notes: notes, humeurIds: b.humeurIds, tropeIds: b.tropeIds, mot: b.mot, maj: Date.now(), creeLe: ancien.creeLe}).then(function () {
-    fermerFeuille();
-    toast('✒️ Carnet enregistré');
+  return ecrire([{t: 'avis', o: {id: b.id, notes: notes, humeurIds: b.humeurIds.slice(), tropeIds: b.tropeIds.slice(), mot: b.mot, maj: Date.now(), creeLe: ancien.creeLe}}]).then(function () {
+    apresEcritureSansRendu();
+    b.etat = '✓ enregistré';
+    majRangNote(b);
   }).catch(erreurEcriture);
-};
+}
 ACTIONS.effacerNote = function () {
   demander('Effacer ta note de carnet pour ce livre ?', {oui: 'Effacer', danger: true}).then(function (ok) {
     if (!ok) {
       return;
     }
-    ecrire([{t: 'avis', suppr: brouillon.id}]).then(function () {
+    clearTimeout(minuteurNote);
+    minuteurNote = null;
+    supprimerAvecAnnulation([{t: 'avis', suppr: brouillon.id}], '🗑️ Note de carnet effacée').then(function () {
       fermerFeuille();
       apresEcriture();
     }).catch(erreurEcriture);
@@ -6493,7 +6576,10 @@ function memeAuteur(a, b) {
 // ---------- caméra ----------
 // surCode(isbn) : ce qu'on fait du code lu (par défaut, le verdict « déjà lu / pile / nouveau »)
 function ouvrirScanner(surCode) {
-  fermerFeuille();
+  // lancé depuis un formulaire (ISBN d'un livre) : le formulaire reste dessous, pour recevoir le code
+  if (typeof surCode !== 'function') {
+    fermerFeuille();
+  }
   scan.surCode = null;
   if (typeof surCode === 'function') {
     scan.surCode = surCode;
@@ -7146,8 +7232,10 @@ function ecrire(ops) {
 
 // après toute modification : modèle recalculé, vues redessinées, sauvegarde programmée
 var apresEcritureHooks = [];
-function apresEcriture() {
+// pour une saisie qui reste à l'écran (étoiles du carnet, enregistrement automatique) : tout, sauf redessiner la vue
+function apresEcritureSansRendu() {
   M = modeleDepuisBase();
+  vueARedessiner = true;
   // d'abord la sauvegarde et les vérifications (la base est déjà écrite), ensuite l'affichage
   apresEcritureHooks.forEach(function (f) {
     try {
@@ -7156,6 +7244,9 @@ function apresEcriture() {
       console.error(e);
     }
   });
+}
+function apresEcriture() {
+  apresEcritureSansRendu();
   try {
     rendre();
   } catch (e) {
@@ -7165,6 +7256,37 @@ function apresEcriture() {
 }
 function enregistrer(t, o) {
   return ecrire([{t: t, o: o}]).then(apresEcriture);
+}
+// supprimer avec « ↩️ Annuler » pendant 5 s : les enregistrements effacés (cascade comprise : lectures, sessions,
+// citations, achats, carnet et photos d'un livre) sont gardés tels quels, puis réécrits avec leurs dates si on annule
+function supprimerAvecAnnulation(ops, message, apresAnnulation) {
+  if (typeof abandonnerAutoForm === 'function') {
+    abandonnerAutoForm();
+  }
+  var copies = [];
+  ops.forEach(function (op) {
+    if (op.suppr !== undefined && D[op.t] && D[op.t][op.suppr]) {
+      copies.push({t: op.t, o: D[op.t][op.suppr], garderDate: true});
+    }
+  });
+  return ecrire(ops).then(function () {
+    toast(message, {libelle: '↩️ Annuler', f: function () {
+      ecrire(copies).then(function () {
+        apresEcriture();
+        if (apresAnnulation) {
+          apresAnnulation();
+        }
+        toast('↩️ C\'est revenu');
+      }).catch(erreurEcriture);
+    }});
+  });
+}
+// après une annulation : la fiche du livre (ou la liste des sessions) est redessinée si elle est encore ouverte
+function rafraichirFeuille(cle, id, f) {
+  var fe = document.getElementById('feuille');
+  if (fe && fe.dataset[cle] === id) {
+    f(id);
+  }
 }
 
 // ---------- réglages (table « reglages » : {id: clé, v: valeur}) ----------
@@ -8518,12 +8640,18 @@ textarea.champ{min-height:90px;font-weight:400}
 .etoiles-saisie button.plein{color:var(--gold)}
 .etoiles-saisie button.demi{background:linear-gradient(90deg,var(--gold) 50%,var(--line) 50%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .etoiles-saisie span{margin-left:8px;font-size:13px;color:var(--muted)}
+.etoiles-saisie.mini{margin:2px 0 0}
+.etoiles-saisie.mini button{font-size:24px}
+.etoiles-saisie.mini span{font-size:12px}
 .apercu-couv{display:flex;gap:12px;align-items:center;margin:6px 0}
 .apercu-couv img,.apercu-couv .ph{width:56px;height:84px;object-fit:cover;border-radius:6px;background:var(--heat0);box-shadow:var(--cover-shadow);flex:none}
 .apercu-couv .ph{display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--muted);text-align:center;padding:4px}
 .ligne-ed{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)}
 .ligne-ed:last-child{border-bottom:0}
 .ligne-ed .boutons{display:flex;gap:4px;flex:none}
+.suites-fin{display:flex;flex-direction:column;gap:8px}
+.etat-auto{margin:16px 0 6px}
+.carte-actions{display:flex;gap:6px;flex-wrap:wrap}
 .mini-btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:5px 10px;font:700 12px Nunito,sans-serif;cursor:pointer}
 .actions-fiche{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
 .actions-fiche .act{padding:8px 12px;font-size:13px}
@@ -8675,7 +8803,9 @@ function prix(v, devise) {
 function champEtoiles(id, v) {
   return '<div class="etoiles-saisie" id="' + id + '" data-v="' + (v || 0) + '">' + boutonsEtoiles(id, v || 0) + '</div>';
 }
-function boutonsEtoiles(id, v) {
+// act : l'action des étoiles (« etoile » par défaut : le formulaire ; « etoileRapide » : enregistrée tout de suite)
+function boutonsEtoiles(id, v, act) {
+  act = act || 'etoile';
   var h = '';
   for (var i = 1; i <= 5; i++) {
     var cls = '';
@@ -8684,7 +8814,7 @@ function boutonsEtoiles(id, v) {
     } else if (v >= i - 0.5) {
       cls = 'demi';
     }
-    h += '<button type="button" class="' + cls + '" data-act="etoile" data-cible="' + id + '" data-n="' + i + '">★</button>';
+    h += '<button type="button" class="' + cls + '" data-act="' + act + '" data-cible="' + id + '" data-n="' + i + '" aria-label="' + i + ' sur 5">★</button>';
   }
   var txt = 'pas de note';
   if (v) {
@@ -8692,18 +8822,44 @@ function boutonsEtoiles(id, v) {
   }
   return h + '<span>' + txt + '</span>';
 }
+// toucher une étoile : n ; la retoucher : n − ½ ; une troisième fois : aucune note
+function etoileSuivante(cur, n) {
+  if (cur === n) {
+    return n - 0.5;
+  }
+  if (cur === n - 0.5) {
+    return 0;
+  }
+  return n;
+}
 ACTIONS.etoile = function (el) {
   var c = document.getElementById(el.dataset.cible);
-  var cur = parseFloat(c.dataset.v) || 0;
-  var n = parseInt(el.dataset.n, 10);
-  var v = n;
-  if (cur === n) {
-    v = n - 0.5;
-  } else if (cur === n - 0.5) {
-    v = 0;
-  }
+  var v = etoileSuivante(parseFloat(c.dataset.v) || 0, parseInt(el.dataset.n, 10));
   c.dataset.v = v;
   c.innerHTML = boutonsEtoiles(c.id, v);
+  formModifie();
+};
+// les étoiles d'une lecture, données directement dans la liste « Sans étoiles » du carnet : enregistrées tout de suite,
+// le livre reste dans la liste jusqu'au prochain affichage (pour pouvoir corriger, ou mettre une demi-étoile)
+ACTIONS.etoileRapide = function (el) {
+  var lid = el.dataset.cible;
+  var boite = el.closest('.etoiles-saisie');
+  siIndependant(function () {
+    var x = D.lectures[lid];
+    if (!x || !boite) {
+      return;
+    }
+    var v = etoileSuivante(parseFloat(boite.dataset.v) || 0, parseInt(el.dataset.n, 10));
+    boite.dataset.v = v;
+    boite.innerHTML = boutonsEtoiles(lid, v, 'etoileRapide');
+    ecrire([{t: 'lectures', o: Object.assign({}, x, {etoiles: v || null})}]).then(function () {
+      apresEcritureSansRendu();
+      var s = boite.querySelector('span');
+      if (s) {
+        s.textContent += ' ✓';
+      }
+    }).catch(erreurEcriture);
+  });
 };
 function valEtoiles(id) {
   var c = document.getElementById(id);
@@ -8825,7 +8981,7 @@ function ouvrirFiche(id) {
   var enCours = lectureEnCours(id);
   h += '<div class="actions-fiche"><button class="act doux" data-act="modifierLivre" data-id="' + id + '">' + ic('pencil') + ' Modifier</button>';
   if (enCours) {
-    h += '<button class="act" data-act="lancerMinuteur" data-lecture="' + enCours.id + '">' + ic('play') + ' Lire maintenant</button><button class="act doux" data-act="progression" data-lecture="' + enCours.id + '">' + ic('bookmark') + ' J\'en suis à…</button>';
+    h += '<button class="act" data-act="lancerMinuteur" data-lecture="' + enCours.id + '">' + ic('play') + ' Lire maintenant</button><button class="act doux" data-act="progression" data-lecture="' + enCours.id + '">' + ic('bookmark') + ' J\'en suis à…</button><button class="act doux" data-act="jaiFini" data-lecture="' + enCours.id + '">' + ic('check-check') + ' Je l\'ai fini</button>';
   } else {
     h += '<button class="act" data-act="commencerLecture" data-livre="' + id + '">' + ic('book-open') + ' Commencer</button>';
   }
@@ -8911,6 +9067,106 @@ ACTIONS.livre = function (el) {
   ouvrirFiche(el.dataset.id);
 };
 
+// ---------- enregistrement automatique : modifier un livre, une lecture ou un achat qui existe déjà ----------
+// Chaque champ s'enregistre quand on le quitte (change), regroupé sur un peu moins d'une seconde ; on reste sur le formulaire.
+// « ↩️ Annuler mes modifications » réécrit ce qui était là à l'ouverture. La fermeture de la feuille envoie ce qui attendait.
+// Pas pour un ajout : le bouton Enregistrer reste, pour ne pas créer de doublons.
+// o = {livreId, ignorer: [ids des champs de saisie intermédiaire], sauver(final, a) → ops ou null, defaire() → ops}
+var autoForm = null;
+function activerAutoForm(o) {
+  autoForm = {livreId: o.livreId, sauver: o.sauver, defaire: o.defaire, minuteur: null, attente: false};
+  document.getElementById('feuille').addEventListener('change', function (e) {
+    if ((o.ignorer || []).indexOf(e.target.id) < 0) {
+      formModifie();
+    }
+  });
+}
+function rangAutoForm(livreId) {
+  return '<p class="small muted etat-auto" id="etatAuto">✍️ tes changements s\'enregistrent tout seuls</p>' +
+    '<div class="row"><button class="act" data-act="retourFiche" data-id="' + livreId + '">' + ic('check') + ' Terminé</button><button type="button" class="lien" data-act="defaireAutoForm" id="defaireAuto" hidden>↩️ Annuler mes modifications</button></div>';
+}
+function etatAutoForm(t) {
+  var e = document.getElementById('etatAuto');
+  if (e) {
+    e.textContent = t;
+  }
+}
+function formModifie() {
+  var a = autoForm;
+  if (!a) {
+    return;
+  }
+  clearTimeout(a.minuteur);
+  etatAutoForm('…');
+  a.minuteur = setTimeout(function () {
+    sauverAutoForm(a, false);
+  }, 900);
+}
+function sauverAutoForm(a, final) {
+  clearTimeout(a.minuteur);
+  a.minuteur = null;
+  // les champs sont lus tout de suite (la feuille peut être en train de se fermer), l'écriture suit
+  var ops = a.sauver(final, a);
+  if (!ops || !ops.length) {
+    return Promise.resolve();
+  }
+  return ecrire(ops).then(function () {
+    apresEcritureSansRendu();
+    if (autoForm === a) {
+      etatAutoForm('✓ enregistré');
+      var d = document.getElementById('defaireAuto');
+      if (d) {
+        d.hidden = false;
+      }
+      return;
+    }
+    // le formulaire est déjà fermé : ce qui s'affiche maintenant se met à jour
+    if (!document.getElementById('feuille')) {
+      rendre();
+    } else {
+      rafraichirFeuille('fiche', a.livreId, ouvrirFiche);
+    }
+  }).catch(erreurEcriture);
+}
+function finirAutoForm() {
+  var a = autoForm;
+  autoForm = null;
+  if (a && (a.minuteur || a.attente)) {
+    sauverAutoForm(a, true);
+  }
+}
+function abandonnerAutoForm() {
+  if (autoForm) {
+    clearTimeout(autoForm.minuteur);
+    autoForm = null;
+  }
+}
+ACTIONS.defaireAutoForm = function () {
+  var a = autoForm;
+  if (!a) {
+    return;
+  }
+  abandonnerAutoForm();
+  ecrire(a.defaire()).then(function () {
+    apresEcriture();
+    ouvrirFiche(a.livreId);
+    toast('↩️ Modifications annulées');
+  }).catch(erreurEcriture);
+};
+// même contenu (sans les dates d'écriture) : rien à enregistrer
+function memeEnregistrement(a, b) {
+  if (!b) {
+    return false;
+  }
+  function net(o) {
+    var c = Object.assign({}, o);
+    delete c.modifieLe;
+    delete c.creeLe;
+    return JSON.stringify(c);
+  }
+  return net(a) === net(b);
+}
+
 // ---------- formulaire d'un livre (ajout ou modification) ----------
 var fl = null;
 
@@ -8983,8 +9239,12 @@ function ouvrirFormLivre(id, prerempli) {
     '<button type="button" class="lien" data-act="flCompleter">' + ic('search') + ' Compléter depuis internet</button>' +
     '<div class="deux"><div><label>Éditeur</label>' + champ('flEditeur', fl.editeur, 'list="dlEditeurs" autocomplete="off"') + '</div><div><label>Langue</label>' + champ('flLangue', fl.langue, 'placeholder="Français"') + '</div></div>' + listeDeChoix('dlEditeurs', valeurs(D.livres).map(function (x) { return x.editeur; })) +
     '<label>Date de parution</label>' + champsParution(fl.parution) +
-    '<label>Résumé</label><textarea class="champ" id="flResume">' + esc(fl.resume) + '</textarea>' +
-    '<div class="row" style="margin-top:16px"><button class="act" data-act="flEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="flAnnuler">Annuler</button></div>';
+    '<label>Résumé</label><textarea class="champ" id="flResume">' + esc(fl.resume) + '</textarea>';
+  if (id) {
+    h += rangAutoForm(id);
+  } else {
+    h += '<div class="row" style="margin-top:16px"><button class="act" data-act="flEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="flAnnuler">Annuler</button></div>';
+  }
   if (id) {
     h += '<button class="lien danger" data-act="supprimerLivre" data-id="' + id + '" style="margin-top:14px">' + ic('trash-2') + ' Supprimer ce livre</button>';
   }
@@ -9021,9 +9281,72 @@ function ouvrirFormLivre(id, prerempli) {
       fl.photo = blob;
       fl.couverture = '';
       rendreCouv();
+      formModifie();
     }).catch(function () {
       avertir('Je n\'arrive pas à lire cette image.');
     });
+  });
+  if (id) {
+    activerAutoFormLivre(id);
+  }
+}
+// un livre existant : enregistrement automatique. Une série tapée qui n'existe pas encore n'est créée qu'à la fermeture
+// du formulaire (jamais un nom à moitié tapé) ; auteur·ices et genres ne comptent qu'une fois ajoutés avec leur bouton.
+function activerAutoFormLivre(id) {
+  var original = JSON.stringify(D.livres[id]);
+  var couvOriginale = D.livres[id].couverture || '';
+  var photoOriginale = null;
+  if (/^p:/.test(couvOriginale) && D.photos[couvOriginale]) {
+    photoOriginale = D.photos[couvOriginale];
+  }
+  activerAutoForm({
+    livreId: id,
+    ignorer: ['flAuteur', 'flRole', 'flGenre', 'flFichierCouv'],
+    sauver: function (final, a) {
+      if (!fl || fl.id !== id) {
+        return null;
+      }
+      if (document.getElementById('flTitre')) {
+        garderChampsLivre();
+      }
+      if (!fl.titre) {
+        etatAutoForm('⚠️ il manque le titre : rien n\'est enregistré');
+        return null;
+      }
+      var f = fl;
+      a.attente = false;
+      if (!final && fl.serieNom && !serieParNom(fl.serieNom)) {
+        var actuel = D.livres[id];
+        var ancienneSerie = '';
+        if (actuel.serieId && D.series[actuel.serieId]) {
+          ancienneSerie = D.series[actuel.serieId].nom;
+        }
+        f = Object.assign({}, fl, {serieNom: ancienneSerie});
+        a.attente = true;
+      }
+      var r = opsLivre(f);
+      // la photo choisie n'est enregistrée qu'une fois
+      if (fl.photo) {
+        fl.couverture = r.livre.couverture;
+        fl.photo = null;
+      }
+      if (r.ops.length === 1 && memeEnregistrement(r.livre, D.livres[id])) {
+        etatAutoForm('✓ enregistré');
+        return null;
+      }
+      return r.ops;
+    },
+    defaire: function () {
+      var ops = [{t: 'livres', o: JSON.parse(original), garderDate: true}];
+      if (photoOriginale && !D.photos[photoOriginale.id]) {
+        ops.push({t: 'photos', o: photoOriginale, garderDate: true});
+      }
+      var actuel = D.livres[id];
+      if (actuel && /^p:/.test(actuel.couverture || '') && actuel.couverture !== couvOriginale) {
+        ops.push({t: 'photos', suppr: actuel.couverture});
+      }
+      return ops;
+    }
   });
 }
 function rendreContrib() {
@@ -9049,10 +9372,12 @@ ACTIONS.flAjouterAuteur = function () {
   fl.contributeurs.push({auteurId: a && a.id, nom: (a && a.nom) || nom, role: val('flRole') || 'auteur'});
   document.getElementById('flAuteur').value = '';
   rendreContrib();
+  formModifie();
 };
 ACTIONS.flRetirerAuteur = function (el) {
   fl.contributeurs.splice(parseInt(el.dataset.i, 10), 1);
   rendreContrib();
+  formModifie();
 };
 function rendreGenresForm() {
   var z = document.getElementById('zGenres');
@@ -9075,10 +9400,12 @@ ACTIONS.flAjouterGenre = function () {
   }
   document.getElementById('flGenre').value = '';
   rendreGenresForm();
+  formModifie();
 };
 ACTIONS.flRetirerGenre = function (el) {
   fl.genres.splice(parseInt(el.dataset.i, 10), 1);
   rendreGenresForm();
+  formModifie();
 };
 function rendreEtageresForm() {
   var z = document.getElementById('zEtageres');
@@ -9101,6 +9428,7 @@ ACTIONS.flEtagere = function (el) {
     fl.etagereIds.push(el.dataset.id);
   }
   rendreEtageresForm();
+  formModifie();
 };
 function rendreCouv() {
   var z = document.getElementById('zCouv');
@@ -9141,12 +9469,14 @@ ACTIONS.flLienCouv = function () {
     fl.couverture = u;
     fl.photo = null;
     rendreCouv();
+    formModifie();
   });
 };
 ACTIONS.flSansCouv = function () {
   fl.couverture = '';
   fl.photo = null;
   rendreCouv();
+  formModifie();
 };
 // la date de parution en trois champs : jour, mois, année (le jour et le mois sont facultatifs)
 function champsParution(p) {
@@ -9271,6 +9601,7 @@ ACTIONS.flCompleter = function () {
       rendreCouv();
     }
     toast('✨ Infos complétées');
+    formModifie();
   });
 };
 ACTIONS.flAnnuler = function () {
@@ -9459,11 +9790,12 @@ ACTIONS.supprimerLivre = function (el) {
     if (!ok) {
       return;
     }
-    ecrire(ops).then(function () {
+    supprimerAvecAnnulation(ops, '🗑️ « ' + l.titre + ' » supprimé', function () {
+      ouvrirFiche(id);
+    }).then(function () {
       fl = null;
       fermerFeuille();
       apresEcriture();
-      toast('🗑️ Livre supprimé');
     }).catch(erreurEcriture);
   });
 };
@@ -9506,8 +9838,12 @@ function ouvrirFormLecture(lid, livreId) {
     '<div class="deux"><div><label>Se compte en</label>' + choix('leUnite', UNITES, v.unite) + '</div><div><label>Longueur</label><div id="zLeTotal">' + champLongueur('leTotal', v.unite, v.total) + '</div></div></div>' +
     '<label>Où j\'en suis</label><div id="zLePos">' + champLongueur('lePosition', v.unite, v.position) + '</div>' +
     '<label>Ma note</label>' + champEtoiles('leEtoiles', v.etoiles) +
-    '<label>Commentaire</label><textarea class="champ" id="leCommentaire">' + esc(v.commentaire || '') + '</textarea>' +
-    '<div class="row" style="margin-top:16px"><button class="act" data-act="leEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
+    '<label>Commentaire</label><textarea class="champ" id="leCommentaire">' + esc(v.commentaire || '') + '</textarea>';
+  if (x) {
+    h += rangAutoForm(l.id);
+  } else {
+    h += '<div class="row" style="margin-top:16px"><button class="act" data-act="leEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
+  }
   if (x) {
     h += '<button class="lien danger" data-act="leSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer cette lecture</button>';
   }
@@ -9520,7 +9856,8 @@ function ouvrirFormLecture(lid, livreId) {
     document.getElementById('zLeTotal').innerHTML = champLongueur('leTotal', unite, t);
     document.getElementById('zLePos').innerHTML = champLongueur('lePosition', unite, p);
   });
-  ACTIONS.leEnregistrer = function () {
+  // la lecture d'après les champs : {lec}, ou {erreur} si elle ne tient pas debout
+  function lireLecture() {
     var statut = val('leStatut');
     var u = val('leUnite');
     var total = lireLongueur('leTotal', u) || 0;
@@ -9529,13 +9866,14 @@ function ouvrirFormLecture(lid, livreId) {
     var fin = champVersDate(val('leFin'), x && x.fin);
     if ((statut === 'terminee' || statut === 'abandonnee' || statut === 'plusenvie') && !fin) {
       fin = Date.now();
+      // la date mise d'office s'affiche, et reste la même aux enregistrements suivants
+      document.getElementById('leFin').value = dateVersChamp(fin);
     }
     if (statut === 'terminee' && total && position < total) {
       position = total;
     }
     if (debut && fin && fin < debut) {
-      avertir('La fin est avant le début.');
-      return;
+      return {erreur: 'La fin est avant le début.'};
     }
     var ls = lecturesDe(l.id);
     var lec = Object.assign({}, x || {id: nouvelId(), livreId: l.id, nth: ls.length ? Math.max.apply(null, ls.map(function (y) { return y.nth || 0; })) + 1 : 1, origine: 'appli'}, {
@@ -9549,11 +9887,44 @@ function ouvrirFormLecture(lid, livreId) {
       etoiles: valEtoiles('leEtoiles'),
       commentaire: val('leCommentaire')
     });
-    ecrire([{t: 'lectures', o: lec}]).then(function () {
+    return {lec: lec};
+  }
+  ACTIONS.leEnregistrer = function () {
+    var r = lireLecture();
+    if (r.erreur) {
+      avertir(r.erreur);
+      return;
+    }
+    ecrire([{t: 'lectures', o: r.lec}]).then(function () {
       apresEcriture();
       ouvrirFiche(l.id);
     }).catch(erreurEcriture);
   };
+  // une lecture existante : enregistrement automatique
+  if (x) {
+    var original = JSON.stringify(x);
+    activerAutoForm({
+      livreId: l.id,
+      sauver: function () {
+        if (!document.getElementById('leStatut')) {
+          return null;
+        }
+        var r = lireLecture();
+        if (r.erreur) {
+          etatAutoForm('⚠️ ' + r.erreur + ' Rien n\'est enregistré.');
+          return null;
+        }
+        if (memeEnregistrement(r.lec, D.lectures[x.id])) {
+          etatAutoForm('✓ enregistré');
+          return null;
+        }
+        return [{t: 'lectures', o: r.lec}];
+      },
+      defaire: function () {
+        return [{t: 'lectures', o: JSON.parse(original), garderDate: true}];
+      }
+    });
+  }
   ACTIONS.leSupprimer = function () {
     var sess = valeurs(D.sessions).filter(function (s) { return s.lectureId === x.id; });
     var avec = '';
@@ -9565,7 +9936,9 @@ function ouvrirFormLecture(lid, livreId) {
         return;
       }
       var ops = [{t: 'lectures', suppr: x.id}].concat(sess.map(function (s) { return {t: 'sessions', suppr: s.id}; }));
-      ecrire(ops).then(function () {
+      supprimerAvecAnnulation(ops, '🗑️ Lecture supprimée', function () {
+        rafraichirFeuille('fiche', l.id, ouvrirFiche);
+      }).then(function () {
         apresEcriture();
         ouvrirFiche(l.id);
       }).catch(erreurEcriture);
@@ -9576,31 +9949,38 @@ ACTIONS.retourFiche = function (el) {
   ouvrirFiche(el.dataset.id);
 };
 
-// « J'en suis à… » : une session sans minuteur
+// « J'en suis à… » : une session sans minuteur, avec les mêmes boutons qu'à l'arrêt du minuteur (−/+, +10, ta moyenne) ;
+// après l'enregistrement, on reste là où on était : la fiche du livre, ou l'accueil
 ACTIONS.progression = function (el) {
   var lid = el.dataset.lecture;
+  var depuisFiche = ficheOuverte();
   siIndependant(function () {
     var x = D.lectures[lid];
     var l = D.livres[x.livreId];
-    var etiquette = 'Page';
+    var depart = x.position || 0;
+    var question = 'Tu en es à quelle page ?';
     if (x.unite === 'secondes') {
-      etiquette = 'Position (h:mm)';
+      question = 'Tu en es où dans l\'écoute ? (h:mm)';
     } else if (x.unite === 'pourcent') {
-      etiquette = 'Pourcentage';
+      question = 'Tu en es à combien de % ?';
+    } else if (x.unite === 'episodes') {
+      question = 'Tu en es à quel épisode ?';
     }
     var reste = '';
     if (x.total) {
       reste = ' sur ' + texteLongueur(x.unite, x.total);
     }
-    ouvrirFeuille('<h3>J\'en suis à…</h3><p class="small muted">' + esc(l.titre) + ' · dernière position : ' + texteLongueur(x.unite, x.position) + reste + '</p><div class="form"><label>' + etiquette + '</label>' + champLongueur('prPosition', x.unite, '') +
-      '<label>Temps de lecture (facultatif)</label>' + champ('prMinutes', '', 'type="number" min="0" inputmode="numeric" placeholder="minutes"') +
-      '<div class="row" style="margin-top:16px"><button class="act" data-act="prEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div></div>');
-    setTimeout(function () {
-      var c = document.getElementById('prPosition');
-      if (c) {
-        c.focus();
-      }
-    }, 300);
+    ouvrirFeuille('<h3>J\'en suis à…</h3><p class="small muted" style="margin:0">' + esc(l.titre) + ' · dernière position : ' + texteLongueur(x.unite, depart) + reste + '</p>' +
+      '<p class="small" style="margin:12px 0 0;text-align:center">' + question + '</p>' + champPosition('prPosition', x, depart) +
+      '<div class="form"><label>Temps de lecture (facultatif)</label>' + champ('prMinutes', '', 'type="number" min="0" inputmode="numeric" placeholder="minutes"') +
+      '<div class="row" style="margin-top:16px"><button class="act" data-act="prEnregistrer">' + ic('check') + ' Enregistrer</button>' + boutonRetour(depuisFiche, l.id, 'Annuler') + '</div></div>');
+    // taper un nombre remplace la position proposée
+    document.getElementById('prPosition').addEventListener('focus', function (e) {
+      e.target.select();
+    });
+    ACTIONS.pasPage = function (b) {
+      pasPosition('prPosition', x, depart, parseFloat(b.dataset.n));
+    };
     ACTIONS.prEnregistrer = function () {
       var pos = lireLongueur('prPosition', x.unite);
       if (pos === null) {
@@ -9610,15 +9990,28 @@ ACTIONS.progression = function (el) {
       var mn = valNombre('prMinutes');
       var fin = Date.now();
       var debut = fin;
+      var duree = null;
       if (mn) {
         debut = fin - mn * 60000;
+        duree = Math.round(mn * 60);
       }
-      enregistrerSession(x, {debut: debut, fin: fin, dureeSec: mn ? Math.round(mn * 60) : null, position: pos, origine: 'manuel'});
+      enregistrerSession(x, {debut: debut, fin: fin, dureeSec: duree, position: pos, origine: 'manuel'}, depuisFiche);
     };
   });
 };
+// une fiche de livre est-elle ouverte ? (pour y revenir après une saisie lancée depuis elle)
+function ficheOuverte() {
+  var f = document.getElementById('feuille');
+  return !!(f && f.dataset.fiche);
+}
+function boutonRetour(depuisFiche, livreId, texte) {
+  if (depuisFiche) {
+    return '<button class="act doux" data-act="retourFiche" data-id="' + livreId + '">' + texte + '</button>';
+  }
+  return '<button class="act doux" data-act="fermer">' + texte + '</button>';
+}
 // enregistre une session et avance la lecture ; propose de la terminer si on arrive au bout
-function enregistrerSession(x, champs) {
+function enregistrerSession(x, champs, depuisFiche) {
   var s = Object.assign({id: nouvelId(), lectureId: x.id, livreId: x.livreId}, champs);
   var ops = [{t: 'sessions', o: s}];
   if (s.position !== null && s.position !== undefined) {
@@ -9627,25 +10020,68 @@ function enregistrerSession(x, champs) {
   return ecrire(ops).then(function () {
     apresEcriture();
     if (x.total && s.position >= x.total && x.statut !== 'terminee') {
-      proposerFin(x.id);
-    } else {
-      ouvrirFiche(x.livreId);
+      proposerFin(x.id, depuisFiche);
+      return;
     }
+    if (depuisFiche) {
+      ouvrirFiche(x.livreId);
+    } else {
+      fermerFeuille();
+    }
+    toast('📍 C\'est noté : ' + texteLongueur(x.unite, s.position));
   }).catch(erreurEcriture);
 }
-function proposerFin(lid) {
+// « ✅ Je l'ai fini » (fiche et carte « En ce moment ») : la note, puis les suites possibles
+ACTIONS.jaiFini = function (el) {
+  var lid = el.dataset.lecture;
+  var depuisFiche = ficheOuverte();
+  siIndependant(function () {
+    proposerFin(lid, depuisFiche);
+  });
+};
+function proposerFin(lid, depuisFiche) {
   var x = D.lectures[lid];
   var l = D.livres[x.livreId];
   ouvrirFeuille('<h3>Tu l\'as fini ? 🎉</h3><p>' + esc(l.titre) + '</p><div class="form"><label>Ta note</label>' + champEtoiles('fiEtoiles', x.etoiles) +
-    '<div class="row" style="margin-top:16px"><button class="act" data-act="fiTerminer">' + ic('check-check') + ' Oui, terminé !</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Pas encore</button></div></div>');
+    '<div class="row" style="margin-top:16px"><button class="act" data-act="fiTerminer">' + ic('check-check') + ' Oui, terminé !</button>' + boutonRetour(depuisFiche, l.id, 'Pas encore') + '</div></div>');
   ACTIONS.fiTerminer = function () {
-    var lec = Object.assign({}, D.lectures[lid], {statut: 'terminee', fin: Date.now(), position: x.total || x.position, etoiles: valEtoiles('fiEtoiles')});
+    var actuelle = D.lectures[lid];
+    var lec = Object.assign({}, actuelle, {statut: 'terminee', fin: Date.now(), position: actuelle.total || actuelle.position, etoiles: valEtoiles('fiEtoiles')});
     ecrire([{t: 'lectures', o: lec}]).then(function () {
       apresEcriture();
-      ouvrirFiche(l.id);
-      toast('🎉 Bravo !');
+      suitesFin(lid);
     }).catch(erreurEcriture);
   };
+}
+// après « terminé » : glisser le livre dans le carnet, ajouter une citation, commencer le tome suivant
+function suitesFin(lid) {
+  var x = D.lectures[lid];
+  var l = D.livres[x.livreId];
+  var h = '<h3>Bravo ! 🎉</h3><p class="small muted" style="margin:0 0 12px">« ' + esc(l.titre) + ' » est terminé. Et maintenant ?</p><div class="suites-fin">';
+  h += '<button class="act" data-act="noter" data-id="' + l.id + '">' + ic('feather') + ' Le glisser dans le carnet</button>';
+  h += '<button class="act doux" data-act="formCitation" data-livre="' + l.id + '">' + ic('quote') + ' Ajouter une citation</button>';
+  var suivant = tomeSuivant(l);
+  if (suivant) {
+    h += '<button class="act doux" data-act="commencerLecture" data-livre="' + suivant.id + '">' + ic('book-open') + ' Commencer le tome ' + nombre(suivant.tome) + '</button>';
+  }
+  h += '<button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Voir la fiche</button></div>';
+  ouvrirFeuille(h);
+}
+// le premier tome suivant de la série qui n'est ni lu, ni en cours, ni revendu
+function tomeSuivant(l) {
+  if (!l.serieId || l.tome === null || l.tome === undefined) {
+    return null;
+  }
+  var dejaLus = {};
+  valeurs(D.lectures).forEach(function (r) {
+    if (r.statut !== 'abandonnee' && r.statut !== 'plusenvie') {
+      dejaLus[r.livreId] = 1;
+    }
+  });
+  var tomes = valeurs(D.livres).filter(function (b) {
+    return b.serieId === l.serieId && b.tome !== null && b.tome !== undefined && b.tome > l.tome && !dejaLus[b.id] && b.possession !== 'revendu';
+  }).sort(function (a, b) { return a.tome - b.tome; });
+  return tomes[0] || null;
 }
 
 // ---------- sessions d'une lecture ----------
@@ -9727,6 +10163,7 @@ function afficherSessions(lid) {
   }).join('');
   h += '<div class="row" style="margin-top:12px"><button class="act doux" data-act="formSession" data-lecture="' + lid + '">' + ic('plus') + ' Ajouter une session</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">' + ic('chevron-left') + ' Retour</button></div>';
   ouvrirFeuille(h);
+  document.getElementById('feuille').dataset.sessions = lid;
 }
 ACTIONS.formSession = function (el) {
   var sid = el.dataset.id;
@@ -9801,7 +10238,9 @@ ACTIONS.formSession = function (el) {
         if (!ok) {
           return;
         }
-        ecrire([{t: 'sessions', suppr: s.id}]).then(function () {
+        supprimerAvecAnnulation([{t: 'sessions', suppr: s.id}], '🗑️ Session supprimée', function () {
+          rafraichirFeuille('sessions', x.id, afficherSessions);
+        }).then(function () {
           apresEcriture();
           afficherSessions(x.id);
         }).catch(erreurEcriture);
@@ -9888,8 +10327,12 @@ function ouvrirFormAchat(aid, livreId) {
     '<label>Boutique</label>' + champ('acBoutique', v.boutique, 'list="dlBoutiques" autocomplete="off"') + listeDeChoix('dlBoutiques', valeurs(D.achats).map(function (x) { return x.boutique; })) +
     '<div id="zEtat">' + choixEtatAchat(v.format, achatEtat(v)) + '</div>' +
     '<label class="case"><input type="checkbox" id="acCadeau"' + (achatCadeau(v) ? ' checked' : '') + '> 🎁 C\'est un cadeau</label>' +
-    '<label>Mémo</label>' + champ('acMemo', v.memo) +
-    '<div class="row" style="margin-top:16px"><button class="act" data-act="acEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
+    '<label>Mémo</label>' + champ('acMemo', v.memo);
+  if (a) {
+    h += rangAutoForm(l.id);
+  } else {
+    h += '<div class="row" style="margin-top:16px"><button class="act" data-act="acEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
+  }
   if (a) {
     h += '<button class="lien danger" data-act="acSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer cet achat</button>';
   }
@@ -9903,8 +10346,8 @@ function ouvrirFormAchat(aid, livreId) {
       document.getElementById('zEtat').innerHTML = choixEtatAchat(val('acFormat'), etatSelonBoutique(val('acBoutique'), a && a.id));
     }
   });
-  ACTIONS.acEnregistrer = function () {
-    var achat = Object.assign({}, a || {id: nouvelId(), livreId: l.id, origine: 'appli'}, {
+  function lireAchat() {
+    return Object.assign({}, a || {id: nouvelId(), livreId: l.id, origine: 'appli'}, {
       prix: valNombre('acPrix') || 0,
       devise: val('acDevise') || 'EUR',
       date: champVersDate(val('acDate'), a && a.date),
@@ -9914,6 +10357,9 @@ function ouvrirFormAchat(aid, livreId) {
       cadeau: document.getElementById('acCadeau').checked,
       memo: val('acMemo')
     });
+  }
+  ACTIONS.acEnregistrer = function () {
+    var achat = lireAchat();
     var ops = [{t: 'achats', o: achat}];
     if (!a && l.possession !== 'possede') {
       ops.push({t: 'livres', o: Object.assign({}, l, {possession: 'possede'})});
@@ -9928,12 +10374,35 @@ function ouvrirFormAchat(aid, livreId) {
       if (!ok) {
         return;
       }
-      ecrire([{t: 'achats', suppr: a.id}]).then(function () {
+      supprimerAvecAnnulation([{t: 'achats', suppr: a.id}], '🗑️ Achat supprimé', function () {
+        rafraichirFeuille('fiche', l.id, ouvrirFiche);
+      }).then(function () {
         apresEcriture();
         ouvrirFiche(l.id);
       }).catch(erreurEcriture);
     });
   };
+  // un achat existant : enregistrement automatique
+  if (a) {
+    var original = JSON.stringify(a);
+    activerAutoForm({
+      livreId: l.id,
+      sauver: function () {
+        if (!document.getElementById('acPrix')) {
+          return null;
+        }
+        var achat = lireAchat();
+        if (memeEnregistrement(achat, D.achats[a.id])) {
+          etatAutoForm('✓ enregistré');
+          return null;
+        }
+        return [{t: 'achats', o: achat}];
+      },
+      defaire: function () {
+        return [{t: 'achats', o: JSON.parse(original), garderDate: true}];
+      }
+    });
+  }
 }
 
 // ---------- séries ----------
@@ -10586,6 +11055,52 @@ function pagesMoyennesParSession(lid) {
   }
   return Math.round(mediane(gains));
 }
+// le champ de position avec − et +, et pour les pages les raccourcis +10, +20, ta moyenne, +50
+// (à l'arrêt du minuteur et dans « J'en suis à… ») ; pasPosition fait avancer le champ
+function champPosition(id, x, propose) {
+  var pas = '';
+  if (x.unite === 'pages') {
+    var moy = pagesMoyennesParSession(x.id);
+    var raccourcis = [10, 20];
+    if (moy && raccourcis.indexOf(moy) < 0) {
+      raccourcis.push(moy);
+    }
+    raccourcis.push(50);
+    raccourcis.sort(function (a, b) { return a - b; });
+    pas = '<div class="pas">' + raccourcis.map(function (n) {
+      var moyenne = '';
+      if (n === moy) {
+        moyenne = ' (ta moyenne)';
+      }
+      return '<button data-act="pasPage" data-n="' + n + '">+' + n + moyenne + '</button>';
+    }).join('') + '</div>';
+  }
+  var c;
+  if (x.unite === 'secondes') {
+    c = champ(id, texteDuree(propose), 'inputmode="numeric"');
+  } else {
+    c = champ(id, propose || '', 'inputmode="decimal"');
+  }
+  return '<div class="champ-page"><button class="rond-m" data-act="pasPage" data-n="-1" aria-label="Moins">' + ic('minus') + '</button>' + c + '<button class="rond-m" data-act="pasPage" data-n="1" aria-label="Plus">' + ic('plus') + '</button></div>' + pas;
+}
+// −1 / +1 partent de ce qui est dans le champ, les raccourcis de la position de départ
+function pasPosition(id, x, depart, n) {
+  var champPos = document.getElementById(id);
+  if (x.unite === 'secondes') {
+    var v = lireDuree(val(id)) || depart;
+    champPos.value = texteDuree(Math.max(0, v + n * 60));
+    return;
+  }
+  var base = depart;
+  if (Math.abs(n) === 1) {
+    base = valNombre(id) || depart;
+  }
+  var nv = Math.max(0, base + n);
+  if (x.total && x.unite === 'pages') {
+    nv = Math.min(nv, x.total);
+  }
+  champPos.value = String(nv).replace('.', ',');
+}
 ACTIONS.arreterMinuteur = function () {
   var s = sessionEnCours();
   if (!s) {
@@ -10603,20 +11118,9 @@ ACTIONS.arreterMinuteur = function () {
   }
   var depart = x.position || 0;
   var propose = depart;
-  var pas = '';
   if (x.unite === 'secondes') {
     // en audio, la position avance avec le temps d'écoute
     propose = depart + sec;
-  } else if (x.unite === 'pages') {
-    var moy = pagesMoyennesParSession(x.id);
-    var raccourcis = [10, 20];
-    if (moy && raccourcis.indexOf(moy) < 0) {
-      raccourcis.push(moy);
-    }
-    raccourcis.push(50);
-    pas = '<div class="pas">' + raccourcis.map(function (n) {
-      return '<button data-act="pasPage" data-n="' + n + '">+' + n + (n === moy ? ' (ta moyenne)' : '') + '</button>';
-    }).join('') + '</div>';
   }
   var oubli = '';
   if (sec > 6 * 3600) {
@@ -10631,8 +11135,7 @@ ACTIONS.arreterMinuteur = function () {
   ouvrirFeuille('<h3>Session terminée ✨</h3><p class="small muted" style="margin:0">' + esc(titreCourt(D.livres[s.livreId])) + '</p>' +
     '<div class="grand-chrono">' + dureeLecture(sec) + '</div><p class="small muted" style="text-align:center;margin:0">de lecture · ' + plage + '</p>' + oubli +
     '<p class="small" style="margin:6px 0 0;text-align:center">' + question + '</p>' +
-    '<div class="champ-page"><button class="rond-m" data-act="pasPage" data-n="-1">' + ic('minus') + '</button>' + (x.unite === 'secondes' ? champ('arPosition', texteDuree(propose), 'inputmode="numeric"') : champ('arPosition', propose || '', 'inputmode="decimal"')) + '<button class="rond-m" data-act="pasPage" data-n="1">' + ic('plus') + '</button></div>' +
-    pas + '<p class="small muted" style="text-align:center;margin:8px 0 0" id="arResume"></p>' +
+    champPosition('arPosition', x, propose) + '<p class="small muted" style="text-align:center;margin:8px 0 0" id="arResume"></p>' +
     '<div class="form" style="margin-top:6px"><label>Temps de lecture (min, pauses déduites)</label>' + champ('arMinutes', mn, 'type="number" min="1" inputmode="numeric"') + '</div>' +
     '<div class="row" style="margin-top:14px"><button class="act" data-act="validerArret">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="reprendreApresArret">' + ic('play') + ' Reprendre</button></div>');
   function resume() {
@@ -10650,21 +11153,7 @@ ACTIONS.arreterMinuteur = function () {
   resume();
   document.getElementById('arPosition').addEventListener('input', resume);
   ACTIONS.pasPage = function (el) {
-    var n = parseFloat(el.dataset.n);
-    if (x.unite === 'secondes') {
-      var v = lireDuree(val('arPosition')) || depart;
-      document.getElementById('arPosition').value = texteDuree(Math.max(0, v + n * 60));
-    } else {
-      var base = depart;
-      if (Math.abs(n) === 1) {
-        base = valNombre('arPosition') || depart;
-      }
-      var nv = Math.max(0, base + n);
-      if (x.total && x.unite === 'pages') {
-        nv = Math.min(nv, x.total);
-      }
-      document.getElementById('arPosition').value = String(nv).replace('.', ',');
-    }
+    pasPosition('arPosition', x, depart, parseFloat(el.dataset.n));
     resume();
   };
   ACTIONS.reprendreApresArret = function () {
@@ -11232,7 +11721,11 @@ ACTIONS.ciSupprimer = function () {
       ops.push({t: 'photos', suppr: c.photoId});
     }
     var retour = fc.retour;
-    ecrire(ops).then(function () {
+    supprimerAvecAnnulation(ops, '🗑️ Citation supprimée', function () {
+      if (retour) {
+        rafraichirFeuille('fiche', retour, ouvrirFiche);
+      }
+    }).then(function () {
       fc = null;
       apresEcriture();
       if (retour) {
@@ -13027,6 +13520,9 @@ ACTIONS.restaurerFichierDrive = function (el) {
 .vide .etapes{text-align:left;margin:12px auto;max-width:320px;line-height:1.8}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--card);font:700 14px Nunito,sans-serif;padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transition:all .3s;z-index:70;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
 .toast.vis{opacity:1;transform:translate(-50%,0)}
+.toast.avec-action{display:flex;align-items:center;gap:12px;padding:5px 5px 5px 16px}
+.toast.avec-action span{overflow:hidden;text-overflow:ellipsis}
+.toast.avec-action button{flex:none;border:0;border-radius:999px;background:var(--gold);color:#2a1a08;font:800 13.5px Nunito,sans-serif;padding:8px 14px;cursor:pointer}
 .maj-dispo{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top));transform:translateX(-50%);z-index:75;display:flex;align-items:center;gap:8px;border:0;background:var(--ink);color:var(--card);font:700 14px Nunito,sans-serif;padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.3);white-space:nowrap;max-width:92vw;animation:fondu .3s ease}
 </style>
 <script>
@@ -13062,16 +13558,37 @@ function idbGet(k) {
   });
 }
 
-function toast(texte) {
+// toast(texte) ; toast(texte, {libelle, f}) : avec un bouton (« ↩️ Annuler »), il reste 5 s
+function toast(texte, action) {
   var t = document.createElement('div');
   t.className = 'toast';
-  t.textContent = texte;
+  t.setAttribute('role', 'status');
+  var duree = 3500;
+  if (action) {
+    // un seul message à bouton à la fois : le précédent s'en va
+    document.querySelectorAll('.toast.avec-action').forEach(function (x) { x.remove(); });
+    t.classList.add('avec-action');
+    var s = document.createElement('span');
+    s.textContent = texte;
+    var b = document.createElement('button');
+    b.textContent = action.libelle;
+    b.addEventListener('click', function (e) {
+      e.stopPropagation();
+      t.remove();
+      action.f();
+    });
+    t.appendChild(s);
+    t.appendChild(b);
+    duree = 5000;
+  } else {
+    t.textContent = texte;
+  }
   document.body.appendChild(t);
   setTimeout(function () { t.classList.add('vis'); }, 50);
   setTimeout(function () {
     t.classList.remove('vis');
     setTimeout(function () { t.remove(); }, 400);
-  }, 3500);
+  }, duree);
 }
 function erreurEcran(e) {
   // même en cas de pépin, les données déjà chargées peuvent partir dans un fichier
@@ -13208,7 +13725,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 10:02:26';
+var VERSION_APPLI = '2026-10-06 10:15:15';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
