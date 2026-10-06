@@ -296,8 +296,15 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .audio-v{position:absolute;left:4px;bottom:4px;z-index:3;width:18px;height:18px;border-radius:50%;background:rgba(14,31,29,.85);color:#fff;display:flex;align-items:center;justify-content:center}
 .audio-v .ic{width:11px;height:11px;stroke-width:2.4}
 @media (prefers-reduced-motion:reduce){.rangs::before,.rangs::after,.vitrine::before,.vitrine::after{animation:none}}
-.legende{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted)}
-.legende i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+/* légende de l'étagère, en haut : les couleurs servent de filtre (les autres livres s'estompent) */
+.leg-couleurs{margin:0 0 12px}
+.leg-chip{display:inline-flex;align-items:center;gap:5px}
+.leg-chip i{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+.leg-symboles{margin-top:6px}
+.leg-symboles .ic{width:12px;height:12px;vertical-align:-2px}
+.tr-l,.case-v{transition:opacity .25s ease,filter .25s ease}
+.tr-l.hors-filtre,.case-v.hors-filtre{opacity:.22;filter:saturate(.3)}
+@media (prefers-reduced-motion:reduce){.tr-l,.case-v{transition:none}}
 
 .tirage{animation:monte .4s ease}
 
@@ -2617,6 +2624,29 @@ ACTIONS.rangerDeco = function (el) {
   enregistrerDecos({decosPlaces: places, decosChoisies: posees});
 };
 
+// ---------- légende-filtre : toucher une couleur garde vifs les livres de ce groupe de genres, les autres s'estompent ----------
+// (gardé tant que l'appli reste ouverte ; -1 = aucun filtre)
+var filtreCouleur = -1;
+function livreDuGroupe(b, i) {
+  return !!b && GENRES_COULEURS[i][0].test(b.tagList.join(' '));
+}
+function appliquerFiltreCouleur() {
+  var actif = filtreCouleur >= 0 && filtreCouleur < GENRES_COULEURS.length;
+  document.querySelectorAll('.rangs .tr-l[data-id], .vitrine .case-v[data-id]').forEach(function (el) {
+    el.classList.toggle('hors-filtre', actif && !livreDuGroupe(M.parId[el.dataset.id], filtreCouleur));
+  });
+  document.querySelectorAll('.leg-chip').forEach(function (c) {
+    var on = +c.dataset.i === filtreCouleur;
+    c.classList.toggle('on', on);
+    c.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+ACTIONS.filtreCouleur = function (el) {
+  var i = +el.dataset.i;
+  filtreCouleur = i === filtreCouleur ? -1 : i;
+  appliquerFiltreCouleur();
+};
+
 function vEtagere() {
   var h = seg('etagere', [['etagere', '' + ic('library-big') + ' Étagère'], ['alire', '' + ic('ferris-wheel') + ' À lire'], ['series', '' + ic('key-round') + ' Séries'], ['tous', '' + ic('search') + ' Tous']]);
   if (sous.etagere === 'alire') {
@@ -2632,6 +2662,7 @@ function vEtagere() {
 }
 vEtagere.apres = function () {
   placerDecos();
+  appliquerFiltreCouleur();
   var r = document.getElementById('rechercheLivres');
   if (r) {
     r.addEventListener('input', function () {
@@ -2802,15 +2833,23 @@ function vShelf() {
     }
     return '<button' + cls + ' data-act="vueEtagere" data-v="' + v[0] + '">' + ic(v[1]) + ' ' + v[2] + '</button>';
   }).join('') + '<button data-act="mesDecos">' + ic('flower-2') + ' Décos</button></div>';
-  var legende = '<div class="legende">' + GENRES_COULEURS.map(function (g) { return '<span><i style="background:' + g[1] + '"></i>' + g[2] + '</span>'; }).join('') + '<span>★ coup de cœur · ' + ic('headphones') + ' audio</span></div>';
+  // la légende, en haut : les couleurs servent aussi de filtre (filtreCouleur)
+  var symboles = '★ coup de cœur · ' + ic('headphones') + ' audio · ' + ic('recycle') + ' revendu';
   if (vue === 'couvertures') {
-    legende = '<div class="legende"><span>' + ic('heart') + ' coup de cœur · ' + ic('headphones') + ' audio · sans couverture : le titre sur la couleur du genre</span></div>';
+    symboles = ic('heart') + ' coup de cœur · ' + ic('headphones') + ' audio · sans couverture : le titre sur la couleur du genre';
   }
+  var legende = '<div class="leg-couleurs"><div class="small muted">Touche une couleur pour voir ses livres</div>' + GENRES_COULEURS.map(function (g, i) {
+    var cls = 'chip leg-chip';
+    if (i === filtreCouleur) {
+      cls += ' on';
+    }
+    return '<button class="' + cls + '" data-act="filtreCouleur" data-i="' + i + '" aria-pressed="' + (i === filtreCouleur) + '"><i style="background:' + g[1] + '"></i>' + g[2] + '</button>';
+  }).join('') + '<div class="small muted leg-symboles">' + symboles + '</div></div>';
   var dispo = '';
   if (modeDisposer && vue === 'tranches') {
     dispo = '<div class="bandeau-dispo"><span>' + ic('pencil') + '</span><b>Disposer mes décos : touche un « + » pour y poser une déco, ou une déco pour la garder là, la libérer ou la ranger.</b><button class="act doux" data-act="disposerDecos">Terminé</button></div>';
   }
-  return h + card('Mon étagère magique', bascule + dispo + rayons + legende, 'touche un livre pour l\'ouvrir');
+  return h + card('Mon étagère magique', bascule + dispo + legende + rayons, 'touche un livre pour l\'ouvrir');
 }
 ACTIONS.filtreEtagere = function (el) {
   filtreEtagere = el.dataset.f;
@@ -13912,7 +13951,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 10:49:21';
+var VERSION_APPLI = '2026-10-06 10:57:10';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
