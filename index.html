@@ -3133,6 +3133,9 @@ function ornementSaison(saison, n) {
 // ::after les autres lumières (couleur 2). Le motif fait 350 px de large et la hauteur d'un rayon : il se répète.
 // Chaque lumière a un halo et une lueur plus large (dégradés dans le masque : un filtre serait coupé par le masque),
 // et le calque est en mode « screen » : la lumière éclaircit les livres et le fond en dessous.
+// Le calque remonte de 10 px (DECALAGE_GUIRLANDE) : la guirlande s'accroche sur le bord de la planche du dessus (ou en haut
+// du meuble pour le premier rayon). La part de lueur qui dépasse en haut du motif est recopiée en bas du motif (une période
+// plus bas) : elle se prolonge sur la planche au lieu d'être coupée net.
 var FORMES_GUIRLANDE = {
   ampoule: function (y) { return '<rect x="10.6" y="' + (y - 8) + '" width="2.8" height="3" rx=".6"/><ellipse cx="12" cy="' + (y + 1) + '" rx="3.6" ry="5"/>'; },
   etoile: function (y) { return '<path d="M12 ' + (y - 7) + 'l2.1 4.6 5 .5-3.8 3.3 1.1 4.9L12 ' + (y + 4.8) + 'l-4.4 2.5 1.1-4.9-3.8-3.3 5-.5z"/>'; },
@@ -3146,11 +3149,14 @@ var FORMES_GUIRLANDE = {
 // les festons d'un motif : [début, fin, creux, nombre de lumières]
 var FESTONS = [[0, 80, 9, 3], [80, 200, 19, 6], [200, 350, 14, 7]];
 var LARGEUR_FESTONS = 350;
+var DECALAGE_GUIRLANDE = 10;
 // → [masque du fil et des lumières impaires, masque des lumières paires] pour des rayons de per px
 function masquesFestons(forme, per) {
   var dessin = FORMES_GUIRLANDE[forme];
   var fil = [];
   var autres = [];
+  var lueursFil = [];
+  var lueursAutres = [];
   var defs = '<defs><radialGradient id="h"><stop offset="0" stop-opacity=".75"/><stop offset="1" stop-opacity="0"/></radialGradient><radialGradient id="l"><stop offset="0" stop-opacity=".34"/><stop offset="1" stop-opacity="0"/></radialGradient></defs>';
   FESTONS.forEach(function (f) {
     var y = 2;
@@ -3161,15 +3167,20 @@ function masquesFestons(forme, per) {
       var s = i / (f[3] + 1);
       var px = (1 - s) * (1 - s) * f[0] + 2 * (1 - s) * s * cx + s * s * f[1];
       var py = (1 - s) * (1 - s) * y + 2 * (1 - s) * s * cy + s * s * y + 5;
-      var lumiere = '<circle cx="' + px.toFixed(1) + '" cy="' + (py + 6).toFixed(1) + '" r="30" fill="url(#l)"/><circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="10" fill="url(#h)"/>' +
-        '<g transform="translate(' + (px - 9.6).toFixed(1) + ' ' + (py - 16).toFixed(1) + ') scale(.8)">' + dessin(20) + '</g>';
+      var lueur = '<circle cx="' + px.toFixed(1) + '" cy="' + (py + 6).toFixed(1) + '" r="30" fill="url(#l)"/><circle cx="' + px.toFixed(1) + '" cy="' + py.toFixed(1) + '" r="10" fill="url(#h)"/>';
+      var lumiere = lueur + '<g transform="translate(' + (px - 9.6).toFixed(1) + ' ' + (py - 16).toFixed(1) + ') scale(.8)">' + dessin(20) + '</g>';
       if (i % 2) {
         fil.push(lumiere);
+        lueursFil.push(lueur);
       } else {
         autres.push(lumiere);
+        lueursAutres.push(lueur);
       }
     }
   });
+  // la lueur qui dépasse au-dessus du motif, recopiée une période plus bas
+  fil.push('<g transform="translate(0 ' + per + ')">' + lueursFil.join('') + '</g>');
+  autres.push('<g transform="translate(0 ' + per + ')">' + lueursAutres.join('') + '</g>');
   return [fil, autres].map(function (parts) {
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + LARGEUR_FESTONS + '" height="' + per + '" viewBox="0 0 ' + LARGEUR_FESTONS + ' ' + per + '">' + defs + parts.join('') + '</svg>';
     return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
@@ -3183,7 +3194,8 @@ function preparerStylesGuirlandes(forme) {
   if (!st) {
     st = document.createElement('style');
     st.id = 'stylesGuirlandes';
-    st.textContent = '.m-orne .rangs::before,.m-orne .vitrine::before{background:var(--g1,var(--gold));mix-blend-mode:screen}' +
+    st.textContent = '.m-orne .rangs::before,.m-orne .rangs::after,.m-orne .vitrine::before,.m-orne .vitrine::after{top:-' + DECALAGE_GUIRLANDE + 'px}' +
+      '.m-orne .rangs::before,.m-orne .vitrine::before{background:var(--g1,var(--gold));mix-blend-mode:screen}' +
       '.m-orne .rangs::after,.m-orne .vitrine::after{background:var(--g2,var(--accent));mix-blend-mode:screen}';
     document.head.appendChild(st);
   }
@@ -13881,7 +13893,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 10:35:52';
+var VERSION_APPLI = '2026-10-06 10:43:38';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
