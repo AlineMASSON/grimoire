@@ -273,7 +273,22 @@ textarea{border-radius:16px;width:100%;min-height:80px;font-weight:400;resize:ve
 .deco-e{margin-left:4px}
 .deco-e .deco-emoji{font-size:46px;margin-bottom:-2px}
 .deco-e .deco-st img{width:56px;height:56px;margin-bottom:-2px}
-.deco-e.cachee{display:none}
+/* décos accrochées en haut du rayon, au bout d'un fil ; décos sur le dessus du meuble */
+.deco-e.haut{flex-direction:column;align-items:center;justify-content:flex-start}
+.deco-e.haut::before{content:"";width:1.5px;height:16px;flex:none;background:linear-gradient(#e8d2a8,#a07a4a)}
+.deco-e.haut .deco-st img{width:48px;height:48px;margin-bottom:0}
+.deco-e.haut .deco-emoji{font-size:40px;margin-bottom:0}
+.dessus-meuble{display:flex;align-items:flex-end;gap:14px;padding:0 22px;margin:-4px 0 -5px;position:relative;z-index:1}
+.dessus-meuble .deco-e{height:auto;margin:0}
+.dessus-meuble .deco-st img{width:50px;height:50px}
+.dessus-meuble .deco-emoji{font-size:42px}
+.dessus-meuble .fente-dessus{height:46px;width:30px;align-self:flex-end;margin-bottom:6px}
+/* mode « Disposer » : les places libres entre les livres, et les décos à toucher */
+.fente{height:168px;width:22px;flex:none;align-self:flex-end;display:flex;align-items:center;justify-content:center;border:1.5px dashed rgba(255,220,170,.55);border-radius:8px;background:rgba(255,220,170,.06);color:#ffe9c4;font:800 16px Nunito,sans-serif;padding:0;cursor:pointer}
+.rangs .deco-e[data-act]{cursor:pointer;outline:1.5px dashed rgba(255,220,170,.6);outline-offset:2px;border-radius:8px}
+.rangs .deco-e.epinglee[data-act]{outline-color:var(--gold)}
+.bandeau-dispo{display:flex;align-items:center;gap:8px;background:var(--gold-soft);border-radius:12px;padding:8px 12px;margin:0 0 12px;font-size:12.5px;line-height:1.3}
+.bandeau-dispo b{flex:1;font-weight:600}
 .tr-l{position:relative;flex:none;cursor:pointer;color:#fff;border-radius:3px 3px 1px 1px;background:linear-gradient(90deg,rgba(0,0,0,.3),rgba(255,255,255,.2) 28%,rgba(255,255,255,.05) 52%,rgba(0,0,0,.32)),var(--c);box-shadow:3px 1px 4px rgba(0,0,0,.4)}
 .tr-l.relie{border-radius:7px 7px 1px 1px}
 .tr-l::before{content:"✦";position:absolute;top:4px;left:0;right:0;text-align:center;font-size:8px;line-height:1;color:rgba(255,232,170,.95)}
@@ -2245,38 +2260,350 @@ ACTIONS.vueEtagere = function (el) {
   lsSet('bm_vue_etagere', el.dataset.v);
   rendre();
 };
-// un meuble : livres = [{b, star}], i = numéro du meuble (choisit la décoration)
-function meuble(livres, i) {
+// un meuble : livres = [{b, star}] ; les décorations sont posées après l'affichage (placerDecos)
+function meuble(livres) {
   if (!livres.length) {
     return '<p class="small muted">Rien sur cette étagère pour l\'instant.</p>';
   }
-  var h;
   if (vueEtagere() === 'couvertures') {
-    h = '<div class="vitrine">' + livres.map(function (x) { return couvertureVitrine(x.b, x.star); }).join('') + '</div>';
-  } else {
-    // la décoration du bout de l'étagère : une de celles que tu as gagnées et posées (🪴 Décos)
-    var posees = decosPosees();
-    var deco = '';
-    if (posees.length) {
-      deco = '<div class="deco-e">' + svgDeco(posees[i % posees.length], true) + '</div>';
-    }
-    h = '<div class="rangs">' + livres.map(function (x, k) {
-      return tranche(x.b, x.star, deco && livres.length > 1 && k === livres.length - 1);
-    }).join('') + deco + '</div>';
+    return '<div class="meuble"><div class="fond-meuble"><div class="vitrine">' + livres.map(function (x) { return couvertureVitrine(x.b, x.star); }).join('') + '</div></div></div>';
   }
-  return '<div class="meuble"><div class="fond-meuble">' + h + '</div></div>';
+  return '<div class="dessus-meuble"></div><div class="meuble"><div class="fond-meuble"><div class="rangs">' + livres.map(function (x) { return tranche(x.b, x.star, false); }).join('') + '</div></div></div>';
 }
-// la décoration ne doit pas occuper seule une étagère de plus
-function rangerDecos() {
-  document.querySelectorAll('.rangs .deco-e').forEach(function (d) {
-    d.classList.remove('cachee');
-    var avant = d.previousElementSibling;
-    if (avant && d.offsetTop > avant.offsetTop + 10) {
-      d.classList.add('cachee');
+
+// ---------- décorations : sur les rayons (une par rayon au plus) et sur le dessus des meubles (3 au plus) ----------
+// Les décos cochées dans « 🪴 Décos » sont réparties par un tirage stable : la graine (réglage decosGraine) ne change
+// qu'avec « 🎲 Redisposer ». Sur un rayon, une déco se glisse entre deux livres, posée sur la planche ou accrochée en haut
+// (HAUTEUR_DECOS). Une déco épinglée à la main (réglage decosPlaces : {déco: {avant: livre, haut} | {dessus: livre}}, ou
+// l'id du livre seul) garde sa place si son livre est affiché, sinon elle repart dans le tirage.
+// Tout se fait après l'affichage, car les rayons dépendent de la largeur de l'écran.
+var DESSUS_MAX = 3;
+var modeDisposer = false;
+var observateurDecos = null;
+function hasardDecos(graine) {
+  var a = graine >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    var x = Math.imul(a ^ (a >>> 15), a | 1);
+    x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function placeDeco(v) {
+  if (typeof v === 'string') {
+    return {avant: v};
+  }
+  return v || null;
+}
+// haut : accrochée en haut du rayon ; dessus : sur le dessus du meuble
+function elementDeco(id, epinglee, haut, dessus) {
+  var d = document.createElement('div');
+  d.className = 'deco-e';
+  if (haut) {
+    d.className += ' haut';
+  }
+  if (epinglee) {
+    d.className += ' epinglee';
+  }
+  d.dataset.deco = id;
+  if (dessus) {
+    d.dataset.dessus = '1';
+  }
+  if (modeDisposer) {
+    d.dataset.act = 'choisirDecoPosee';
+  }
+  d.innerHTML = svgDeco(id, false);
+  return d;
+}
+function dessusDuMeuble(el) {
+  var m = el.closest('.meuble');
+  var d = m && m.previousElementSibling;
+  if (d && d.classList.contains('dessus-meuble')) {
+    return d;
+  }
+  return null;
+}
+// les rayons d'un meuble, de haut en bas : [{places: [.place-l…], occupe}] (occupe = une déco y est déjà)
+function rayonsDuMeuble(rangs) {
+  var rayons = [];
+  Array.from(rangs.children).forEach(function (el) {
+    var dernier = rayons[rayons.length - 1];
+    if (!dernier || Math.abs(dernier.top - el.offsetTop) > 10) {
+      dernier = {top: el.offsetTop, places: [], occupe: false};
+      rayons.push(dernier);
+    }
+    if (el.classList.contains('place-l')) {
+      dernier.places.push(el);
+    } else if (el.classList.contains('deco-e')) {
+      dernier.occupe = true;
     }
   });
+  return rayons;
 }
-window.addEventListener('resize', rangerDecos);
+function placerDecos() {
+  var meubles = Array.from(document.querySelectorAll('.rangs'));
+  if (!meubles.length) {
+    return;
+  }
+  meubles.forEach(function (r) {
+    r.querySelectorAll('.deco-e, .fente').forEach(function (x) { x.remove(); });
+    r.querySelectorAll('.place-l.penche').forEach(function (p) {
+      p.classList.remove('penche');
+      p.style.margin = '';
+    });
+    var dessus = dessusDuMeuble(r);
+    if (dessus) {
+      dessus.innerHTML = '';
+    }
+  });
+  var places = reglage('decosPlaces', {}) || {};
+  var hasard = hasardDecos(reglage('decosGraine', 1));
+  // les épinglées d'abord, à leur place
+  var libres = [];
+  decosPosees().forEach(function (id) {
+    var p = placeDeco(places[id]);
+    var livre = p && (p.avant || p.dessus);
+    var tr = livre && document.querySelector('.rangs .tr-l[data-id="' + CSS.escape(livre) + '"]');
+    if (tr && p.dessus) {
+      var dessus = dessusDuMeuble(tr);
+      if (dessus && dessus.children.length < DESSUS_MAX && HAUTEUR_DECOS[id] !== 'haut') {
+        dessus.appendChild(elementDeco(id, true, false, true));
+        return;
+      }
+    } else if (tr) {
+      var haut = HAUTEUR_DECOS[id] === 'haut' || (HAUTEUR_DECOS[id] === 'haut-bas' && !!p.haut);
+      tr.closest('.place-l').before(elementDeco(id, true, haut, false));
+      return;
+    }
+    libres.push(id);
+  });
+  // les autres, mélangées : sur un rayon (réparties sur toute l'étagère) ou, parfois, sur le dessus d'un meuble
+  for (var i = libres.length - 1; i > 0; i--) {
+    var j = Math.floor(hasard() * (i + 1));
+    var x = libres[i];
+    libres[i] = libres[j];
+    libres[j] = x;
+  }
+  var rayons = [];
+  var dessusLibres = [];
+  meubles.forEach(function (r) {
+    rayonsDuMeuble(r).forEach(function (ray) {
+      if (!ray.occupe && ray.places.length >= 2) {
+        rayons.push(ray);
+      }
+    });
+    var dessus = dessusDuMeuble(r);
+    if (dessus) {
+      dessusLibres.push({el: dessus, n: dessus.children.length, decos: []});
+    }
+  });
+  var placeDessus = dessusLibres.reduce(function (t, d) { return t + DESSUS_MAX - d.n; }, 0);
+  var surRayons = [];
+  libres.forEach(function (id) {
+    var peutDessus = HAUTEUR_DECOS[id] !== 'haut' && placeDessus > 0;
+    if (peutDessus && (hasard() < 0.3 || surRayons.length >= rayons.length)) {
+      // sur le meuble le moins garni (au hasard entre les ex aequo)
+      var min = Math.min.apply(null, dessusLibres.map(function (d) { return d.n + d.decos.length; }));
+      var candidats = dessusLibres.filter(function (d) { return d.n + d.decos.length === min; });
+      candidats[Math.floor(hasard() * candidats.length)].decos.push(id);
+      placeDessus--;
+    } else if (surRayons.length < rayons.length) {
+      surRayons.push(id);
+    }
+  });
+  var n = surRayons.length;
+  var choisis = [];
+  for (var k = 0; k < n; k++) {
+    var idx = Math.min(rayons.length - 1, Math.floor((k + 0.1 + hasard() * 0.8) * rayons.length / n));
+    if (choisis.length && idx <= choisis[choisis.length - 1]) {
+      idx = choisis[choisis.length - 1] + 1;
+    }
+    choisis.push(idx);
+  }
+  var poses = choisis.map(function (idx, k) {
+    var ray = rayons[idx];
+    var id = surRayons[k];
+    var pos = 1 + Math.floor(hasard() * (ray.places.length - 1));
+    var haut = HAUTEUR_DECOS[id] === 'haut' || (HAUTEUR_DECOS[id] === 'haut-bas' && hasard() < 0.5);
+    return {avant: ray.places[pos], apres: ray.places[pos - 1], id: id, haut: haut, penche: !haut && hasard() < 0.35};
+  });
+  // de bas en haut : une déco ajoutée ne décale que les rayons du dessous, déjà servis
+  poses.reverse().forEach(function (p) {
+    p.avant.before(elementDeco(p.id, false, p.haut, false));
+    // parfois, le livre d'à côté s'appuie sur une déco posée
+    var tr = p.apres.querySelector('.tr-l');
+    if (p.penche && tr) {
+      p.apres.classList.add('penche');
+      p.apres.style.margin = '0 ' + (Math.round(tr.offsetHeight * 0.23) + 2) + 'px 0 6px';
+    }
+  });
+  var alignements = ['flex-start', 'center', 'flex-end'];
+  dessusLibres.forEach(function (d) {
+    d.decos.forEach(function (id) { d.el.appendChild(elementDeco(id, false, false, true)); });
+    d.el.style.justifyContent = alignements[Math.floor(hasard() * alignements.length)];
+  });
+  if (modeDisposer) {
+    meubles.forEach(function (r) {
+      r.querySelectorAll('.place-l').forEach(function (p) {
+        var b = p.querySelector('.tr-l');
+        var fente = document.createElement('button');
+        fente.className = 'fente';
+        fente.dataset.act = 'fenteDeco';
+        fente.dataset.livre = b.dataset.id;
+        fente.setAttribute('aria-label', 'Poser une décoration ici');
+        fente.textContent = '+';
+        p.before(fente);
+      });
+      var dessus = dessusDuMeuble(r);
+      if (dessus && dessus.children.length < DESSUS_MAX) {
+        var f = document.createElement('button');
+        f.className = 'fente fente-dessus';
+        f.dataset.act = 'fenteDeco';
+        f.dataset.dessus = r.querySelector('.tr-l').dataset.id;
+        f.setAttribute('aria-label', 'Poser une décoration sur le dessus du meuble');
+        f.textContent = '+';
+        dessus.appendChild(f);
+      }
+    });
+  }
+  animerDecosVisibles();
+}
+// une déco animée pèse lourd (0,5 à 1 Mo) et tourne en continu : seules celles à l'écran bougent
+function animerDecosVisibles() {
+  if (observateurDecos) {
+    observateurDecos.disconnect();
+    observateurDecos = null;
+  }
+  if (!('IntersectionObserver' in window) || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+    return;
+  }
+  observateurDecos = new IntersectionObserver(function (entrees) {
+    entrees.forEach(function (e) {
+      var d = e.target;
+      var anime = d.dataset.anime === '1';
+      if (e.isIntersecting && !anime) {
+        d.innerHTML = svgDeco(d.dataset.deco, true);
+        d.dataset.anime = '1';
+      } else if (!e.isIntersecting && anime) {
+        d.innerHTML = svgDeco(d.dataset.deco, false);
+        d.dataset.anime = '';
+      }
+    });
+  }, {rootMargin: '120px'});
+  document.querySelectorAll('.rangs .deco-e, .dessus-meuble .deco-e').forEach(function (d) { observateurDecos.observe(d); });
+}
+var minuteurPlacerDecos = null;
+window.addEventListener('resize', function () {
+  clearTimeout(minuteurPlacerDecos);
+  minuteurPlacerDecos = setTimeout(placerDecos, 200);
+});
+function enregistrerDecos(changes) {
+  return ecrire(Object.keys(changes).map(function (k) { return {t: 'reglages', o: {id: k, v: changes[k]}}; })).then(function () {
+    planifierSauvegarde();
+    placerDecos();
+  }).catch(erreurEcriture);
+}
+// le nom d'une déco avec sa majuscule (nomDeco, dans Saisons.html, la donne en minuscules)
+function nomDecoAffiche(id) {
+  var x = DECOS.filter(function (d) { return d[0] === id; })[0];
+  return (x && x[1]) || id;
+}
+ACTIONS.redisposerDecos = function () {
+  fermerFeuille();
+  enregistrerDecos({decosGraine: Math.floor(Math.random() * 1e9) + 1}).then(function () { toast('🎲 Nouvel arrangement'); });
+};
+ACTIONS.disposerDecos = function () {
+  fermerFeuille();
+  modeDisposer = !modeDisposer;
+  if (modeDisposer) {
+    lsSet('bm_vue_etagere', 'tranches');
+  }
+  rendre();
+};
+// une place « + » touchée (entre deux livres, ou sur le dessus d'un meuble) : quelle déco y poser ?
+ACTIONS.fenteDeco = function (el) {
+  var livre = el.dataset.livre || el.dataset.dessus;
+  var dessus = !!el.dataset.dessus;
+  var b = M.parId[livre];
+  var choix = [];
+  decosGagnees().forEach(function (id) {
+    var h = HAUTEUR_DECOS[id];
+    if (dessus) {
+      if (h !== 'haut') {
+        choix.push([id, nomDecoAffiche(id), '']);
+      }
+    } else if (h === 'haut-bas') {
+      choix.push([id, nomDecoAffiche(id) + ' · en bas', '']);
+      choix.push([id, nomDecoAffiche(id) + ' · en haut', '1']);
+    } else {
+      choix.push([id, nomDecoAffiche(id) + (h === 'haut' ? ' · en haut' : ''), h === 'haut' ? '1' : '']);
+    }
+  });
+  var ou = 'juste avant « ' + esc(b ? titre(b) : '') + ' »';
+  if (dessus) {
+    ou = 'sur le dessus de ce meuble (' + DESSUS_MAX + ' au plus)';
+  }
+  ouvrirFeuille('<h3>Que poser ici ?</h3><p class="small muted" style="margin:0 0 10px">' + ou + '</p><div class="decos-g">' + choix.map(function (c) {
+    return '<button class="deco-g" data-act="epinglerDeco" data-deco="' + c[0] + '" data-' + (dessus ? 'dessus' : 'livre') + '="' + esc(livre) + '" data-haut="' + c[2] + '"><span class="img-d">' + svgDeco(c[0], false) + '</span><b>' + esc(c[1]) + '</b></button>';
+  }).join('') + '</div>');
+};
+ACTIONS.epinglerDeco = function (el) {
+  var places = Object.assign({}, reglage('decosPlaces', {}) || {});
+  if (el.dataset.dessus) {
+    places[el.dataset.deco] = {dessus: el.dataset.dessus};
+  } else {
+    places[el.dataset.deco] = {avant: el.dataset.livre, haut: el.dataset.haut === '1'};
+  }
+  var posees = decosPosees();
+  if (posees.indexOf(el.dataset.deco) < 0) {
+    posees.push(el.dataset.deco);
+  }
+  fermerFeuille();
+  enregistrerDecos({decosPlaces: places, decosChoisies: posees});
+};
+// une déco touchée en mode Disposer : l'épingler là (accrochée ou posée), la libérer ou la ranger
+ACTIONS.choisirDecoPosee = function (el) {
+  var id = el.dataset.deco;
+  var places = reglage('decosPlaces', {}) || {};
+  var h = '<div class="tete"><span class="img-d" style="font-size:40px">' + svgDeco(id, false) + '</span><div><h3>' + esc(nomDecoAffiche(id)) + '</h3><div class="small muted">' + (places[id] ? 'épinglée ici à la main' : 'placée par le tirage') + '</div></div></div><div class="row" style="flex-direction:column;align-items:stretch">';
+  if (el.dataset.dessus) {
+    var r = el.closest('.dessus-meuble').nextElementSibling.querySelector('.tr-l');
+    if (!places[id] && r) {
+      h += '<button class="act" data-act="epinglerDeco" data-deco="' + id + '" data-dessus="' + esc(r.dataset.id) + '">📌 La garder sur ce meuble</button>';
+    }
+  } else {
+    var suivant = el.nextElementSibling;
+    while (suivant && !suivant.classList.contains('place-l')) {
+      suivant = suivant.nextElementSibling;
+    }
+    var livre = suivant && suivant.querySelector('.tr-l').dataset.id;
+    var haut = el.classList.contains('haut');
+    if (livre && !places[id]) {
+      h += '<button class="act" data-act="epinglerDeco" data-deco="' + id + '" data-livre="' + esc(livre) + '" data-haut="' + (haut ? '1' : '') + '">📌 La garder à cette place</button>';
+    }
+    if (livre && HAUTEUR_DECOS[id] === 'haut-bas') {
+      h += '<button class="act doux" data-act="epinglerDeco" data-deco="' + id + '" data-livre="' + esc(livre) + '" data-haut="' + (haut ? '' : '1') + '">' + (haut ? '⬇️ La poser sur la planche' : '⬆️ L\'accrocher en haut') + '</button>';
+    }
+  }
+  if (places[id]) {
+    h += '<button class="act doux" data-act="libererDeco" data-deco="' + id + '">' + ic('shuffle') + ' La laisser se placer toute seule</button>';
+  }
+  h += '<button class="act doux" data-act="rangerDeco" data-deco="' + id + '">🧺 La ranger (plus sur l\'étagère)</button></div>';
+  ouvrirFeuille(h);
+};
+ACTIONS.libererDeco = function (el) {
+  var places = Object.assign({}, reglage('decosPlaces', {}) || {});
+  delete places[el.dataset.deco];
+  fermerFeuille();
+  enregistrerDecos({decosPlaces: places});
+};
+ACTIONS.rangerDeco = function (el) {
+  var places = Object.assign({}, reglage('decosPlaces', {}) || {});
+  delete places[el.dataset.deco];
+  var posees = decosPosees().filter(function (id) { return id !== el.dataset.deco; });
+  fermerFeuille();
+  enregistrerDecos({decosPlaces: places, decosChoisies: posees});
+};
 
 function vEtagere() {
   var h = seg('etagere', [['etagere', '' + ic('library-big') + ' Étagère'], ['alire', '' + ic('ferris-wheel') + ' À lire'], ['series', '' + ic('key-round') + ' Séries'], ['tous', '' + ic('search') + ' Tous']]);
@@ -2292,7 +2619,7 @@ function vEtagere() {
   return h;
 }
 vEtagere.apres = function () {
-  rangerDecos();
+  placerDecos();
   var r = document.getElementById('rechercheLivres');
   if (r) {
     r.addEventListener('input', function () {
@@ -2438,9 +2765,9 @@ function vShelf() {
       }
       parAn[y].push(r);
     });
-    Object.keys(parAn).sort().reverse().forEach(function (y, i) {
+    Object.keys(parAn).sort().reverse().forEach(function (y) {
       var l = parAn[y].sort(function (a, b) { return a.end - b.end; });
-      rayons += '<div class="etagere"><h4>' + y + ' <span class="small muted">· ' + l.length + ' livres</span></h4>' + meuble(l.map(function (r) { return {b: r.book, star: r.star}; }), i) + '</div>';
+      rayons += '<div class="etagere"><h4>' + y + ' <span class="small muted">· ' + l.length + ' livres</span></h4>' + meuble(l.map(function (r) { return {b: r.book, star: r.star}; })) + '</div>';
     });
   } else {
     var envie = filtreEtagere === 'envies';
@@ -2449,11 +2776,7 @@ function vShelf() {
     if (envie) {
       nom = 'Tes envies';
     }
-    var num = 2;
-    if (envie) {
-      num = 3;
-    }
-    rayons = '<div class="etagere"><h4>' + nom + ' <span class="small muted">· ' + l.length + ' livres</span></h4><p class="small muted" style="margin:-2px 0 8px">Les plus anciens en premier.</p>' + meuble(l.map(function (b) { return {b: b, star: 0}; }), num) + '</div>';
+    rayons = '<div class="etagere"><h4>' + nom + ' <span class="small muted">· ' + l.length + ' livres</span></h4><p class="small muted" style="margin:-2px 0 8px">Les plus anciens en premier.</p>' + meuble(l.map(function (b) { return {b: b, star: 0}; })) + '</div>';
   }
   var vue = vueEtagere();
   var bascule = '<div class="bascule-vue">' + [['tranches', 'library-big', 'Tranches'], ['couvertures', 'image', 'Couvertures']].map(function (v) {
@@ -2467,7 +2790,11 @@ function vShelf() {
   if (vue === 'couvertures') {
     legende = '<div class="legende"><span>' + ic('heart') + ' coup de cœur · ' + ic('headphones') + ' audio · sans couverture : le titre sur la couleur du genre</span></div>';
   }
-  return h + card('Mon étagère magique', bascule + rayons + legende, 'touche un livre pour l\'ouvrir');
+  var dispo = '';
+  if (modeDisposer && vue === 'tranches') {
+    dispo = '<div class="bandeau-dispo"><span>' + ic('pencil') + '</span><b>Disposer mes décos : touche un « + » pour y poser une déco, ou une déco pour la garder là, la libérer ou la ranger.</b><button class="act doux" data-act="disposerDecos">Terminé</button></div>';
+  }
+  return h + card('Mon étagère magique', bascule + dispo + rayons + legende, 'touche un livre pour l\'ouvrir');
 }
 ACTIONS.filtreEtagere = function (el) {
   filtreEtagere = el.dataset.f;
@@ -4008,6 +4335,9 @@ function suivreInclinaison() {
 // chaque décoration est un emoji (rendu par le téléphone)
 var DECOS_EMOJI = {plante: '🪴', chat: '🐈‍⬛', bougie: '🕯️', boule: '🔮', chouette: '🦉', pile: '🔖', lanterne: '🏮', sablier: '⏳', fiole: '💎', oeuf: '🐉', citrouille: '🎃', sapin: '🎄',
   bonhomme: '⛄', champignon: '🍄', phenix: '🐦‍🔥', toile: '🕷️', bougie2: '🪔', trophee: '🏆', matriochka: '🪆', theiere: '🫖', tresor: '💰'};
+// sur l'étagère : 'haut' = toujours accrochée en haut du rayon (au bout d'un fil), 'haut-bas' = accrochée ou posée ;
+// les autres sont posées sur la planche (ou sur le dessus du meuble)
+var HAUTEUR_DECOS = {pile: 'haut', toile: 'haut', lanterne: 'haut-bas'};
 // [id, nom, comment la gagner, condition sur donneesDecos()]
 var DECOS = [
   ['plante', 'Plante grimpante', 'offerte', function () { return true; }],
@@ -4075,12 +4405,12 @@ function decosGagnees(d) {
   d = d || donneesDecos();
   return DECOS.filter(function (x) { return x[3](d); }).map(function (x) { return x[0]; });
 }
-// les décorations posées sur les étagères (4 au plus) ; sans choix, les 4 premières gagnées
+// les décorations posées sur les étagères (autant qu'on veut, une par rayon au plus : placerDecos) ; sans choix, toutes les gagnées
 function decosPosees() {
   var gagnees = decosGagnees();
   var choix = reglage('decosChoisies', null);
   if (!choix) {
-    return gagnees.slice(0, 4);
+    return gagnees;
   }
   return choix.filter(function (id) { return gagnees.indexOf(id) >= 0; });
 }
@@ -4178,7 +4508,7 @@ ACTIONS.mesDecos = function () {
   var d = donneesDecos();
   var gagnees = decosGagnees(d);
   var posees = decosPosees();
-  var h = '<h3>Mes décorations</h3><p class="small muted" style="margin:0 0 12px">' + gagnees.length + ' / ' + DECOS.length + ' gagnées · touche une décoration pour la poser sur tes étagères ou l\'enlever (4 au plus)</p><div class="decos-g">' + DECOS.map(function (x) {
+  var h = '<h3>Mes décorations</h3><p class="small muted" style="margin:0 0 12px">' + gagnees.length + ' / ' + DECOS.length + ' gagnées · touche une décoration pour la poser sur tes étagères ou l\'enlever (une par rayon au plus, glissée entre les livres)</p><div class="row" style="margin:0 0 12px"><button class="act doux" data-act="redisposerDecos">' + ic('shuffle') + ' Redisposer</button><button class="act doux" data-act="disposerDecos">' + ic('pencil') + ' Disposer à la main</button></div><div class="decos-g">' + DECOS.map(function (x) {
     var ok = gagnees.indexOf(x[0]) >= 0;
     var cls = 'deco-g';
     var cadenas = '';
@@ -4200,15 +4530,14 @@ ACTIONS.poserDeco = function (el) {
   var posees = decosPosees();
   var id = el.dataset.id;
   var i = posees.indexOf(id);
+  var places = Object.assign({}, reglage('decosPlaces', {}) || {});
   if (i >= 0) {
     posees.splice(i, 1);
-  } else if (posees.length >= 4) {
-    toast('4 décorations au plus : enlève-en une d\'abord');
-    return;
+    delete places[id];
   } else {
     posees.push(id);
   }
-  regler('decosChoisies', posees).then(function () {
+  ecrire([{t: 'reglages', o: {id: 'decosChoisies', v: posees}}, {t: 'reglages', o: {id: 'decosPlaces', v: places}}]).then(function () {
     planifierSauvegarde();
     rendre();
     ACTIONS.mesDecos();
@@ -11569,13 +11898,13 @@ function verifierJeu() {
     if (fetes.length > 8) {
       fetes = [];
     }
-    // une nouvelle décoration se pose d'elle-même s'il reste de la place
+    // une nouvelle décoration se pose d'elle-même sur les étagères
     var suite = Promise.resolve();
     var nouvellesDecos = fetes.filter(function (f) { return f.type === 'deco'; });
     if (nouvellesDecos.length) {
       var posees = decosPosees();
       nouvellesDecos.forEach(function (f) {
-        if (posees.length < 4 && posees.indexOf(f.id) < 0) {
+        if (posees.indexOf(f.id) < 0) {
           posees.push(f.id);
           f.posee = true;
         }
@@ -12136,7 +12465,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 08:34:25';
+var VERSION_APPLI = '2026-10-06 09:32:48';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }

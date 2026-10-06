@@ -42,6 +42,7 @@ Le pas à pas complet, avec les captures, est dans le **[mode d'emploi](https://
 - Tout est enregistré **sur le téléphone**, dans le stockage de l'appli. Rien n'est envoyé sur ce site.
 - **Sauvegarde** : un fichier `.zip` à exporter depuis ⚙️ Réglages, ou une sauvegarde automatique dans son Google Drive avec un code de liaison personnel.
 - L'appli va chercher en ligne les informations et les couvertures des livres (Google Books, Open Library).
+- **Pour essayer sans ses propres livres**, ou pour voir le format des données : le dossier [`exemples/`](exemples/) contient une sauvegarde d'exemple (livres inventés) et un fichier de propositions qui va avec. ⚠️ Restaurer une sauvegarde remplace tout le grimoire.
 
 ## Ce dépôt
 
@@ -56,6 +57,7 @@ Il contient l'appli publiée sur GitHub Pages :
 | `aide.html`, `aide/` | le mode d'emploi et ses captures |
 | `reparer.html` | la page de réparation d'une mise à jour bloquée |
 | `prompt-propositions.md` | la consigne envoyée à Claude par « ✨ Compléter avec Claude » (genres, tropes et traducteurs à proposer) |
+| `exemples/` | une sauvegarde d'exemple (`grimoire-exemple.zip`), un fichier de propositions (`propositions-exemple.json`) et la description de leurs formats |
 | `.github/workflows/publier.yml` | la publication sur GitHub Pages, à chaque envoi sur `main` (GitHub Actions) |
 
 ## Crédits

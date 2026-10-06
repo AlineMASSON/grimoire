@@ -1,0 +1,89 @@
+{
+ "format": "grimoire-propositions",
+ "version": 1,
+ "date": 1791288000000,
+ "titre": "Exemple de propositions",
+ "livres": [
+  {
+   "id": "exemple-3",
+   "titre": "La Bibliothèque sous la mer",
+   "genres": [
+    "Fantasy",
+    "Mystère"
+   ],
+   "tropes": [
+    "Créatures marines",
+    "Secret de famille"
+   ],
+   "traducteurs": [
+    "Jeanne Ferrand"
+   ],
+   "roles": [],
+   "langue": "anglais",
+   "source": "https://exemple.org/la-bibliotheque-sous-la-mer",
+   "confiance": "moyenne",
+   "note": "Deux traductions existent : celle-ci correspond à l'édition des Vagues."
+  },
+  {
+   "id": "exemple-4",
+   "titre": "Thé noir et alibis",
+   "genres": [
+    "Policier",
+    "Cosy",
+    "Mystère"
+   ],
+   "tropes": [
+    "Enquête",
+    "Petite ville et ses secrets"
+   ],
+   "traducteurs": [],
+   "roles": [
+    {
+     "nom": "Lou Vasseur",
+     "role": "narration"
+    }
+   ],
+   "confiance": "haute",
+   "note": ""
+  },
+  {
+   "id": "exemple-5",
+   "titre": "Le Dernier Phare",
+   "genres": [
+    "Thriller",
+    "Policier"
+   ],
+   "tropes": [
+    "Huis clos",
+    "Disparition"
+   ],
+   "traducteurs": [],
+   "roles": [],
+   "confiance": "haute",
+   "note": "",
+   "infos": {
+    "parution": "2025-03-12",
+    "editeur": "Éditions du Ressac",
+    "langue": "Français",
+    "resume": "Une gardienne de phare reçoit chaque nuit un signal lumineux venu d'une île déserte."
+   }
+  },
+  {
+   "id": "exemple-8",
+   "titre": "Le Jardin des horloges",
+   "genres": [
+    "Steampunk",
+    "Fantasy"
+   ],
+   "tropes": [],
+   "traducteurs": [],
+   "roles": [],
+   "confiance": "faible",
+   "note": "Peu de sources : à vérifier.",
+   "couverture": {
+    "image": "data:image/jpeg;base64,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",
+    "source": "dessinée pour l'exemple"
+   }
+  }
+ ]
+}
