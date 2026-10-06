@@ -8911,18 +8911,15 @@ function afficherSessions(lid) {
     if (!gains[s.id] || !s.dureeSec || s.dureeSec < 60) {
       return 0;
     }
-    return gains[s.id] / (s.dureeSec / 60);
+    return gains[s.id] / (s.dureeSec / 3600);
   }
   var h = '<h3>Sessions de lecture</h3><p class="small muted">' + esc(l.titre) + ' · ' + texteLecture(x) + '</p>';
   var minutees = ss.filter(function (s) { return vitesse(s) > 0; });
   if (minutees.length) {
     var pages = minutees.reduce(function (n, s) { return n + gains[s.id]; }, 0);
-    var minutes = minutees.reduce(function (n, s) { return n + s.dureeSec / 60; }, 0);
-    var parPage = '';
-    if (pages / minutes < 1) {
-      parPage = ', soit environ ' + nombre(round(minutes / pages, 1)) + ' min par page';
-    }
-    h += '<p class="small">⚡ En moyenne <b>' + nombre(round(pages / minutes, 1)) + ' page' + (pages / minutes >= 2 ? 's' : '') + ' par minute</b>' + parPage + ' (' + minutees.length + ' session' + (minutees.length > 1 ? 's' : '') + ' minutée' + (minutees.length > 1 ? 's' : '') + ')</p>';
+    var heures = minutees.reduce(function (n, s) { return n + s.dureeSec / 3600; }, 0);
+    var parHeure = Math.round(pages / heures);
+    h += '<p class="small">⚡ En moyenne <b>' + parHeure + ' page' + (parHeure > 1 ? 's' : '') + ' par heure</b> (' + minutees.length + ' session' + (minutees.length > 1 ? 's' : '') + ' minutée' + (minutees.length > 1 ? 's' : '') + ')</p>';
   }
   if (!ss.length) {
     h += '<p class="small muted">Aucune session notée.</p>';
@@ -8935,7 +8932,7 @@ function afficherSessions(lid) {
     }
     var rythme = '';
     if (vitesse(s)) {
-      rythme = ' · ' + gains[s.id] + ' p. · <b>' + nombre(round(vitesse(s), 1)) + ' p./min</b>';
+      rythme = ' · ' + gains[s.id] + ' p. · <b>' + Math.round(vitesse(s)) + ' p./h</b>';
     } else if (gains[s.id]) {
       rythme = ' · ' + gains[s.id] + ' p.';
     }
@@ -12139,7 +12136,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 08:32:20';
+var VERSION_APPLI = '2026-10-06 08:34:25';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
