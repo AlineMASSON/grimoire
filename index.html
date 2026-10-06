@@ -5523,12 +5523,12 @@ function lignePari() {
 .hibou-scene{position:relative;height:250px;border-radius:16px;overflow:hidden;margin:8px 0 4px;background:radial-gradient(120% 80% at 50% 0%,color-mix(in srgb,var(--lav) 28%,var(--card)),var(--card) 75%);border:1px solid var(--line)}
 .hibou-scene::before{content:"";position:absolute;right:26px;top:20px;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 40% 40%,#fff7d6,#e7c36b);box-shadow:0 0 18px color-mix(in srgb,var(--gold) 60%,transparent);opacity:.85}
 .hibou-attente{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:12px 16px 14px;color:var(--muted);font-size:13px;text-align:center}
-.hibou-attente .chouette-p{width:104px;height:130px;display:block;margin-bottom:-14px;position:relative;z-index:1}
+.hibou-attente .chouette-p{width:104px;height:130px;display:block;margin-bottom:-14px;position:relative;z-index:1;overflow:visible}
 .hibou-attente .branche-h{width:170px;display:block}
 /* la chouette qui attend : elle respire, cligne des yeux, penche la tête, s'ébouriffe de temps en temps */
 .chouette-p{transform-origin:50% 100%;animation:ch-ebouriffe 13s ease-in-out infinite}
-.chouette-p .souffle{transform-box:fill-box;transform-origin:50% 100%;animation:ch-souffle 3.6s ease-in-out infinite}
-.chouette-p .tete{transform-box:fill-box;transform-origin:50% 90%;animation:ch-tete 9s ease-in-out infinite}
+.chouette-p .souffle{transform-box:view-box;transform-origin:60px 138px;animation:ch-souffle 3.6s ease-in-out infinite}
+.chouette-p .tete{transform-box:view-box;transform-origin:60px 80px;animation:ch-tete 9s ease-in-out infinite}
 .chouette-p .paupiere,.chouette-v .paupiere{transform-box:fill-box;transform-origin:50% 0;transform:scaleY(0);animation:ch-cligne 5.3s ease-in-out infinite}
 @keyframes ch-souffle{0%,100%{transform:scale(1,1)}50%{transform:scale(1.012,1.028)}}
 @keyframes ch-tete{0%,55%,100%{transform:rotate(0)}62%,72%{transform:rotate(-11deg)}78%,84%{transform:rotate(6deg)}90%{transform:rotate(0)}}
@@ -5538,11 +5538,11 @@ function lignePari() {
 .hibou-vol{position:absolute;left:-190px;top:10px;width:176px;z-index:3;will-change:transform;animation:vol-avance 3.4s forwards}
 .hibou-vol .haut{will-change:transform;animation:vol-monte 3.4s forwards}
 .hibou-vol .chouette-v{display:block;width:100%;height:auto;overflow:visible;animation:vol-corps 1.5s ease-in-out infinite}
-.chouette-v .bras{transform-box:fill-box;transform-origin:100% 78%;animation:vol-bras 1.5s ease-in-out infinite}
-.chouette-v .main{transform-box:fill-box;transform-origin:95% 66%;animation:vol-main 1.5s ease-in-out infinite;animation-delay:-.06s}
+.chouette-v .bras{transform-box:fill-box;transform-origin:98% 64%;animation:vol-bras 1.5s ease-in-out infinite}
+.chouette-v .main{transform-box:fill-box;transform-origin:87% 36%;animation:vol-main 1.5s ease-in-out infinite;animation-delay:-.06s}
 .hibou-vol .lettre-portee{animation:vol-lache 3.4s linear forwards}
 @keyframes vol-bras{0%{transform:rotate(24deg)}15%{transform:rotate(-24deg)}30%{transform:rotate(24deg)}45%{transform:rotate(-24deg)}60%,100%{transform:rotate(5deg)}}
-@keyframes vol-main{0%{transform:rotate(16deg)}16%{transform:rotate(-20deg)}31%{transform:rotate(16deg)}46%{transform:rotate(-20deg)}62%,100%{transform:rotate(-5deg)}}
+@keyframes vol-main{0%{transform:rotate(8deg)}16%{transform:rotate(-18deg)}31%{transform:rotate(8deg)}46%{transform:rotate(-18deg)}62%,100%{transform:rotate(-5deg)}}
 @keyframes vol-corps{0%,30%{transform:translateY(3px) rotate(-3deg)}15%,45%{transform:translateY(-3px) rotate(-1deg)}60%,100%{transform:translateY(0) rotate(-2deg)}}
 @keyframes vol-avance{0%{transform:translateX(0);animation-timing-function:cubic-bezier(.25,.6,.4,1)}46%{transform:translateX(calc(var(--l,340px) / 2 + 100px));animation-timing-function:cubic-bezier(.6,0,.8,.45)}100%{transform:translateX(calc(var(--l,340px) + 220px))}}
 @keyframes vol-monte{0%{transform:translateY(80px) rotate(-6deg);animation-timing-function:cubic-bezier(.3,.6,.4,1)}38%{transform:translateY(-4px) rotate(-2deg)}46%{transform:translateY(14px) rotate(4deg);animation-timing-function:ease-in-out}60%{transform:translateY(0) rotate(-6deg);animation-timing-function:cubic-bezier(.5,0,.8,.5)}100%{transform:translateY(-90px) rotate(-12deg)}}
@@ -5631,7 +5631,7 @@ function chouettePerchee() {
   var u = 'chp' + (++numeroSvgHibou) + '-';
   var defs = '<defs>' +
     degradeSvg(u + 'corps', 'radial', [[0, p.plume1], [1, p.plume2]], 'cx="48" cy="48" r="96"') +
-    degradeSvg(u + 'aile', 'linear', [[0, p.aile1], [1, p.aile2]], 'x1="0" y1="70" x2="0" y2="138"') +
+    degradeSvg(u + 'aile', 'linear', [[0, p.plume2], [0.22, p.aile1], [1, p.aile2]], 'x1="0" y1="68" x2="0" y2="138"') +
     degradeSvg(u + 'ventre', 'linear', [[0, p.ventre1], [1, p.ventre2]], 'x1="0" y1="72" x2="0" y2="134"') +
     degradeSvg(u + 'face', 'radial', [[0, p.face1], [1, p.face2]], 'cx="60" cy="54" r="30"') +
     degradeSvg(u + 'iris', 'radial', [[0, p.iris1], [0.75, p.iris2]], 'cx="60" cy="56" r="40"') +
@@ -5647,7 +5647,9 @@ function chouettePerchee() {
       }
       return 120 - x;
     };
-    return '<path d="M' + m(24) + ' 70 C ' + m(8) + ' 90, ' + m(10) + ' 120, ' + m(32) + ' 134 Q ' + m(35) + ' 129, ' + m(38) + ' 134 Q ' + m(40) + ' 127, ' + m(44) + ' 131 C ' + m(36) + ' 110, ' + m(36) + ' 88, ' + m(24) + ' 70 Z" fill="url(#' + u + 'aile)"/>' +
+    // large dès l'épaule (et plus en pointe), le bas en festons
+    return '<path d="M' + m(31) + ' 61 C ' + m(16) + ' 65, ' + m(8) + ' 88, ' + m(10) + ' 112 C ' + m(12) + ' 124, ' + m(22) + ' 132, ' + m(32) + ' 134 Q ' + m(35) + ' 129, ' + m(38) + ' 134 Q ' + m(40) + ' 127, ' + m(44) + ' 131 C ' + m(40) + ' 110, ' + m(40) + ' 86, ' + m(37) + ' 70 C ' + m(36) + ' 66, ' + m(34) + ' 62, ' + m(31) + ' 61 Z" fill="url(#' + u + 'aile)"/>' +
+      '<path d="M' + m(18) + ' 74 Q ' + m(25) + ' 70, ' + m(33) + ' 72 M' + m(15) + ' 82 Q ' + m(24) + ' 78, ' + m(35) + ' 81"' + cssSvg('stroke', p.aile2) + ' stroke-width="1" fill="none" opacity=".35"/>' +
       '<path d="M' + m(20) + ' 86 C ' + m(18) + ' 100, ' + m(22) + ' 114, ' + m(32) + ' 124"' + cssSvg('stroke', p.aile2) + ' stroke-width="1.2" fill="none" opacity=".45"/>' +
       '<path d="M' + m(27) + ' 82 C ' + m(26) + ' 96, ' + m(29) + ' 110, ' + m(37) + ' 120"' + cssSvg('stroke', p.aile2) + ' stroke-width="1.2" fill="none" opacity=".35"/>' +
       etoileSvg(m(22), 100, 1.5) + '<circle cx="' + m(29) + '" cy="114" r="1.3"' + cssSvg('fill', p.or) + '/>';
@@ -5673,9 +5675,9 @@ function chouettePerchee() {
     yeuxChouette(u, 45, 75, 56, 10.5) +
     '<path d="M56 64 Q60 61 64 64 Q62 72 60 77 Q58 72 56 64 Z" fill="url(#' + u + 'bec)"/>' +
     '<ellipse cx="33" cy="68" rx="5.5" ry="3" fill="#ff9fb8" opacity=".35"/><ellipse cx="87" cy="68" rx="5.5" ry="3" fill="#ff9fb8" opacity=".35"/>' +
-    '</g>';
+    coucheAccessoire('tete', false) + '</g>';
   var pattes = '<path d="M47 134 q-2 6 -6 8 M51 135 q0 6 -2 9 M55 135 q2 6 1 9 M65 135 q-1 6 -1 9 M69 135 q1 6 3 9 M73 134 q2 6 6 8"' + cssSvg('stroke', p.pattes) + ' stroke-width="3" fill="none" stroke-linecap="round"/>';
-  return '<svg class="chouette-p" viewBox="0 0 120 150" aria-hidden="true">' + defs + '<g class="souffle">' + corps + aileRepliee(-1) + aileRepliee(1) + ventre + ecailles + '</g>' + tete + pattes + '</svg>';
+  return '<svg class="chouette-p" viewBox="0 0 120 150" aria-hidden="true">' + defs + coucheAccessoire('fond', false) + '<g class="souffle">' + corps + aileRepliee(-1) + aileRepliee(1) + ventre + ecailles + coucheAccessoire('corps', false) + '</g>' + tete + pattes + coucheAccessoire('cou', false) + '</svg>';
 }
 // en vol, vue de face : ailes en deux parties (la main se plie après le bras), queue en éventail, la lettre dans les serres
 function chouetteVol() {
@@ -5685,44 +5687,67 @@ function chouetteVol() {
     degradeSvg(u + 'corps', 'radial', [[0, p.plume1], [1, p.plume2]], 'cx="104" cy="56" r="60"') +
     degradeSvg(u + 'aile', 'linear', [[0, p.aile1], [1, p.aile2]], 'x1="0" y1="20" x2="0" y2="80"') +
     degradeSvg(u + 'plume', 'linear', [[0, p.aile1], [0.6, p.aile1], [1, p.aile2]], 'x1="64" y1="0" x2="6" y2="0"') +
+    degradeSvg(u + 'bras', 'linear', [[0, p.plume1], [0.5, p.aile1], [1, p.aile1]], 'x1="100" y1="0" x2="62" y2="0"') +
+    degradeSvg(u + 'couv', 'linear', [[0, p.plume1], [1, p.aile1]], 'x1="98" y1="0" x2="66" y2="0"') +
+    degradeSvg(u + 'second', 'linear', [[0, p.aile1], [1, 'color-mix(in srgb,' + p.aile1 + ' 50%,' + p.aile2 + ')']], 'x1="0" y1="72" x2="0" y2="98"') +
     degradeSvg(u + 'ventre', 'linear', [[0, p.ventre1], [1, p.ventre2]], 'x1="0" y1="66" x2="0" y2="112"') +
     degradeSvg(u + 'face', 'radial', [[0, p.face1], [1, p.face2]], 'cx="110" cy="52" r="20"') +
     degradeSvg(u + 'iris', 'radial', [[0, p.iris1], [0.75, p.iris2]], 'cx="110" cy="54" r="24"') +
     degradeSvg(u + 'bec', 'linear', [[0, p.bec1], [1, p.bec2]], 'x1="0" y1="56" x2="0" y2="66"') +
     '</defs>';
   function aile(sens) {
-    // dessinée pour la gauche, la droite est la même retournée. Main : 6 rémiges larges aux bouts arrondis, en éventail, une
-    // couverture cache leur base ; bras : couverture et rémiges secondaires en festons
-    var pointes = [[34, 70], [20, 64], [10, 54], [6, 43], [8, 32], [16, 22]];
-    var primaires = pointes.map(function (t, i) {
-      var by = 62 - i * 3.4;
-      var mx = (64 + t[0]) / 2;
+    // dessinée pour la gauche, la droite est la même retournée. Une aile de chouette est large et arrondie : un bras large
+    // près du corps (rémiges secondaires au bord arrière, trois rangs de couvertures en écailles), puis la main, qui
+    // s'affine peu à peu en 6 rémiges primaires aux bouts arrondis ; la couverture de la main cache leur base.
+    var primaires = '';
+    var pointes = [[16, 24], [7, 34], [4, 46], [8, 58], [18, 70], [34, 80]];
+    for (var i = pointes.length - 1; i >= 0; i--) {
+      var t = pointes[i];
+      var bx = 60 - i * 1.4;
+      var by = 40 + i * 6;
+      var mx = (bx + t[0]) / 2;
       var my = (by + t[1]) / 2;
-      var plume = '<path d="M64 ' + (by - 4) + ' C ' + mx + ' ' + (my - 6) + ', ' + (t[0] + 6) + ' ' + (t[1] - 6) + ', ' + t[0] + ' ' + t[1] +
-        ' C ' + (t[0] - 3) + ' ' + (t[1] + 6) + ', ' + mx + ' ' + (my + 7) + ', 64 ' + (by + 4) + ' Z" fill="url(#' + u + 'plume)"' + cssSvg('stroke', p.aile2) + ' stroke-width=".7" stroke-opacity=".55"/>';
+      primaires += '<path d="M' + bx + ' ' + (by - 4.5) + ' C ' + mx + ' ' + (my - 6) + ', ' + (t[0] + 5) + ' ' + (t[1] - 5) + ', ' + t[0] + ' ' + t[1] +
+        ' C ' + (t[0] - 2) + ' ' + (t[1] + 5) + ', ' + mx + ' ' + (my + 6) + ', ' + bx + ' ' + (by + 4.5) + ' Z" fill="url(#' + u + 'plume)"' + cssSvg('stroke', p.aile2) + ' stroke-width=".7" stroke-opacity=".55"/>';
       if (i === 3) {
-        plume += etoileSvg(t[0] + 10, t[1] + 1, 1.2);
+        primaires += etoileSvg(t[0] + 11, t[1] - 1, 1.2);
       }
-      return plume;
-    }).join('');
-    var couverture = '<path d="M70 38 C 56 33, 42 38, 32 48 C 42 54, 56 58, 70 58 Z" fill="url(#' + u + 'aile)"/>' +
-      '<path d="M66 40 C 56 37, 45 40, 36 48"' + cssSvg('stroke', p.or) + ' stroke-width="1" fill="none" opacity=".9"/>';
-    var festons = '';
-    for (var k = 0; k < 5; k++) {
-      var fx = 66 + k * 7.5;
-      var fy = 58 + k * 3;
-      festons += '<path d="M' + (fx - 4) + ' ' + (fy - 2) + ' Q ' + fx + ' ' + (fy + 9) + ', ' + (fx + 5) + ' ' + (fy + 1) + '" fill="url(#' + u + 'aile)"' + cssSvg('stroke', p.aile2) + ' stroke-width=".6" stroke-opacity=".5"/>';
     }
-    var bras = '<path d="M102 60 C 92 46, 78 40, 64 40 C 60 48, 62 56, 66 60 C 78 66, 90 70, 102 74 Z" fill="url(#' + u + 'aile)"/>' + festons +
-      '<path d="M96 60 C 86 52, 76 48, 68 48"' + cssSvg('stroke', p.aile2) + ' stroke-width="1.1" fill="none" opacity=".4"/>';
-    var g = '<g class="bras"><g class="main">' + primaires + couverture + '</g>' + bras + '</g>';
+    var couvertureMain = '<path d="M66 33 C 54 32, 43 39, 39 50 C 36 61, 40 72, 49 79 C 55 70, 59 52, 67 36 Z" fill="url(#' + u + 'bras)"' + cssSvg('stroke', p.aile2) + ' stroke-width=".5" stroke-opacity=".35"/>' +
+      '<path d="M64 36 C 54 36, 46 42, 42 51"' + cssSvg('stroke', p.or) + ' stroke-width="1" fill="none" opacity=".9"/>';
+    // rémiges secondaires : le bord arrière du bras, arrondi ; la 7e, sous la main, fait le raccord quand la main se lève
+    var secondaires = '';
+    for (var k = 6; k >= 0; k--) {
+      var sx = 96 - k * 8.2;
+      var sy = 87 - k * 2.6;
+      var tx = sx - 4;
+      var ty = sy + 12 - k * 0.6;
+      secondaires += '<path d="M' + (sx + 4.5) + ' ' + (sy - 3) + ' C ' + (sx + 4.5) + ' ' + (sy + 7) + ', ' + (tx + 3) + ' ' + ty + ', ' + tx + ' ' + ty +
+        ' C ' + (tx - 3.5) + ' ' + ty + ', ' + (sx - 4.5) + ' ' + (sy + 5) + ', ' + (sx - 4.5) + ' ' + (sy - 3) + ' Z" fill="url(#' + u + 'second)"' + cssSvg('stroke', p.aile2) + ' stroke-width=".6" stroke-opacity=".45"/>';
+    }
+    // le bras : couleur du corps à l'épaule, de l'aile vers le poignet ; trois rangs de couvertures, les plus hautes par-dessus
+    var couvertures = '';
+    [[6.5, 4, 'second', 95, 74, 58, 64, 6], [6, 3.6, 'bras', 95, 62, 64, 52, 5], [5, 3, 'couv', 94, 52, 66, 42, 5]].forEach(function (rang) {
+      for (var n = 0; n < rang[7]; n++) {
+        var f = n / (rang[7] - 1);
+        var cx = (rang[3] + (rang[5] - rang[3]) * f).toFixed(1);
+        var cy = (rang[4] + (rang[6] - rang[4]) * f).toFixed(1);
+        couvertures += '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + rang[0] + '" ry="' + rang[1] + '" transform="rotate(24 ' + cx + ' ' + cy + ')" fill="url(#' + u + rang[2] + ')"' + cssSvg('stroke', p.aile2) + ' stroke-width=".5" stroke-opacity=".45"/>';
+      }
+    });
+    var bras = secondaires + '<path d="M100 50 C 88 40, 74 34, 60 36 C 52 44, 47 58, 47 74 C 62 80, 84 86, 100 88 L 104 70 Z" fill="url(#' + u + 'bras)"/>' + couvertures;
+    var g = '<g class="bras"><g class="main">' + primaires + couvertureMain + '</g>' + bras + '</g>';
     if (sens > 0) {
       return '<g transform="translate(220 0) scale(-1 1)"><g class="aile d">' + g + '</g></g>';
     }
     return '<g class="aile g">' + g + '</g>';
   }
   var queue = '<path d="M100 98 L90 124 L100 120 L110 128 L120 120 L130 124 L120 98 Z" fill="url(#' + u + 'aile)"/>';
-  var corps = '<ellipse cx="110" cy="80" rx="22" ry="28" fill="url(#' + u + 'corps)"/>' +
+  // les épaules : des plumes du corps par-dessus l'attache des ailes (elles ne bougent pas, l'aile pivote dessous)
+  var epaule = 'M100 52 C 92 53, 88 58, 91 63 C 86 66, 86 72, 91 74 C 88 79, 92 83, 98 82 L 106 70 Z';
+  var epaules = '<path d="' + epaule + '" fill="url(#' + u + 'corps)"' + cssSvg('stroke', p.plume2) + ' stroke-width=".6" stroke-opacity=".5"/>' +
+    '<path d="' + epaule + '" transform="translate(220 0) scale(-1 1)" fill="url(#' + u + 'corps)"' + cssSvg('stroke', p.plume2) + ' stroke-width=".6" stroke-opacity=".5"/>';
+  var corps = '<ellipse cx="110" cy="80" rx="22" ry="28" fill="url(#' + u + 'corps)"/>' + epaules +
     '<path d="M110 66 C 122 66, 126 78, 125 88 C 124 100, 117 106, 110 106 C 103 106, 96 100, 95 88 C 94 78, 98 66, 110 66 Z" fill="url(#' + u + 'ventre)"/>';
   var ecailles = '';
   for (var r = 0; r < 3; r++) {
@@ -5740,7 +5765,7 @@ function chouetteVol() {
   var serres = '<path d="M103 106 l-3 7 M110 108 v7 M117 106 l3 7"' + cssSvg('stroke', p.pattes) + ' stroke-width="3" stroke-linecap="round"/>';
   var lettre = '<g class="lettre-portee" transform="translate(94 111) rotate(-5)"><rect width="34" height="23" rx="2" fill="#f6e6c4" stroke="#c8a774" stroke-width="1.2"/>' +
     '<path d="M0 2 L17 13 L34 2" fill="#ead2a2" stroke="#c8a774" stroke-width="1.2"/><circle cx="17" cy="13" r="4"' + cssSvg('fill', 'var(--accent)') + '/></g>';
-  return '<svg class="chouette-v" viewBox="0 0 220 140" aria-hidden="true">' + defs + aile(-1) + aile(1) + queue + corps + ecailles + tete + serres + lettre + '</svg>';
+  return '<svg class="chouette-v" viewBox="0 0 220 140" aria-hidden="true">' + defs + coucheAccessoire('fond', true) + aile(-1) + aile(1) + queue + corps + ecailles + coucheAccessoire('corps', true) + tete + coucheAccessoire('tete', true) + coucheAccessoire('cou', true) + serres + lettre + '</svg>';
 }
 // la branche où elle attend
 var BRANCHE_HIBOU = '<svg class="branche-h" viewBox="0 0 170 34" aria-hidden="true"><defs><linearGradient id="hbBois" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a8774a"/><stop offset="1" stop-color="#5e3a22"/></linearGradient></defs>' +
@@ -5821,6 +5846,131 @@ function enveloppeSvg() {
 function sceauLettre() {
   var u = 'scl' + (++numeroSvgHibou) + '-';
   return '<svg class="sceau-l" viewBox="0 0 40 40" aria-hidden="true">' + sceauCire(u, 20, 20, 13) + '</svg>';
+}
+// ---------- l'accessoire du jour : un pour chaque fête et chaque saison (thème « Au fil de l'année », fête essayée) ----------
+// Dessinés pour la chouette perchée (tête centrée en 60,52) ; en vol, ils sont réduits et posés sur sa tête plus petite.
+// couche : 'fond' (derrière elle), 'corps' (sur le ventre), 'tete' (penche avec la tête), 'cou' (par-dessus, sous le bec).
+function coeurSvg(x, y, t, c) {
+  return '<path d="M' + x + ' ' + (y + t * 0.9) + ' C ' + (x - t * 1.4) + ' ' + y + ', ' + (x - t * 0.9) + ' ' + (y - t * 0.9) + ', ' + x + ' ' + (y - t * 0.3) +
+    ' C ' + (x + t * 0.9) + ' ' + (y - t * 0.9) + ', ' + (x + t * 1.4) + ' ' + y + ', ' + x + ' ' + (y + t * 0.9) + ' Z"' + cssSvg('fill', c) + '/>';
+}
+function noteSvg(x, y, c) {
+  return '<ellipse cx="' + x + '" cy="' + y + '" rx="3.2" ry="2.4" transform="rotate(-20 ' + x + ' ' + y + ')"' + cssSvg('fill', c) + '/>' +
+    '<path d="M' + (x + 2.8) + ' ' + y + ' V ' + (y - 13) + ' q4 2 6 6"' + cssSvg('stroke', c) + ' stroke-width="1.4" fill="none" stroke-linecap="round"/>';
+}
+var ACCESSOIRES_CHOUETTE = null;
+// dessinés au premier usage (les fleurs et les feuilles viennent de Meubles.html)
+function accessoiresChouette() {
+  if (!ACCESSOIRES_CHOUETTE) {
+    ACCESSOIRES_CHOUETTE = {
+      // bonnet de Noël, la pointe retombe sur le côté
+      noel: ['tete', '<path d="M36 31 C 36 12, 56 2, 76 4 C 90 5, 100 12, 104 24 L 96 27 C 92 20, 86 16, 82 19 C 84 23, 85 27, 84 31 Z" fill="#c8272f"/>' +
+        '<path d="M44 26 C 46 14, 58 8, 72 8" stroke="#ff6b6b" stroke-width="2" fill="none" opacity=".6" stroke-linecap="round"/>' +
+        '<path d="M32 31 C 45 23, 75 23, 88 31 C 89 35, 87 39, 85 39 C 72 32, 48 32, 35 39 C 33 39, 31 35, 32 31 Z" fill="#fbfbf7" stroke="#d8d8d0" stroke-width=".8"/>' +
+        '<circle cx="101" cy="27" r="6.5" fill="#fbfbf7" stroke="#d8d8d0" stroke-width=".8"/><circle cx="99" cy="25" r="2" fill="#fff"/>'],
+      // chapeau de fête pointu, rayé, et quelques confettis
+      nouvelan: ['tete', '<g transform="rotate(12 63 27)"><path d="M48 28 L63 -8 L78 28 Z"' + cssSvg('fill', 'var(--gold)') + '/>' +
+        '<path d="M55.5 10 L70.5 10 L73 16 L53 16 Z M51 21 L75 21 L77 26 L49 26 Z"' + cssSvg('fill', 'var(--accent)') + ' opacity=".85"/>' +
+        '<circle cx="63" cy="-9" r="4"' + cssSvg('fill', 'var(--accent)') + '/></g>' +
+        '<rect x="18" y="16" width="5" height="3" rx="1" transform="rotate(30 20 17)"' + cssSvg('fill', 'var(--gold)') + '/><rect x="100" y="30" width="5" height="3" rx="1" transform="rotate(-25 102 31)"' + cssSvg('fill', 'var(--accent)') + '/>' +
+        '<circle cx="16" cy="40" r="1.8"' + cssSvg('fill', 'var(--lav)') + '/><circle cx="104" cy="12" r="1.8"' + cssSvg('fill', 'var(--gold)') + '/>'],
+      // chapeau de sorcière, pointe cassée, ruban et boucle dorée
+      halloween: ['tete', '<ellipse cx="60" cy="28" rx="37" ry="7" fill="#24152f"/><ellipse cx="60" cy="27" rx="35" ry="5.5" fill="#3a2650"/>' +
+        '<path d="M42 27 C 48 18, 50 8, 58 -2 C 62 -8, 70 -14, 81 -12 C 74 -8, 70 0, 72 10 C 74 17, 76 22, 78 27 Z" fill="#2f1d42"/>' +
+        '<path d="M50 20 C 52 10, 56 2, 62 -4" stroke="#5a3f7a" stroke-width="1.6" fill="none" stroke-linecap="round"/>' +
+        '<path d="M43 23 C 52 26, 68 26, 77 23 L 78 27.5 C 68 30.5, 52 30.5, 42 27.5 Z"' + cssSvg('fill', 'var(--accent)') + '/>' +
+        '<rect x="56" y="22.6" width="8" height="6" rx="1" fill="none"' + cssSvg('stroke', 'var(--gold)') + ' stroke-width="1.4"/>'],
+      // chapeau de magicien bleu nuit, lune et étoiles dorées
+      imaginaire: ['tete', '<ellipse cx="61" cy="28" rx="28" ry="5.5" fill="#1c1a52"/>' +
+        '<path d="M44 28 C 50 14, 56 2, 63 -16 C 66 -2, 72 13, 78 28 Z" fill="#2b2878"/><path d="M52 22 C 55 12, 59 2, 62 -8" stroke="#4a46a8" stroke-width="1.5" fill="none" stroke-linecap="round"/>' +
+        etoileSvg(63, -15, 1.6) + etoileSvg(68, 14, 1.1) + etoileSvg(55, 20, 0.9) +
+        '<path d="M60 8 a4.5 4.5 0 1 1 -2.5 -6 a3.5 3.5 0 1 0 2.5 6 Z"' + cssSvg('fill', 'var(--gold)') + '/>'],
+      // serre-tête à cœurs
+      valentin: ['tete', '<path d="M29 37 C 38 17, 82 17, 91 37" fill="none"' + cssSvg('stroke', 'color-mix(in srgb,var(--accent) 70%,#fff)') + ' stroke-width="3.5" stroke-linecap="round"/>' +
+        coeurSvg(43, 21, 5, 'var(--accent)') + coeurSvg(60, 15, 6.5, '#e0245e') + coeurSvg(77, 21, 5, 'var(--accent)')],
+      // une crêpe posée sur la tête
+      chandeleur: ['tete', '<g transform="rotate(-8 58 23)"><ellipse cx="58" cy="24" rx="25" ry="7.5" fill="#d9963a"/><ellipse cx="58" cy="22" rx="24" ry="6.5" fill="#f3c46e"/>' +
+        '<ellipse cx="50" cy="21" rx="3" ry="1.2" fill="#c98a3a"/><ellipse cx="64" cy="23" rx="2.4" ry="1" fill="#c98a3a"/><ellipse cx="70" cy="20" rx="1.6" ry=".8" fill="#c98a3a"/>' +
+        '<path d="M40 19 C 48 16, 60 15, 72 17" stroke="#fff3c9" stroke-width="1.6" fill="none" opacity=".7" stroke-linecap="round"/></g>'],
+      // serre-tête à oreilles de lapin, une oreille pliée
+      paques: ['tete', '<path d="M32 35 C 42 21, 78 21, 88 35" fill="none" stroke="#f3b6cb" stroke-width="3" stroke-linecap="round"/>' +
+        '<path d="M44 27 C 34 5, 36 -17, 44 -19 C 52 -17, 54 5, 51 27 Z" fill="#fbfbf7" stroke="#e2dccf" stroke-width=".8"/><path d="M45.5 23 C 39 5, 41 -11, 45 -13 C 49 -11, 50 5, 48.5 23 Z" fill="#f6b3c9"/>' +
+        '<g transform="rotate(28 70 27)"><path d="M67 27 C 60 9, 62 -7, 69 -9 C 76 -7, 77 9, 74 27 Z" fill="#fbfbf7" stroke="#e2dccf" stroke-width=".8"/><path d="M68.5 23 C 64 9, 65.5 -2, 69 -4 C 72.5 -2, 73 9, 72 23 Z" fill="#f6b3c9"/></g>'],
+      // un poisson en papier collé sur le ventre
+      poisson: ['corps', '<g transform="rotate(-14 84 110)"><path d="M70 110 C 76 102, 88 102, 94 110 C 88 118, 76 118, 70 110 Z M93 110 L 102 103 L 101 117 Z" fill="#8fd0ee" stroke="#3a86b0" stroke-width="1"/>' +
+        '<circle cx="76" cy="108.5" r="1.4" fill="#1d3a4d"/><path d="M82 105 q3 5 0 10 M87 105 q3 5 0 10" stroke="#3a86b0" stroke-width=".9" fill="none"/>' +
+        '<rect x="81" y="99" width="10" height="5" rx="1" fill="#fff7d6" opacity=".75" transform="rotate(20 86 101)"/></g>'],
+      // lunettes de lecture rondes
+      livre: ['tete', '<circle cx="45" cy="56" r="13.5" fill="#fff" fill-opacity=".12" stroke="#3a2a20" stroke-width="2.2"/><circle cx="75" cy="56" r="13.5" fill="#fff" fill-opacity=".12" stroke="#3a2a20" stroke-width="2.2"/>' +
+        '<path d="M58 54 Q60 51 62 54 M31.5 54 L25 50 M88.5 54 L95 50" stroke="#3a2a20" stroke-width="2.2" fill="none" stroke-linecap="round"/>' +
+        '<path d="M38 49 l5 -3 M68 49 l5 -3" stroke="#fff" stroke-width="1.4" opacity=".6" stroke-linecap="round"/>'],
+      // casque audio et deux notes
+      musique: ['tete', '<path d="M21 52 C 21 12, 99 12, 99 52" fill="none" stroke="#2b2b36" stroke-width="5" stroke-linecap="round"/><path d="M24 44 C 28 20, 92 20, 96 44" fill="none" stroke="#55556a" stroke-width="1.4" opacity=".7"/>' +
+        '<rect x="14" y="42" width="14" height="22" rx="6" fill="#2b2b36"/><rect x="16.5" y="45" width="9" height="16" rx="4"' + cssSvg('fill', 'var(--accent)') + '/>' +
+        '<rect x="92" y="42" width="14" height="22" rx="6" fill="#2b2b36"/><rect x="94.5" y="45" width="9" height="16" rx="4"' + cssSvg('fill', 'var(--accent)') + '/>' +
+        noteSvg(108, 24, 'var(--gold)') + noteSvg(10, 30, 'var(--gold)')],
+      // oreilles de chat noires et moustaches
+      chat: ['tete', '<path d="M30 33 L27 4 L52 23 Z" fill="#2b2b36"/><path d="M33 27 L31 11 L46 23 Z" fill="#f6b3c9"/><path d="M90 33 L93 4 L68 23 Z" fill="#2b2b36"/><path d="M87 27 L89 11 L74 23 Z" fill="#f6b3c9"/>' +
+        '<path d="M52 70 L33 66 M52 72 L32 72 M52 74 L34 78 M68 70 L87 66 M68 72 L88 72 M68 74 L86 78" stroke="#2b2b36" stroke-width=".9" stroke-linecap="round" opacity=".75"/>'],
+      // une étoile filante au-dessus de la tête
+      etoiles: ['tete', '<path d="M26 26 Q 50 4 76 6" stroke="#fff3c4" stroke-width="5" fill="none" opacity=".25" stroke-linecap="round"/><path d="M36 20 Q 54 6 76 6" stroke="#fff3c4" stroke-width="2.4" fill="none" opacity=".6" stroke-linecap="round"/>' +
+        '<circle cx="78" cy="6" r="7"' + cssSvg('fill', 'var(--gold)') + ' opacity=".25"/>' + etoileSvg(78, 6, 3) + etoileSvg(96, 22, 1) + etoileSvg(20, 12, 0.9)],
+      // un béret d'écrivain
+      rentree: ['tete', '<path d="M28 31 C 28 15, 52 9, 72 11 C 92 13, 100 24, 93 31 C 80 26, 44 26, 28 31 Z" fill="#2d3a5a"/><path d="M36 25 C 44 16, 62 13, 78 15" stroke="#4a5a82" stroke-width="2" fill="none" stroke-linecap="round" opacity=".8"/>' +
+        '<path d="M62 11 l1 -5" stroke="#2d3a5a" stroke-width="2.4" stroke-linecap="round"/>'],
+      // la pleine lune derrière elle
+      pleinelune: ['fond', '<circle cx="60" cy="54" r="50" fill="#fff6c9" opacity=".18"/><circle cx="60" cy="54" r="40" fill="#fff3b0" opacity=".28"/>' +
+        '<circle cx="44" cy="40" r="5" fill="#e9d98a" opacity=".35"/><circle cx="78" cy="68" r="7" fill="#e9d98a" opacity=".3"/>'],
+      // un trèfle à quatre feuilles piqué près de l'aigrette
+      vendredi13: ['tete', '<g transform="rotate(-15 82 22)"><path d="M82 26 q2 8 -1 14" stroke="#3f8f52" stroke-width="1.6" fill="none" stroke-linecap="round"/>' +
+        coeurSvg(82, 17, 4.2, '#4caf6a') + '<g transform="rotate(90 82 22)">' + coeurSvg(82, 17, 4.2, '#4caf6a') + '</g><g transform="rotate(180 82 22)">' + coeurSvg(82, 17, 4.2, '#4caf6a') + '</g><g transform="rotate(270 82 22)">' + coeurSvg(82, 17, 4.2, '#4caf6a') + '</g>' +
+        '<circle cx="82" cy="22" r="1.4" fill="#2f7a42"/></g>'],
+      // une couronne de fleurs
+      printemps: ['tete', '<path d="M29 35 C 40 20, 80 20, 91 35" fill="none" stroke="#5a9a4a" stroke-width="2.2" stroke-linecap="round"/>' +
+        feuilleSvg(38, 28, -40, 10, '#6aa86a') + feuilleSvg(84, 30, -140, 10, '#6aa86a') + feuilleSvg(52, 22, -20, 9, '#7fbf7a') + feuilleSvg(70, 22, -160, 9, '#7fbf7a') +
+        fleurSvg(33, 30, 7, '#f4a6c6') + fleurSvg(46, 23, 7.5, '#fff3a6') + fleurSvg(60, 20.5, 8.5, '#c9b3f4') + fleurSvg(74, 23, 7.5, '#f4a6c6') + fleurSvg(87, 30, 7, '#ffd1a6')],
+      // lunettes de soleil
+      ete: ['tete', '<ellipse cx="45" cy="56" rx="13.5" ry="11.5" fill="#1d1d2b" opacity=".93"/><ellipse cx="75" cy="56" rx="13.5" ry="11.5" fill="#1d1d2b" opacity=".93"/>' +
+        '<path d="M58 54 Q60 51 62 54 M31.5 53 L25 49 M88.5 53 L95 49" fill="none" stroke-width="2.4" stroke-linecap="round"' + cssSvg('stroke', 'var(--accent)') + '/>' +
+        '<ellipse cx="45" cy="56" rx="13.5" ry="11.5" fill="none" stroke-width="2"' + cssSvg('stroke', 'var(--accent)') + '/><ellipse cx="75" cy="56" rx="13.5" ry="11.5" fill="none" stroke-width="2"' + cssSvg('stroke', 'var(--accent)') + '/>' +
+        '<path d="M37 52 l7 -5 M67 52 l7 -5" stroke="#fff" stroke-width="2" opacity=".55" stroke-linecap="round"/>'],
+      // une écharpe tricotée, un pan qui pend
+      automne: ['cou', '<path d="M29 79 C 44 89, 76 89, 91 79 L 93 88 C 77 99, 43 99, 27 88 Z"' + cssSvg('fill', 'var(--accent)') + '/>' +
+        '<path d="M28 84 C 44 94, 76 94, 92 84" fill="none"' + cssSvg('stroke', 'color-mix(in srgb,var(--accent) 55%,#fff)') + ' stroke-width="2.4"/>' +
+        '<path d="M70 90 L 66 114 L 79 114 L 81 91 Z"' + cssSvg('fill', 'var(--accent)') + '/><path d="M67.5 104 L 79.5 104"' + cssSvg('stroke', 'color-mix(in srgb,var(--accent) 55%,#fff)') + ' stroke-width="2.4"/>' +
+        '<path d="M67 114 v4 M70 114 v4 M73 114 v4 M76 114 v4 M79 114 v4"' + cssSvg('stroke', 'var(--accent)') + ' stroke-width="1.4" stroke-linecap="round"/>' +
+        '<path d="M38 86 l2 3 2 -3 M50 89 l2 3 2 -3 M64 89 l2 3 2 -3 M78 86 l2 3 2 -3" fill="none"' + cssSvg('stroke', 'color-mix(in srgb,var(--accent) 60%,#2a0a18)') + ' stroke-width=".8" opacity=".6"/>'],
+      // bonnet de laine à pompon
+      hiver: ['tete', '<path d="M31 33 C 30 10, 90 10, 89 33 Z"' + cssSvg('fill', 'var(--accent)') + '/>' +
+        '<path d="M44 31 C 44 18, 46 14, 48 13 M56 31 V 12 M64 31 V 12 M76 31 C 76 18, 74 14, 72 13" fill="none"' + cssSvg('stroke', 'color-mix(in srgb,var(--accent) 60%,#1b1330)') + ' stroke-width="1.2" opacity=".5"/>' +
+        '<rect x="29" y="28" width="62" height="10" rx="5"' + cssSvg('fill', 'color-mix(in srgb,var(--accent) 45%,#fff)') + '/>' +
+        '<circle cx="60" cy="8" r="7.5" fill="#fbfbf7"/><circle cx="56" cy="5" r="3" fill="#fff"/><circle cx="64" cy="10" r="3" fill="#ecebe4"/>']
+    };
+  }
+  return ACCESSOIRES_CHOUETTE;
+}
+// l'accessoire du jour : celui de la fête ou de la saison du thème (et l'écharpe pour le thème fixe « automne »)
+function accessoireChouette() {
+  var id = feteActive;
+  if (!id && themeChoisi === 'autumn') {
+    id = 'automne';
+  }
+  if (id && accessoiresChouette()[id]) {
+    return id;
+  }
+  return null;
+}
+// une couche d'accessoire ; en vol, réduite et posée sur la tête de la chouette volante
+function coucheAccessoire(couche, enVol) {
+  var id = accessoireChouette();
+  if (!id || accessoiresChouette()[id][0] !== couche) {
+    return '';
+  }
+  var t = '';
+  if (enVol) {
+    t = ' transform="translate(110 50) scale(.55) translate(-60 -52)"';
+  }
+  return '<g class="accessoire acc-' + id + '"' + t + '>' + accessoiresChouette()[id][1] + '</g>';
 }
 
 // les filtres du hibou (formats, tailles) : dans la base, réglage « hibou »
@@ -14339,7 +14489,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 11:37:00';
+var VERSION_APPLI = '2026-10-06 12:09:07';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
