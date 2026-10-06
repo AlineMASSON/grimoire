@@ -1,18 +1,21 @@
 // Service worker du grimoire : fonctionnement hors ligne + réception des fichiers partagés (sauvegarde, export Bookmory).
-var VERSION = 'grimoire-v10';
+var VERSION = 'grimoire-v11';
 var PARTAGE = 'grimoire-partage';
 // couvertures et décorations à part, avec un plafond : ce cache ne grossit plus sans fin
 var IMAGES = 'grimoire-images';
 var IMAGES_MAX = 300;
 // au-delà, la page gardée en cache s'ouvre (elle se met à jour dès que le réseau répond)
 var ATTENTE_RESEAU = 3000;
-// sql.js ne sert qu'à l'import Bookmory : il est mis en cache au premier usage
+// sql.js ne sert qu'à l'import Bookmory : il est mis en cache au premier usage ;
+// GSAP anime Bergamote, la chouette du courrier : préchargé pour qu'elle vole aussi hors ligne
 var FICHIERS = [
   './index.html',
   './manifest.webmanifest',
   './icone2-192.png',
   './icone2-512.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/MotionPathPlugin.min.js'
 ];
 
 // cache: 'reload' : on prend les fichiers sur le serveur, pas une copie gardée par le navigateur ;
