@@ -6808,23 +6808,32 @@ function ecrire(ops) {
     return new Promise(function (ok, ko) {
       var tx = db.transaction(tables, 'readwrite');
       var maintenant = Date.now();
-      ops.forEach(function (op) {
-        var s = tx.objectStore(op.t);
-        if (op.suppr !== undefined) {
-          s.delete(op.suppr);
-          return;
-        }
-        if (!op.o.id) {
-          op.o.id = nouvelId();
-        }
-        if (!op.o.creeLe) {
-          op.o.creeLe = maintenant;
-        }
-        if (!op.garderDate || !op.o.modifieLe) {
-          op.o.modifieLe = maintenant;
-        }
-        s.put(op.o);
-      });
+      // tout ou rien : une erreur sur une écriture annule toute la transaction (rien n'est gardé à moitié)
+      try {
+        ops.forEach(function (op) {
+          var s = tx.objectStore(op.t);
+          if (op.suppr !== undefined) {
+            s.delete(op.suppr);
+            return;
+          }
+          if (!op.o.id) {
+            op.o.id = nouvelId();
+          }
+          if (!op.o.creeLe) {
+            op.o.creeLe = maintenant;
+          }
+          if (!op.garderDate || !op.o.modifieLe) {
+            op.o.modifieLe = maintenant;
+          }
+          s.put(op.o);
+        });
+      } catch (e) {
+        try {
+          tx.abort();
+        } catch (e2) {}
+        ko(e);
+        return;
+      }
       tx.oncomplete = function () {
         ops.forEach(function (op) {
           if (op.suppr !== undefined) {
@@ -6859,11 +6868,20 @@ function ecrire(ops) {
 var apresEcritureHooks = [];
 function apresEcriture() {
   M = modeleDepuisBase();
-  if (typeof roue !== 'undefined') {
-    roue.livres = null;
+  // d'abord la sauvegarde et les vérifications (la base est déjà écrite), ensuite l'affichage
+  apresEcritureHooks.forEach(function (f) {
+    try {
+      f();
+    } catch (e) {
+      console.error(e);
+    }
+  });
+  try {
+    rendre();
+  } catch (e) {
+    console.error(e);
+    toast('⚠️ Enregistré, mais l\'affichage a eu un souci : rouvre l\'onglet');
   }
-  rendre();
-  apresEcritureHooks.forEach(function (f) { f(); });
 }
 function enregistrer(t, o) {
   return ecrire([{t: t, o: o}]).then(apresEcriture);
@@ -6894,6 +6912,11 @@ function idGenre(nom) {
 }
 function opsListesDeDepart() {
   var ops = [];
+  // une seule fois : une liste vidée exprès ensuite ne se remplit plus toute seule
+  if (reglage('listesDeDepart')) {
+    return ops;
+  }
+  ops.push({t: 'reglages', o: {id: 'listesDeDepart', v: Date.now()}});
   if (!valeurs(D.criteres).length) {
     CRITERES.forEach(function (c, i) {
       ops.push({t: 'criteres', o: {id: c[0], nom: c[2], emoji: c[1], ordre: i}});
@@ -6926,11 +6949,110 @@ function opsListesDeDepart() {
 function preparerBase() {
   return chargerBase().then(function () {
     var migration = fusionnerMigrations(opsFusionSessions().concat(opsPlusEnvie(), opsEmojisCriteres(), opsLangueFrancais(), opsEtatAchats()));
-    if (migration.length) {
-      // la base a changé : une sauvegarde partira au démarrage
+    var change = migration.some(function (op) { return op.t !== 'reglages'; });
+    if (change) {
+      // la base va changer : une sauvegarde partira au démarrage
       lsSet('bm_sauv_attente', '1');
     }
-    return ecrire(opsListesDeDepart().concat(migration));
+    var avant = Promise.resolve();
+    if (change && valeurs(D.livres).length) {
+      avant = faireInstantane('avant une mise à jour de l\'appli');
+    }
+    return avant.then(function () {
+      return ecrire(opsListesDeDepart().concat(migration));
+    }).catch(function (e) {
+      // une mise à jour ratée n'empêche pas d'ouvrir le grimoire ; elle sera retentée au prochain démarrage
+      console.error(e);
+      lsSet('bm_erreur_migration', String((e && e.message) || e));
+    });
+  });
+}
+
+// ---------- copies de sécurité locales : avant une restauration, un réimport, des propositions, une migration ----------
+// Une copie complète des données (sans les photos, qui ne changent pas dans ces opérations), dans une base à part.
+// On garde les 5 dernières ; ⚙️ Réglages → Copies de sécurité permet d'y revenir.
+var BASE_INSTANTANES = 'grimoire-instantanes';
+var INSTANTANES_MAX = 5;
+function baseInstantanes() {
+  return new Promise(function (ok, ko) {
+    var r = indexedDB.open(BASE_INSTANTANES, 1);
+    r.onupgradeneeded = function () {
+      r.result.createObjectStore('instantanes', {keyPath: 'id'});
+    };
+    r.onsuccess = function () {
+      ok(r.result);
+    };
+    r.onerror = function () {
+      ko(r.error);
+    };
+  });
+}
+// ne bloque jamais l'opération qui suit : une copie ratée est seulement signalée dans la console
+function faireInstantane(raison) {
+  if (!valeurs(D.livres).length) {
+    return Promise.resolve();
+  }
+  var tables = {};
+  Object.keys(TABLES).forEach(function (t) {
+    if (t !== 'photos') {
+      tables[t] = valeurs(D[t]);
+    }
+  });
+  var inst = {id: Date.now(), raison: raison, livres: valeurs(D.livres).length, tables: tables};
+  return baseInstantanes().then(function (db) {
+    return new Promise(function (ok) {
+      var tx = db.transaction('instantanes', 'readwrite');
+      var s = tx.objectStore('instantanes');
+      s.put(inst);
+      var req = s.getAllKeys();
+      req.onsuccess = function () {
+        var cles = req.result.slice().sort(function (a, b) { return a - b; });
+        cles.slice(0, Math.max(0, cles.length - INSTANTANES_MAX)).forEach(function (k) {
+          s.delete(k);
+        });
+      };
+      tx.oncomplete = ok;
+      tx.onerror = function () {
+        ok();
+      };
+    });
+  }).catch(function (e) {
+    console.error(e);
+  });
+}
+function listerInstantanes() {
+  return baseInstantanes().then(function (db) {
+    return new Promise(function (ok, ko) {
+      var req = db.transaction('instantanes').objectStore('instantanes').getAll();
+      req.onsuccess = function () {
+        ok(req.result.sort(function (a, b) { return b.id - a.id; }));
+      };
+      req.onerror = function () {
+        ko(req.error);
+      };
+    });
+  });
+}
+// revenir à une copie : ses données remplacent la base, les photos et les réglages privés du téléphone sont gardés
+function revenirInstantane(id) {
+  return listerInstantanes().then(function (l) {
+    var inst = l.find(function (x) { return x.id === id; });
+    if (!inst) {
+      throw new Error('Copie introuvable');
+    }
+    return faireInstantane('avant de revenir à une copie').then(function () {
+      var tables = {};
+      Object.keys(TABLES).forEach(function (t) {
+        tables[t] = inst.tables[t] || [];
+      });
+      tables.photos = valeurs(D.photos);
+      REGLAGES_PRIVES.forEach(function (k) {
+        if (D.reglages[k]) {
+          tables.reglages = tables.reglages.filter(function (r) { return r.id !== k; }).concat([D.reglages[k]]);
+        }
+      });
+      return remplacerBase(tables);
+    });
   });
 }
 
@@ -6939,6 +7061,13 @@ function preparerBase() {
 var NOUVEAUX_EMOJIS_CRITERES = {perso: ['👥', '🧙‍♀️'], plume: ['✒️', '🪶'], univers: ['🏰', '🏞️']};
 function opsEmojisCriteres() {
   var ops = [];
+  // une seule fois : un emoji repris ensuite à la main n'est plus changé
+  if (reglage('migrationEmojisCriteres')) {
+    return ops;
+  }
+  if (valeurs(D.criteres).length) {
+    ops.push({t: 'reglages', o: {id: 'migrationEmojisCriteres', v: Date.now()}});
+  }
   Object.keys(NOUVEAUX_EMOJIS_CRITERES).forEach(function (id) {
     var c = D.criteres && D.criteres[id];
     var e = NOUVEAUX_EMOJIS_CRITERES[id];
@@ -7752,7 +7881,9 @@ function importerBookmory(buf) {
 // ---------- Sauvegarde : tout le grimoire dans un zip (donnees.json + photos/) ----------
 var FORMAT_SAUVEGARDE = 'grimoire';
 // réglages qui ne quittent jamais le téléphone
-var REGLAGES_PRIVES = ['liaison'];
+// propres au téléphone, jamais remplacés par une restauration : le code de liaison, et la dernière sauvegarde
+// (sinon une vieille sauvegarde restaurée désarmerait le garde-fou contre un grimoire soudain vidé)
+var REGLAGES_PRIVES = ['liaison', 'derniereSauvegarde'];
 
 function nomFichierPhoto(id, type) {
   var ext = 'jpg';
@@ -7780,7 +7911,8 @@ function fabriquerSauvegarde() {
     });
     var photos = valeurs(D.photos).map(function (p) {
       var f = nomFichierPhoto(p.id, p.type);
-      z.file(f, p.blob);
+      // les photos sont déjà compressées (JPEG) : les recompresser coûte du temps pour rien
+      z.file(f, p.blob, {compression: 'STORE'});
       return {id: p.id, type: p.type, fichier: f, creeLe: p.creeLe, modifieLe: p.modifieLe, origine: p.origine};
     });
     z.file('donnees.json', JSON.stringify({format: FORMAT_SAUVEGARDE, version: BASE_VERSION, date: Date.now(), tables: tables, photos: photos}));
@@ -7907,9 +8039,24 @@ function appelRelais(action, champs, l) {
     return Promise.reject(new Error('Sauvegarde Drive pas encore reliée'));
   }
   var corps = Object.assign({secret: l.secret, action: action}, champs || {});
-  return fetch(l.url, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(corps)}).then(function (r) {
+  // un envoi bloqué (réseau perdu) est abandonné au bout d'un moment, pour ne pas bloquer les suivants
+  var arret = null;
+  var opts = {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(corps)};
+  if (window.AbortController) {
+    var ctrl = new AbortController();
+    opts.signal = ctrl.signal;
+    var delai = 30000;
+    if (action === 'sauver' || action === 'lire') {
+      delai = 120000;
+    }
+    arret = setTimeout(function () {
+      ctrl.abort();
+    }, delai);
+  }
+  return fetch(l.url, opts).then(function (r) {
     return r.json();
   }).then(function (rep) {
+    clearTimeout(arret);
     if (!rep.ok) {
       var msg = rep.erreur;
       if (rep.erreur === 'secret') {
@@ -7977,13 +8124,24 @@ function majTemoin(etat) {
   }
 }
 
+// au moins 5 min entre deux envois pendant qu'on utilise l'appli (chacun repart avec toutes les photos) ;
+// le passage en arrière-plan, lui, envoie tout de suite ce qui attend
+var ECART_SAUVEGARDES = 5 * 60 * 1000;
+var versionDonnees = 0;
+var sauvegardeARefaire = false;
 function planifierSauvegarde() {
   if (!liaison()) {
     return;
   }
+  versionDonnees++;
   lsSet('bm_sauv_attente', '1');
   clearTimeout(minuteurSauvegarde);
-  minuteurSauvegarde = setTimeout(sauvegarderMaintenant, DELAI_SAUVEGARDE);
+  var derniere = reglage('derniereSauvegarde');
+  var delai = DELAI_SAUVEGARDE;
+  if (derniere && derniere.date) {
+    delai = Math.max(delai, ECART_SAUVEGARDES - (Date.now() - derniere.date));
+  }
+  minuteurSauvegarde = setTimeout(sauvegarderMaintenant, delai);
 }
 apresEcritureHooks.push(planifierSauvegarde);
 
@@ -7991,9 +8149,15 @@ apresEcritureHooks.push(planifierSauvegarde);
 function sauvegarderMaintenant(force) {
   clearTimeout(minuteurSauvegarde);
   minuteurSauvegarde = null;
-  if (!liaison() || sauvegardeEnCours) {
+  if (!liaison()) {
     return Promise.resolve();
   }
+  // un envoi est déjà en cours : on en refera un juste après, pour ne pas perdre ce qui vient de changer
+  if (sauvegardeEnCours) {
+    sauvegardeARefaire = true;
+    return Promise.resolve();
+  }
+  var version = versionDonnees;
   var n = valeurs(D.livres).length;
   var avant = reglage('derniereSauvegarde');
   // garde-fou : un grimoire soudain vidé ne doit pas écraser les sauvegardes
@@ -8006,14 +8170,26 @@ function sauvegarderMaintenant(force) {
   return fabriquerSauvegarde().then(blobEnBase64).then(function (b64) {
     return appelRelais('sauver', {contenu: b64, jour: dkey(new Date())});
   }).then(function (rep) {
-    lsSet('bm_sauv_attente', '');
+    // une modification arrivée pendant l'envoi garde la sauvegarde « en attente »
+    if (versionDonnees === version) {
+      lsSet('bm_sauv_attente', '');
+    }
     return regler('derniereSauvegarde', {date: Date.now(), livres: n, taille: rep.taille, nom: rep.nom});
   }).then(function () {
     sauvegardeEnCours = false;
     majTemoin('');
+    if (sauvegardeARefaire || versionDonnees !== version) {
+      sauvegardeARefaire = false;
+      planifierSauvegarde();
+    }
   }).catch(function (e) {
     sauvegardeEnCours = false;
-    majTemoin('☁️ pas sauvegardé (' + ((e && e.message) || 'hors connexion ?') + ')');
+    sauvegardeARefaire = false;
+    var msg = (e && e.message) || 'hors connexion ?';
+    if (e && e.name === 'AbortError') {
+      msg = 'réseau trop lent, nouvel essai plus tard';
+    }
+    majTemoin('☁️ pas sauvegardé (' + msg + ')');
   });
 }
 // l'appli passe en arrière-plan : on n'attend pas la fin du délai
@@ -11713,7 +11889,9 @@ ACTIONS.propAppliquer = function () {
     if (!ok) {
       return;
     }
-    return blobsCouvertures().then(function (blobs) {
+    return faireInstantane('avant des propositions').then(function () {
+      return blobsCouvertures();
+    }).then(function (blobs) {
       r = propOperations(blobs);
       return ecrire(r.ops);
     }).then(function () {
@@ -12349,12 +12527,43 @@ ACTIONS.reglages = function () {
   }
 
   var v = VERSION_APPLI;
+  h += '<div class="reglage"><h4>🛟 Copies de sécurité</h4><p class="small muted">Le grimoire garde une copie de tes données avant chaque restauration, réimport, application de propositions ou mise à jour de l\'appli (les 5 dernières).</p><div class="row"><button class="act doux" data-act="copiesSecurite">' + ic('history') + ' Voir les copies</button></div></div>';
+
   h += '<div class="reglage"><h4>📱 Stockage sur le téléphone</h4><p class="small" id="etatStockage">…</p><p class="small muted">Version de l\'appli : ' + esc(v.slice(8, 10) + '/' + v.slice(5, 7) + '/' + v.slice(0, 4) + ' à ' + v.slice(11, 16)) + ' · <a href="reparer.html" style="color:var(--accent)">bloquée sur une ancienne version ? Réparer</a></p>' +
     '<p class="small"><a href="aide.html" style="color:var(--accent)">📖 Installer, mettre à jour, changer de téléphone : le mode d\'emploi</a></p></div>';
   ouvrirFeuille(h);
   afficherStockage();
 };
 
+// les copies de sécurité locales (faireInstantane, Base.html) : la liste, et le retour à l'une d'elles
+ACTIONS.copiesSecurite = function () {
+  listerInstantanes().then(function (l) {
+    var h = '<h3>Copies de sécurité</h3><p class="small muted">Revenir à une copie remplace tes livres, lectures, carnet, citations et achats par ceux de ce moment-là. Tes photos et ta liaison au Drive ne bougent pas, et une copie de maintenant est gardée avant.</p>';
+    if (!l.length) {
+      h += '<p class="small muted">Aucune copie pour l\'instant : la première sera faite avant ta prochaine restauration, ton prochain import ou la prochaine mise à jour.</p>';
+    }
+    h += l.map(function (x) {
+      var d = new Date(x.id);
+      return '<div class="ligne-ed"><div class="small"><b>' + esc(fdate(x.id)) + ' à ' + d.getHours() + ' h ' + String(d.getMinutes()).padStart(2, '0') + '</b><div class="muted">' + esc(x.raison) + ' · ' + x.livres + ' livres</div></div><div class="boutons"><button class="mini-btn" data-act="revenirCopie" data-id="' + x.id + '" aria-label="Revenir à cette copie">' + ic('rotate-ccw') + '</button></div></div>';
+    }).join('');
+    h += '<div class="row" style="margin-top:12px"><button class="act doux" data-act="reglages">' + ic('chevron-left') + ' Retour</button></div>';
+    ouvrirFeuille(h);
+  }).catch(erreurEcriture);
+};
+ACTIONS.revenirCopie = function (el) {
+  var id = parseInt(el.dataset.id, 10);
+  demander('Ton grimoire va revenir à cette copie du ' + fdate(id) + '. Ce que tu as changé depuis sera remplacé (une copie de maintenant est gardée avant, tu pourras y revenir).', {titre: 'Revenir à cette copie ?', oui: 'Revenir', danger: true}).then(function (ok) {
+    if (!ok) {
+      return;
+    }
+    return revenirInstantane(id).then(function () {
+      fermerFeuille();
+      afficherGrimoire();
+      planifierSauvegarde();
+      toast('🛟 Grimoire revenu à la copie du ' + fdate(id));
+    });
+  }).catch(erreurEcriture);
+};
 function afficherStockage() {
   var el = document.getElementById('etatStockage');
   if (!el || !navigator.storage || !navigator.storage.persisted) {
@@ -12489,7 +12698,12 @@ function toast(texte) {
   }, 3500);
 }
 function erreurEcran(e) {
-  document.getElementById('app').innerHTML = '<div id="load" class="err">' + esc((e && e.message) || e) + '</div>';
+  // même en cas de pépin, les données déjà chargées peuvent partir dans un fichier
+  var secours = '';
+  if (typeof D !== 'undefined' && D.livres && valeurs(D.livres).length) {
+    secours = '<p class="small" style="margin-top:14px">Tes données sont toujours là : tu peux les mettre à l\'abri.</p><div class="row" style="justify-content:center"><button class="act" data-act="exporterSauvegarde">' + ic('share-2') + ' Exporter mon grimoire</button></div>';
+  }
+  document.getElementById('app').innerHTML = '<div id="load" class="err">' + esc((e && e.message) || e) + secours + '</div>';
 }
 
 function majSource() {
@@ -12560,7 +12774,9 @@ function proposerExportBookmory(buf) {
   };
 }
 function importerEtAfficher(buf) {
-  return importerBookmory(buf).then(function (recap) {
+  return faireInstantane('avant un réimport').then(function () {
+    return importerBookmory(buf);
+  }).then(function (recap) {
     afficherGrimoire();
     planifierSauvegarde();
     toast('✨ Grimoire mis à jour · ' + recap.livres + ' livres');
@@ -12578,7 +12794,9 @@ function proposerRestauration(lu) {
   ouvrirFeuille('<h3>Restaurer une sauvegarde</h3><p>' + esc(resumeSauvegarde(lu.donnees)) + '</p><p class="small muted">Tout ce qui est actuellement dans le grimoire sera remplacé par cette sauvegarde.</p><div class="row"><button class="act" data-act="confirmerRestauration">' + ic('rotate-ccw') + ' Restaurer</button><button class="act doux" data-act="fermer">Annuler</button></div>');
   ACTIONS.confirmerRestauration = function () {
     fermerFeuille();
-    restaurerSauvegarde(lu).then(function () {
+    faireInstantane('avant une restauration').then(function () {
+      return restaurerSauvegarde(lu);
+    }).then(function () {
       afficherSiPossible();
       planifierSauvegarde();
       toast('✨ Sauvegarde restaurée');
@@ -12614,7 +12832,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-06 09:37:56';
+var VERSION_APPLI = '2026-10-06 09:44:37';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
@@ -12760,12 +12978,17 @@ function demarrer() {
         });
       });
     }
-    // test en local : ?db=fichier
-    if (params.get('db')) {
+    // test en local seulement : ?db=fichier
+    if (params.get('db') && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
       return fetch(params.get('db')).then(function (r) { return r.arrayBuffer(); }).then(recevoirFichier);
     }
     return Promise.resolve(ouvrirGrimoire()).then(function () {
       reprendreVue(reprise);
+      // une mise à jour des données a échoué au démarrage : on le dit (elle sera retentée au prochain)
+      if (lsGet('bm_erreur_migration')) {
+        lsSet('bm_erreur_migration', '');
+        toast('⚠️ Une mise à jour de tes données n\'a pas pu se faire : nouvel essai au prochain démarrage');
+      }
     });
   }).then(function () {
     setTimeout(verifierMiseAJour, 2000);
