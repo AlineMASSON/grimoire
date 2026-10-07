@@ -10,10 +10,10 @@
 ## Ce qu'on y trouve
 
 - **Mes livres** : ajout par scan du code-barres, par recherche du titre ou à la main ; lectures, pages lues, minuteur de lecture, achats.
-- **Étagère magique** : les livres rangés par année sur un meuble en bois, en tranches ou en couvertures, avec des décorations à gagner. Bergamote, la chouette, apporte un livre de la pile à lire.
+- **Étagère magique** : les livres rangés par année sur un meuble en bois, en tranches ou en couvertures, avec des décorations à gagner et une étagère de tes coups de cœur. Bergamote, la chouette, apporte un livre de la pile à lire.
 - **Carnet** : critères, humeurs et tropes pour chaque livre ; citations avec photo et lecture du texte de la photo.
-- **Stats et bilan** : rythme, temps de lecture, goûts, l'année en chiffres, les Grimoires d'or et le bilan en stories.
-- **Quêtes** : niveaux de sorcière, défis de la semaine, bingo, sceaux en cire, cartes de collection, quêtes de saison et pari du destin, avec des animations à chaque victoire.
+- **Stats et bilan** : rythme, temps de lecture, goûts et coût, pour une année ou toutes confondues, l'année en chiffres, les Grimoires d'or et le bilan en stories.
+- **Quêtes** : niveaux de sorcière, quêtes de la semaine et du mois, bingo, sceaux en cire, cartes de collection, quêtes de saison et quêtes de Bergamote, avec des animations à chaque victoire.
 - **Thèmes au fil de l'année** : saisons, fêtes, pleine lune…
 
 ## Installer
