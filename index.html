@@ -6255,6 +6255,9 @@ function carteQueteBergamote() {
 .berg-mini{position:relative;width:76px;height:95px}
 .berg-mini .couche{position:absolute;inset:0}
 .berg-mini svg{display:block;width:100%;height:auto;overflow:visible}
+/* la petite branche où elle se pose, entre la queue (derrière) et le corps (devant), comme dans le courrier */
+.berg-mini .branche-mini{inset:auto;left:-12px;top:81px;width:100px}
+.berg-mini .branche-h{position:static;width:100%;margin:0}
 .berg-bulle{position:relative;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,var(--lav) 16%,var(--card));border:1px solid var(--line);font:400 20px/1.15 Sacramento,"Dancing Script",cursive}
 .berg-bulle:before{content:"";position:absolute;left:-7px;top:50%;width:12px;height:12px;margin-top:-6px;background:inherit;border-left:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}
 .berg-raccourcis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
@@ -7023,7 +7026,7 @@ function carteBergamoteAccueil() {
   var pal = M.livres.filter(function (b) { return b.statut === 'NOT_STARTED' && !b.wishlist; }).length;
   var envies = M.livres.filter(function (b) { return b.wishlist && b.statut !== 'DROPPED'; }).length;
   var dessin = chouetteBergamote();
-  return card('Bergamote', '<button class="berg-appel" data-act="allerALire"><span class="berg-mini" aria-hidden="true"><span class="couche">' + dessin.queue + '</span><span class="couche">' + dessin.corps + '</span></span><span class="berg-bulle">' + phraseBergamoteAccueil() + '</span></button>' +
+  return card('Bergamote', '<button class="berg-appel" data-act="allerALire"><span class="berg-mini" aria-hidden="true"><span class="couche">' + dessin.queue + '</span><span class="couche branche-mini">' + BRANCHE_HIBOU + '</span><span class="couche">' + dessin.corps + '</span></span><span class="berg-bulle">' + phraseBergamoteAccueil() + '</span></button>' +
     '<div class="berg-raccourcis"><button class="act doux" data-act="allerTous" data-e="pal">' + ic('layers') + ' Ma PAL · ' + pal + '</button><button class="act doux" data-act="allerTous" data-e="envies">' + ic('bookmark-plus') + ' Mes envies · ' + envies + '</button></div>', 'le courrier, ta pile à lire, tes envies');
 }
 // « Ma PAL » et « Mes envies » : la liste « Tous » déjà filtrée
@@ -16442,7 +16445,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-07 13:11:45';
+var VERSION_APPLI = '2026-10-07 13:13:57';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
