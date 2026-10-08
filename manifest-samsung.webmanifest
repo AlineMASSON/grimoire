@@ -1,0 +1,32 @@
+{
+  "name": "Mon grimoire de lectures",
+  "short_name": "Grimoire",
+  "description": "Mes lectures, mon étagère magique, mon carnet et mes citations",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fcf0f6",
+  "theme_color": "#f3c3da",
+  "icons": [
+    {
+      "src": "icone2-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icone2-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icone2-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
