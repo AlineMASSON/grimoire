@@ -1,5 +1,5 @@
 // Service worker du grimoire : fonctionnement hors ligne + réception des fichiers partagés (sauvegarde, export Bookmory).
-var VERSION = 'grimoire-v11';
+var VERSION = 'grimoire-v12';
 var PARTAGE = 'grimoire-partage';
 // couvertures et décorations à part, avec un plafond : ce cache ne grossit plus sans fin
 var IMAGES = 'grimoire-images';

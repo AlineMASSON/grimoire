@@ -13880,12 +13880,10 @@ html.externe main{padding:0 !important;margin:0;max-width:none}
 .ext-vide .em{font-size:40px;line-height:1}
 .ext-vide b{font:700 21px/1.2 "Cormorant Garamond",Georgia,serif;margin:10px 0 4px}
 .ext-vide p{margin:0;font-size:13px;color:var(--muted)}
-/* le minuteur : l'anneau-bouton au centre (Minuteur.html), dessous la couverture, le texte, puis annoter et terminer alignés à gauche */
+/* le minuteur : le titre en haut, l'anneau-bouton au centre (Minuteur.html) entre retour et annuler, dessous la couverture et le texte, annoter et terminer en bas à gauche */
 /* en bas, la place de l'icône de format de MultiStar, qui flotte au centre par-dessus l'appli */
 .page-minuteur.externe-m{padding:calc(6px + env(safe-area-inset-top)) 0 calc(30px + env(safe-area-inset-bottom));align-items:stretch;overflow:hidden}
 .pm-haut{display:flex;align-items:center;gap:8px;padding:4px 14px 0}
-.pm-haut button{border:0;background:none;color:var(--muted);font:700 13px Nunito,sans-serif;display:inline-flex;align-items:center;gap:4px;padding:4px 0;cursor:pointer}
-.pm-haut button .ic{width:16px;height:16px}
 .pm-haut .t{flex:1;min-width:0;text-align:center;font:700 16px "Cormorant Garamond",Georgia,serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* tailles en vh : la mise en page vise 380 × 400 environ et tient jusqu'à 375 de haut ; sur un écran plus grand, zoomExterne agrandit le tout (541 × 599 au format plein de MultiStar) */
 .pm-milieu{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:min(14px,3vh)}
@@ -13893,13 +13891,16 @@ html.externe main{padding:0 !important;margin:0;max-width:none}
 .externe-m .chrono-m{font-size:min(48px,11vh)}
 .externe-m .icone-m{margin-top:min(10px,2vh)}
 .externe-m .icone-m .ic{width:min(38px,9vh);height:min(38px,9vh)}
-.pm-colonne{display:flex;flex-direction:column;align-items:flex-start;gap:min(10px,2vh);padding-bottom:min(10px,2vh)}
+/* retour et annuler en ronds de chaque côté de l'anneau */
+.pm-anneau-rangee{display:flex;align-items:center;justify-content:center;gap:min(12px,2.5vh)}
+.pm-anneau-rangee .rond-m .ic{color:var(--muted)}
 .pm-livre{display:flex;align-items:center;gap:10px;text-align:left}
 .pm-livre .cv{width:min(38px,8.7vh);height:min(57px,13vh);flex:none;border-radius:6px;overflow:hidden;box-shadow:0 6px 14px rgba(0,0,0,.4)}
 .pm-livre .cv img,.pm-livre .cv .ph{width:100%;height:100%;object-fit:cover;font-size:11px}
 .pm-livre small{font-size:12px;color:var(--muted);line-height:1.45}
 .pm-livre b{color:var(--ink)}
-.pm-rangee{display:flex;gap:16px}
+/* annoter et terminer dans le coin en bas à gauche (la marge du bas reste pour l'icône de MultiStar, au centre) */
+.pm-rangee{display:flex;gap:16px;align-self:flex-start;padding-left:14px;margin:8px 0 -20px}
 .externe-m .rond-m{width:min(58px,14vh);height:min(58px,14vh);gap:1px;font-size:11px}
 .externe-m .rond-m .ic{width:20px;height:20px}
 .externe-m .rond-m small{display:block;margin-top:0}
@@ -13925,6 +13926,15 @@ html.externe .sheet .form label{margin:0;flex:1;font-size:11px}
 html.externe .sheet .form .champ{width:76px;flex:none;padding:6px 10px;text-align:center}
 html.externe .sheet .row{position:sticky;bottom:0;margin-top:8px !important;padding:6px 0 30px;background:var(--card)}
 html.externe .sheet .row .act{flex:1;padding:9px 10px}
+/* format étroit de MultiStar (269 de large) : anneau plus petit, retour et annuler sans texte, pour tenir sur une ligne */
+@media (max-width:340px){
+  .externe-m .anneau-m{width:140px;height:140px}
+  .externe-m .chrono-m{font-size:36px}
+  .externe-m .icone-m .ic{width:28px;height:28px}
+  .pm-anneau-rangee{gap:8px}
+  .pm-anneau-rangee .rond-m{width:44px;height:44px}
+  .pm-anneau-rangee .rond-m small{display:none}
+}
 </style>
 <script>
 // ---------- écran extérieur du Flip : l'accueil réduit aux livres en cours, le minuteur, la fin de session ----------
@@ -13979,10 +13989,10 @@ function texteListeExterne(s) {
 // la page du minuteur, version écran extérieur : les mêmes identifiants que la grande (majPageMinuteur la tient à jour)
 function htmlMinuteurExterne(s, l) {
   return '<div class="bandeau-pause">⏸ EN PAUSE ⏸ EN PAUSE ⏸ EN PAUSE ⏸ EN PAUSE</div>' +
-    '<div class="pm-haut"><button data-act="fermerPageMinuteur">' + ic('chevron-left') + ' Retour</button><span class="t">' + esc(titreCourt(l)) + '</span><button data-act="annulerMinuteur" aria-label="Annuler le minuteur">' + ic('x') + '</button></div>' +
-    '<div class="pm-milieu">' + htmlAnneauMinuteur(false) +
-    '<div class="pm-colonne"><div class="pm-livre"><div class="cv">' + couvSession(s) + '</div><small id="infosMinuteur"></small></div>' +
-    '<div class="pm-rangee"><button class="rond-m annot" data-act="annoterMinuteur">' + ic('quote') + '<small>annoter</small></button><button class="rond-m" data-act="arreterMinuteur">' + ic('square') + '<small>terminer</small></button></div></div></div>';
+    '<div class="pm-haut"><span class="t">' + esc(titreCourt(l)) + '</span></div>' +
+    '<div class="pm-milieu"><div class="pm-anneau-rangee"><button class="rond-m" data-act="fermerPageMinuteur" aria-label="Retour à la liste">' + ic('chevron-left') + '<small>retour</small></button>' + htmlAnneauMinuteur(false) + '<button class="rond-m" data-act="annulerMinuteur" aria-label="Annuler le minuteur">' + ic('x') + '<small>annuler</small></button></div>' +
+    '<div class="pm-livre"><div class="cv">' + couvSession(s) + '</div><small id="infosMinuteur"></small></div></div>' +
+    '<div class="pm-rangee"><button class="rond-m annot" data-act="annoterMinuteur">' + ic('quote') + '<small>annoter</small></button><button class="rond-m" data-act="arreterMinuteur">' + ic('square') + '<small>terminer</small></button></div>';
 }
 function messageOuvrirTelephone() {
   var p = document.getElementById('pageMinuteur');
@@ -16683,7 +16693,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-08 10:27:21';
+var VERSION_APPLI = '2026-10-08 10:44:08';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
