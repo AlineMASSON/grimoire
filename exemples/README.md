@@ -9,6 +9,10 @@ Deux fichiers pour découvrir le grimoire, ou pour voir à quoi ressemblent ses 
 
 ## Essayer
 
+Le plus simple : sur un grimoire vide, l'écran de bienvenue propose **Essayer avec l'exemple**. Le grimoire se remplit avec `grimoire-exemple.zip` en un toucher, et un bandeau rappelle que les livres sont inventés. **Commencer mon vrai grimoire** efface l'exemple et ramène à l'écran de bienvenue.
+
+À la main :
+
 1. Dans l'appli : ⚙️ Réglages → **📥 Importer un fichier** → `grimoire-exemple.zip` → **Restaurer**.
    **⚠️ Restaurer remplace tout le grimoire.** Fais-le sur un grimoire vide, ou dans un autre navigateur. Si tu as déjà tes livres, exporte d'abord une sauvegarde (⚙️ → 💾 Exporter).
 2. Puis **📥 Importer un fichier** → `propositions-exemple.json`. L'appli montre chaque livre avec ses propositions cochées. Décoche ce que tu ne veux pas, puis **Appliquer**.

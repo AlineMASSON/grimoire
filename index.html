@@ -1430,7 +1430,7 @@ function vAccueil() {
   return avec('stats', vAccueilCorps);
 }
 function vAccueilCorps() {
-  return blocEnCeMoment() + carteBergamoteAccueil() + carteAnnee() + bandeauNiveau() + carteCitationDuJour() + carteCeJourLa();
+  return bandeauExemple() + blocEnCeMoment() + carteBergamoteAccueil() + carteAnnee() + bandeauNiveau() + carteCitationDuJour() + carteCeJourLa();
 }
 
 // ---------- En ce moment : les lectures en cours (pas celles en pause), la plus récemment lue d'abord ----------
@@ -16446,6 +16446,14 @@ ACTIONS.restaurerFichierDrive = function (el) {
 <style>
 .vide{text-align:center}
 .vide .etapes{text-align:left;margin:12px auto;max-width:320px;line-height:1.8}
+/* grimoire d'exemple : l'essai depuis l'écran de bienvenue, et le bandeau qui le signale à l'accueil */
+.essai-ex{margin-top:18px;padding:14px 14px 12px;border-radius:16px;border:1px dashed color-mix(in srgb,var(--accent) 55%,var(--line));background:color-mix(in srgb,var(--accent) 8%,transparent);text-align:center}
+.essai-ex b{display:block;font:700 18px "Cormorant Garamond",Georgia,serif}
+.essai-ex p{margin:4px 0 10px}
+.bandeau-ex{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:9px 12px;border-radius:14px;background:color-mix(in srgb,var(--gold) 18%,var(--card));border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line));font-size:12.5px;line-height:1.35}
+.bandeau-ex .ic{width:20px;height:20px;flex:none;color:var(--gold)}
+.bandeau-ex span{flex:1;min-width:0}
+.bandeau-ex button{flex:none;border:0;border-radius:999px;padding:7px 12px;font:800 12px Nunito,sans-serif;background:var(--gold);color:#2a1a08;cursor:pointer}
 .toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translate(-50%,20px);background:var(--ink);color:var(--card);font:700 14px Nunito,sans-serif;padding:10px 16px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transition:all .3s;z-index:70;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
 .toast.vis{opacity:1;transform:translate(-50%,0)}
 .toast.avec-action{display:flex;align-items:center;gap:12px;padding:5px 5px 5px 16px}
@@ -16665,8 +16673,61 @@ function proposerRestauration(lu) {
 function ecranVide() {
   M = null;
   document.getElementById('src').textContent = '';
-  document.getElementById('app').innerHTML = card('Bienvenue dans ton grimoire ✨', '<div class="vide"><p><b>Nouveau téléphone ?</b> Retrouve ton grimoire depuis ton Drive : ⚙️ Réglages → colle ton code de liaison (fichier <i>Grimoire sauvegardes / code-de-liaison.txt</i>) → ' + ic('rotate-ccw') + ' Restaurer.</p><div class="row" style="justify-content:center"><button class="act" data-act="reglages">' + ic('cloud-download') + ' Restaurer depuis mon Drive</button></div><p class="small muted" style="margin-top:16px">Ou reprends une sauvegarde du grimoire (un fichier .zip).</p><div class="row" style="justify-content:center"><button class="act doux" data-act="choisirExport">' + ic('folder-open') + ' Choisir un fichier</button><button class="act doux" data-act="grimoireVide">' + ic('sparkles') + ' Commencer à zéro</button></div><p class="small" style="margin-top:16px"><a href="aide.html" style="color:var(--accent)">📖 Le mode d\'emploi : installer, sauvegarder, mettre à jour</a></p></div>');
+  document.getElementById('app').innerHTML = card('Bienvenue dans ton grimoire ✨', '<div class="vide"><p><b>Nouveau téléphone ?</b> Retrouve ton grimoire depuis ton Drive : ⚙️ Réglages → colle ton code de liaison (fichier <i>Grimoire sauvegardes / code-de-liaison.txt</i>) → ' + ic('rotate-ccw') + ' Restaurer.</p><div class="row" style="justify-content:center"><button class="act" data-act="reglages">' + ic('cloud-download') + ' Restaurer depuis mon Drive</button></div><p class="small muted" style="margin-top:16px">Ou reprends une sauvegarde du grimoire (un fichier .zip).</p><div class="row" style="justify-content:center"><button class="act doux" data-act="choisirExport">' + ic('folder-open') + ' Choisir un fichier</button><button class="act doux" data-act="grimoireVide">' + ic('sparkles') + ' Commencer à zéro</button></div>' +
+    '<div class="essai-ex"><b>Juste pour voir ?</b><p class="small muted">Un grimoire d\'exemple avec 8 livres inventés, leurs lectures, citations et carnet. Tu pourras tout effacer ensuite.</p><button class="act" data-act="essayerExemple">' + ic('sparkles') + ' Essayer avec l\'exemple</button></div>' +
+    '<p class="small" style="margin-top:16px"><a href="aide.html" style="color:var(--accent)">📖 Le mode d\'emploi : installer, sauvegarder, mettre à jour</a></p></div>');
 }
+// « Juste pour voir ? » : le grimoire d'exemple de pwa/exemples (livres inventés), chargé en un toucher, seulement sur un grimoire vide ;
+// le réglage « exemple » fait afficher le bandeau de l'accueil, qui permet de tout effacer pour commencer pour de vrai
+ACTIONS.essayerExemple = function () {
+  if (valeurs(D.livres || {}).length) {
+    return;
+  }
+  toast('📖 J\'ouvre le grimoire d\'exemple…');
+  fetch('exemples/grimoire-exemple.zip').then(function (r) {
+    if (!r.ok) {
+      throw new Error('Grimoire d\'exemple introuvable (' + r.status + ')');
+    }
+    return r.arrayBuffer();
+  }).then(lireSauvegarde).then(function (lu) {
+    if (!lu) {
+      throw new Error('Grimoire d\'exemple illisible');
+    }
+    return restaurerSauvegarde(lu);
+  }).then(function () {
+    return ecrire([{t: 'reglages', o: {id: 'exemple', v: Date.now()}}]);
+  }).then(function () {
+    afficherGrimoire();
+    toast('✨ Bienvenue dans le grimoire d\'exemple');
+  }).catch(erreurEcriture);
+};
+function bandeauExemple() {
+  if (!reglage('exemple')) {
+    return '';
+  }
+  return '<div class="bandeau-ex">' + ic('book-open') + '<span><b>Grimoire d\'exemple</b> : les livres sont inventés.</span><button data-act="quitterExemple">Commencer mon vrai grimoire</button></div>';
+}
+ACTIONS.quitterExemple = function () {
+  demander('Les livres d\'exemple seront effacés de ce téléphone, et tu retrouveras l\'écran de bienvenue.', {titre: 'Commencer ton vrai grimoire ?', oui: 'Effacer l\'exemple', non: 'Garder l\'exemple', danger: true}).then(function (ok) {
+    if (!ok) {
+      return;
+    }
+    // tout est vidé, sauf les réglages propres au téléphone (REGLAGES_PRIVES) ; le jeu repart de zéro lui aussi
+    var tables = {reglages: []};
+    REGLAGES_PRIVES.forEach(function (k) {
+      if (D.reglages[k]) {
+        tables.reglages.push(D.reglages[k]);
+      }
+    });
+    try {
+      localStorage.removeItem('bm_etat_jeu');
+    } catch (e) {}
+    return remplacerBase(tables).then(function () {
+      ecranVide();
+      toast('✨ Ton grimoire est vide : à toi d\'écrire la première page');
+    });
+  }).catch(erreurEcriture);
+};
 ACTIONS.grimoireVide = function () {
   ecrire([{t: 'reglages', o: {id: 'mode', v: 'independant'}}, {t: 'reglages', o: {id: 'bascule', v: Date.now()}}]).then(function () {
     afficherGrimoire();
@@ -16690,7 +16751,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-08 16:44:45';
+var VERSION_APPLI = '2026-10-08 20:13:09';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
