@@ -638,7 +638,6 @@ nav button span .ic{width:22px;height:22px;display:block;margin:0 auto 2px;verti
 .carte-livre .lire.en-cours .ic{margin-left:0}
 .lecteur .b .ic{width:20px;height:20px}
 .rond-m .ic{width:22px;height:22px}
-.gros-m .ic{width:42px;height:42px;stroke-width:2}
 .page-minuteur .haut button .ic{width:16px;height:16px}
 .scan .haut button .ic{width:20px;height:20px}
 .story .x .ic{width:20px;height:20px}
@@ -1409,6 +1408,10 @@ function rendre() {
   }
   rendreNav();
   var f = vues[onglet];
+  // l'écran extérieur du Flip n'a que ses livres en cours (Externe.html)
+  if (ecranExterne()) {
+    f = vExterne;
+  }
   document.getElementById('app').innerHTML = f();
   if (f.apres) {
     f.apres();
@@ -13265,31 +13268,32 @@ body.minuteur-actif main{padding-bottom:180px}
 .page-minuteur .couv .ph{display:flex;align-items:center;justify-content:center;font:700 15px "Cormorant Garamond",serif;padding:10px}
 .page-minuteur .titre{font:700 22px/1.15 "Cormorant Garamond",Georgia,serif;margin:12px 0 0}
 .page-minuteur .auteur{font-size:12px;color:var(--muted)}
-.anneau-m{position:relative;width:220px;height:220px;margin:16px 0 8px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
+/* l'anneau du chrono est le bouton : on le touche (ou le temps) pour la pause ou la reprise */
+.anneau-m{position:relative;width:250px;height:250px;margin:18px 0 8px;padding:0;border:0;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none;color:var(--ink);cursor:pointer;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--accent) 22%,var(--card)),var(--card) 70%);box-shadow:0 0 0 10px color-mix(in srgb,var(--accent) 16%,transparent),0 16px 34px rgba(0,0,0,.45);transition:transform .1s;-webkit-tap-highlight-color:transparent}
+.anneau-m:active{transform:scale(.97)}
 /* l'anneau tourne au lancement et à chaque reprise, puis s'arrête : la page reste allumée longtemps, autant ménager la batterie */
 .anneau-m::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,var(--accent),var(--lav),var(--gold),var(--accent));-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px));mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px));animation:tourne-anneau 6s linear 3}
-.anneau-m::after{content:"";position:absolute;inset:-14px;border-radius:50%;box-shadow:0 0 40px color-mix(in srgb,var(--accent) 45%,transparent);animation:respire-anneau 2.6s ease-in-out 6 forwards;pointer-events:none}
 @keyframes tourne-anneau{to{transform:rotate(360deg)}}
-@keyframes respire-anneau{0%,100%{opacity:.35}50%{opacity:1}}
-.chrono-m{font:700 60px/1 "Cormorant Garamond",Georgia,serif;font-variant-numeric:tabular-nums;position:relative}
-.etat-m{position:relative;margin-top:8px;font:800 12px Nunito,sans-serif;letter-spacing:1px;text-transform:uppercase;padding:4px 12px;border-radius:999px;background:color-mix(in srgb,var(--lav) 25%,transparent)}
+.chrono-m{font:700 62px/1 "Cormorant Garamond",Georgia,serif;font-variant-numeric:tabular-nums;position:relative}
+.icone-m{position:relative;display:flex;margin-top:10px;color:var(--accent)}
+.icone-m .ic{width:44px;height:44px}
+.etat-m{position:relative;margin-top:4px;font:800 11px Nunito,sans-serif;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
 .infos-m{font-size:12.5px;color:var(--muted);line-height:1.6;min-height:40px}
 .infos-m b{color:var(--ink)}
 .commandes{display:flex;align-items:center;justify-content:center;gap:24px;margin-top:auto;padding-top:18px}
 .rond-m{width:60px;height:60px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;color:var(--ink);cursor:pointer}
-.rond-m small{font:700 11px Nunito,sans-serif;color:var(--muted);margin-top:1px}
-.gros-m{width:100px;height:100px;border-radius:50%;border:0;display:flex;align-items:center;justify-content:center;font-size:40px;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--accent),var(--lav));box-shadow:0 10px 30px color-mix(in srgb,var(--accent) 55%,transparent),0 0 0 6px color-mix(in srgb,var(--accent) 18%,transparent);transition:transform .1s}
-.gros-m:active{transform:scale(.94)}
+.rond-m small{font:700 11px Nunito,sans-serif;color:var(--ink);margin-top:1px}
+.rond-m.annot .ic{color:var(--accent)}
 .eveil{font-size:11px;color:var(--muted);margin-top:14px}
 .bandeau-pause{display:none;pointer-events:none}
 /* en pause : tout s'éteint, bandeau doré */
 .page-minuteur.pause{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--ink) 5%,transparent) 0 14px,transparent 14px 28px),linear-gradient(165deg,var(--bg) 0%,var(--bg2) 100%)}
-.page-minuteur.pause .couv img{filter:grayscale(.85) brightness(.7)}
+.page-minuteur.pause .couv img,.page-minuteur.pause .pm-livre .cv img{filter:grayscale(.85) brightness(.7)}
+.page-minuteur.pause .anneau-m{background:var(--card);box-shadow:0 0 0 10px rgba(128,128,128,.12),0 16px 34px rgba(0,0,0,.45)}
 .page-minuteur.pause .anneau-m::before{background:var(--line);animation:none}
-.page-minuteur.pause .anneau-m::after{animation:none;opacity:0}
 .page-minuteur.pause .chrono-m{color:var(--muted);animation:clignote 1.2s steps(2) infinite}
-.page-minuteur.pause .etat-m{background:var(--gold);color:#2a1a08;font-size:15px;padding:7px 18px;box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 30%,transparent)}
-.page-minuteur.pause .gros-m{background:var(--gold);color:#2a1a08;box-shadow:0 10px 30px color-mix(in srgb,var(--gold) 50%,transparent),0 0 0 6px color-mix(in srgb,var(--gold) 25%,transparent)}
+.page-minuteur.pause .icone-m{color:var(--gold)}
+.page-minuteur.pause .rond-m.annot .ic{color:var(--muted)}
 .page-minuteur.pause .bandeau-pause{display:block;position:absolute;z-index:3;top:calc(64px + env(safe-area-inset-top));left:-40px;right:-40px;transform:rotate(-6deg);background:var(--gold);color:#2a1a08;font:800 13px Nunito,sans-serif;letter-spacing:3px;padding:6px 0;box-shadow:0 6px 16px rgba(0,0,0,.3);white-space:nowrap;overflow:hidden}
 /* fenêtre d'arrêt */
 .grand-chrono{font:700 46px/1 "Cormorant Garamond",Georgia,serif;text-align:center;margin:8px 0 4px}
@@ -13298,7 +13302,7 @@ body.minuteur-actif main{padding-bottom:180px}
 .champ-page .rond-m{width:48px;height:48px;font-size:22px;flex:none}
 .pas{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 .pas button{font:800 13px Nunito,sans-serif;padding:8px 13px;border-radius:999px;border:0;background:var(--accent-soft);color:var(--accent);cursor:pointer}
-@media (prefers-reduced-motion:reduce){.anneau-m::before,.anneau-m::after,.chrono-m,.lecteur .chrono{animation:none !important}}
+@media (prefers-reduced-motion:reduce){.anneau-m::before,.chrono-m,.lecteur .chrono{animation:none !important}}
 .page-minuteur .annuler-haut{display:none}
 /* écran externe du Flip 7 (petit, presque carré) : tout tient sans défiler, rien d'important en bas à gauche (caméras) */
 @media (max-height:620px){
@@ -13306,17 +13310,16 @@ body.minuteur-actif main{padding-bottom:180px}
   .page-minuteur .couv,.page-minuteur .auteur,#eveilEcran{display:none}
   .page-minuteur .annuler-haut{display:inline-flex;align-items:center;gap:4px}
   .page-minuteur .titre{font-size:17px;margin:4px 0 0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .anneau-m{width:min(178px,42vh);height:min(178px,42vh);margin:10px 0 6px}
-  .chrono-m{font-size:min(46px,11vh)}
-  .etat-m{font-size:11px;margin-top:4px;padding:3px 10px}
-  .page-minuteur.pause .etat-m{font-size:12.5px;padding:5px 14px}
+  .anneau-m{width:min(186px,44vh);height:min(186px,44vh);margin:10px 0 6px}
+  .chrono-m{font-size:min(48px,11vh)}
+  .icone-m{margin-top:6px}
+  .icone-m .ic{width:34px;height:34px}
+  .etat-m{display:none}
   .infos-m{font-size:11.5px;min-height:0;line-height:1.45}
   .commandes{gap:18px;padding-top:8px}
   .commandes .annuler{visibility:hidden;width:50px}
   .rond-m{width:50px;height:50px}
   .rond-m small{display:none}
-  .gros-m{width:80px;height:80px}
-  .gros-m .ic{width:34px;height:34px}
   .page-minuteur.pause .bandeau-pause{display:none}
   .lecteur{bottom:calc(58px + env(safe-area-inset-bottom));padding:6px;gap:8px;border-radius:16px}
   .lecteur img,.lecteur .ph{width:28px;height:42px}
@@ -13462,15 +13465,28 @@ ACTIONS.pageMinuteur = function () {
   if (b) {
     auteurs = b.authors.join(', ');
   }
+  // l'écran extérieur du Flip a sa propre présentation (Externe.html), avec les mêmes identifiants
+  var externe = ecranExterne();
+  p.classList.toggle('externe-m', externe);
+  if (externe) {
+    p.innerHTML = htmlMinuteurExterne(s, l);
+    majPageMinuteur();
+    majVerrouEcran();
+    return;
+  }
   p.innerHTML = '<div class="bandeau-pause">⏸ EN PAUSE ⏸ EN PAUSE ⏸ EN PAUSE ⏸ EN PAUSE</div>' +
     '<div class="haut"><button data-act="fermerPageMinuteur">' + ic('chevron-left') + ' Retour</button><span class="small muted" id="eveilEcran"></span><button class="annuler-haut" data-act="annulerMinuteur">' + ic('x') + ' Annuler</button></div>' +
     '<div class="couv">' + couvSession(s) + '</div><div class="titre">' + esc(titreCourt(l)) + '</div><div class="auteur">' + esc(auteurs) + '</div>' +
-    '<div class="anneau-m"><div class="chrono-m" id="chronoGrand"></div><div class="etat-m" id="etatMinuteur"></div></div>' +
+    htmlAnneauMinuteur(true) +
     '<div class="infos-m" id="infosMinuteur"></div>' +
-    '<div class="commandes"><button class="rond-m annuler" data-act="annulerMinuteur">' + ic('x') + '<small>annuler</small></button><button class="gros-m" id="boutonMinuteur" data-act="basculerMinuteur"></button><button class="rond-m" data-act="arreterMinuteur">' + ic('square') + '<small>terminer</small></button></div>';
+    '<div class="commandes"><button class="rond-m annuler" data-act="annulerMinuteur">' + ic('x') + '<small>annuler</small></button><button class="rond-m annot" data-act="annoterMinuteur">' + ic('quote') + '<small>annoter</small></button><button class="rond-m" data-act="arreterMinuteur">' + ic('square') + '<small>terminer</small></button></div>';
   majPageMinuteur();
   majVerrouEcran();
 };
+// l'anneau-bouton, commun aux deux écrans : le temps, ⏸ ou ▶, et sur le grand écran la consigne en dessous
+function htmlAnneauMinuteur(consigne) {
+  return '<button class="anneau-m" id="boutonMinuteur" data-act="basculerMinuteur" aria-label="Pause ou reprise"><b class="chrono-m" id="chronoGrand"></b><span class="icone-m"></span>' + (consigne ? '<small class="etat-m" id="etatMinuteur"></small>' : '') + '</button>';
+}
 function majPageMinuteur() {
   var p = document.getElementById('pageMinuteur');
   var s = sessionEnCours();
@@ -13480,11 +13496,14 @@ function majPageMinuteur() {
   var pause = !s.repriseA;
   p.classList.toggle('pause', pause);
   document.getElementById('chronoGrand').textContent = texteChrono(ecoule(s));
-  document.getElementById('etatMinuteur').textContent = pause ? '⏸ en pause' : '✨ lecture en cours';
-  var gros = document.getElementById('boutonMinuteur');
-  if (gros.dataset.etat !== String(pause)) {
-    gros.dataset.etat = String(pause);
-    gros.innerHTML = pause ? ic('play') : ic('pause');
+  var anneau = document.getElementById('boutonMinuteur');
+  if (anneau.dataset.etat !== String(pause)) {
+    anneau.dataset.etat = String(pause);
+    anneau.querySelector('.icone-m').innerHTML = pause ? ic('play') : ic('pause');
+    var consigne = document.getElementById('etatMinuteur');
+    if (consigne) {
+      consigne.textContent = pause ? 'touche pour reprendre' : 'touche pour la pause';
+    }
   }
   var x = D.lectures[s.lectureId] || {};
   // le texte sous le chrono (heure de début, estimation de fin) ne se recalcule que s'il a pu changer, pas chaque seconde
@@ -13507,7 +13526,10 @@ var infoMinuteurM = null;
 function texteInfosMinuteur(s, x, pause) {
   var info;
   if (pause) {
-    info = 'en pause' + (s.pauseA ? ' depuis <b>' + dureeCourte((Date.now() - s.pauseA) / 1000) + '</b>' : '') + '<br>touche ▶ pour reprendre';
+    info = 'en pause' + (s.pauseA ? ' depuis <b>' + dureeCourte((Date.now() - s.pauseA) / 1000) + '</b>' : '');
+    if (ecranExterne()) {
+      info += '<br>touche le cercle pour reprendre';
+    }
   } else {
     info = 'commencé à <b>' + heureVersChamp(s.debut).replace(':', ' h ') + '</b>';
     if (x.position) {
@@ -13586,6 +13608,22 @@ ACTIONS.basculerMinuteur = function () {
     vibrer(50);
     modifierSessionEnCours({repriseA: Date.now(), pauseA: null});
   }
+};
+// ❝ Annoter : le minuteur se met en pause, et le formulaire d'annotation de ce livre s'ouvre par-dessus ;
+// enregistré ou fermé, on revient au minuteur, toujours en pause (▶ pour reprendre)
+ACTIONS.annoterMinuteur = function () {
+  var s = sessionEnCours();
+  if (!s) {
+    return;
+  }
+  ACTIONS.pauseMinuteur();
+  // l'écran extérieur est trop petit pour écrire : le formulaire s'ouvrira quand le Flip s'ouvrira (Externe.html)
+  if (ecranExterne()) {
+    annoterEnAttente = s.livreId;
+    messageOuvrirTelephone();
+    return;
+  }
+  ACTIONS.formCitation({dataset: {livre: s.livreId, minuteur: '1'}});
 };
 ACTIONS.pauseMinuteur = function () {
   var s = sessionEnCours();
@@ -13805,6 +13843,215 @@ ACTIONS.arreterMinuteur = function () {
     }).catch(erreurEcriture);
   };
 };
+</script>
+
+<style>
+/* ---------- écran extérieur du Flip (petit dans les deux sens : 620 × 620 au plus) : html.externe ----------
+   seulement les livres en cours, le minuteur et la fin de session ; ni barre de titre, ni réglages, ni navigation */
+html.externe .tete-n,html.externe header,html.externe nav,html.externe #fabAjout,html.externe .lecteur{display:none !important}
+html.externe main{padding:0 !important;margin:0;max-width:none}
+/* l'accueil : un livre en cours par écran, un gros ▶ au centre ; on glisse pour passer au suivant */
+.ext{position:fixed;inset:0;display:flex;flex-direction:column;color:var(--ink);padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.ext-rail{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.ext-rail::-webkit-scrollbar{display:none}
+.ext-page{flex:0 0 100%;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px 24px;text-align:center}
+.ext-haut{display:flex;align-items:center;gap:14px;max-width:100%}
+.ext-haut .cv{width:62px;height:93px;flex:none;border-radius:8px;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,.45)}
+.ext-haut .cv img,.ext-haut .cv .ph{width:100%;height:100%;object-fit:cover;font-size:11px}
+.ext-titre{min-width:0;font:700 19px/1.15 "Cormorant Garamond",Georgia,serif;text-align:left}
+.ext-titre small{display:block;font:600 12px Nunito,sans-serif;color:var(--muted);margin-top:4px}
+.ext-gros{flex:none;width:118px;height:118px;border-radius:50%;border:0;color:#fff;background:linear-gradient(135deg,var(--accent),var(--lav));display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 0 10px color-mix(in srgb,var(--accent) 20%,transparent),0 14px 30px rgba(0,0,0,.45)}
+.ext-gros{margin:8px 0}
+.ext-gros .ic{width:54px;height:54px}
+.ext-gros.lecture .ic{margin-left:6px}
+.ext-prog{width:min(220px,80%);height:7px;border-radius:4px;background:var(--heat0)}
+.ext-prog i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--lav),var(--accent))}
+.ext-points{display:flex;justify-content:center;gap:6px;padding:0 0 12px}
+.ext-points i{width:7px;height:7px;border-radius:50%;background:var(--muted);opacity:.4}
+.ext-points i.on{opacity:1;background:var(--accent)}
+.ext-vide{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.ext-vide .em{font-size:40px;line-height:1}
+.ext-vide b{font:700 21px/1.2 "Cormorant Garamond",Georgia,serif;margin:10px 0 4px}
+.ext-vide p{margin:0;font-size:13px;color:var(--muted)}
+/* le minuteur : l'anneau-bouton au centre (Minuteur.html), dessous la couverture, le texte, puis annoter et terminer alignés à gauche */
+.page-minuteur.externe-m{padding:calc(6px + env(safe-area-inset-top)) 0 calc(8px + env(safe-area-inset-bottom));align-items:stretch;overflow:hidden}
+.pm-haut{display:flex;align-items:center;gap:8px;padding:4px 14px 0}
+.pm-haut button{border:0;background:none;color:var(--muted);font:700 13px Nunito,sans-serif;display:inline-flex;align-items:center;gap:4px;padding:4px 0;cursor:pointer}
+.pm-haut button .ic{width:16px;height:16px}
+.pm-haut .t{flex:1;min-width:0;text-align:center;font:700 16px "Cormorant Garamond",Georgia,serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pm-milieu{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.externe-m .anneau-m{width:186px;height:186px;margin:0}
+.externe-m .chrono-m{font-size:48px}
+.externe-m .icone-m .ic{width:38px;height:38px}
+.pm-colonne{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding-bottom:10px}
+.pm-livre{display:flex;align-items:center;gap:10px;text-align:left}
+.pm-livre .cv{width:38px;height:57px;flex:none;border-radius:6px;overflow:hidden;box-shadow:0 6px 14px rgba(0,0,0,.4)}
+.pm-livre .cv img,.pm-livre .cv .ph{width:100%;height:100%;object-fit:cover;font-size:11px}
+.pm-livre small{font-size:12px;color:var(--muted);line-height:1.45}
+.pm-livre b{color:var(--ink)}
+.pm-rangee{display:flex;gap:16px}
+.externe-m .rond-m{width:58px;height:58px;gap:1px;font-size:11px}
+.externe-m .rond-m .ic{width:20px;height:20px}
+.externe-m .rond-m small{display:block;margin-top:0}
+.page-minuteur.externe-m.pause .bandeau-pause{display:block;top:calc(66px + env(safe-area-inset-top));transform:rotate(-4deg);font-size:11px;letter-spacing:2px;padding:4px 0}
+/* « annoter » : l'écran est trop petit pour écrire, on propose d'ouvrir le téléphone */
+.pm-voile{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;padding:18px;background:color-mix(in srgb,var(--bg) 70%,transparent);backdrop-filter:blur(3px)}
+.pm-msg{width:100%;max-width:330px;padding:18px 16px 14px;border-radius:22px;background:var(--card);border:1px solid var(--line);box-shadow:0 18px 40px rgba(0,0,0,.45);text-align:center}
+.pm-msg .em{font-size:34px;line-height:1}
+.pm-msg b{display:block;font:700 19px/1.2 "Cormorant Garamond",Georgia,serif;margin:8px 0 4px}
+.pm-msg p{margin:0 0 12px;font-size:12.5px;color:var(--muted);line-height:1.45}
+.pm-msg button{border:1px solid var(--line);background:var(--card);color:var(--ink);font:700 13px Nunito,sans-serif;border-radius:999px;padding:8px 16px;cursor:pointer}
+/* la fin de session, compacte : tout tient sans défiler, « Enregistrer » et « Reprendre » toujours visibles */
+html.externe .sheet{max-height:100vh;border-radius:20px 20px 0 0;padding:12px 14px 10px}
+html.externe .sheet h3{font-size:19px;margin-right:40px}
+html.externe .sheet-x{top:8px;right:10px;width:30px;height:30px}
+html.externe .grand-chrono{font-size:30px;margin:2px 0 0}
+html.externe .champ-page{margin:4px 0}
+html.externe .champ-page input{font-size:24px;padding:6px}
+html.externe .champ-page .rond-m{width:42px;height:42px}
+html.externe #arResume{margin:2px 0 0 !important}
+html.externe .sheet .form{display:flex;align-items:center;gap:8px;margin-top:4px !important}
+html.externe .sheet .form label{margin:0;flex:1;font-size:11px}
+html.externe .sheet .form .champ{width:76px;flex:none;padding:6px 10px;text-align:center}
+html.externe .sheet .row{position:sticky;bottom:0;margin-top:8px !important;padding-top:6px;background:var(--card)}
+html.externe .sheet .row .act{flex:1;padding:9px 10px}
+</style>
+<script>
+// ---------- écran extérieur du Flip : l'accueil réduit aux livres en cours, le minuteur, la fin de session ----------
+// Le mode s'active quand l'écran est petit dans les deux sens (le téléphone ouvert, même en paysage, n'est pas concerné) ;
+// fermer ou ouvrir le Flip fait basculer l'appli d'elle-même.
+var ECRAN_EXTERNE = '(max-width:620px) and (max-height:620px)';
+// le livre dont on veut écrire une annotation, en attendant que le Flip s'ouvre
+var annoterEnAttente = null;
+// en arrivant sur l'écran extérieur, un minuteur qui tourne s'affiche tout de suite
+var minuteurAOuvrir = false;
+function ecranExterne() {
+  return !!(window.matchMedia && matchMedia(ECRAN_EXTERNE).matches);
+}
+function lecturesEnCoursExterne() {
+  return M.lectures.filter(function (r) { return r.status === 'READING'; }).sort(function (a, b) { return derniereActivite(b) - derniereActivite(a); });
+}
+function vExterne() {
+  var enCours = lecturesEnCoursExterne();
+  if (!enCours.length) {
+    return '<div class="ext"><div class="ext-vide"><div class="em">📖</div><b>Aucune lecture en cours</b><p>Ouvre ton téléphone pour en commencer une.</p></div></div>';
+  }
+  var s = sessionEnCours();
+  var pages = enCours.map(function (r) {
+    var b = r.book;
+    var total = r.total_page || b.total_page || 0;
+    var pct = 0;
+    if (total) {
+      pct = Math.min(100, Math.round(100 * (r.page || 0) / total));
+    }
+    var infos = [pct + ' %'];
+    var est = estimationLecture(r);
+    if (est.reste) {
+      infos.push(est.reste.replace('⏳ ', ''));
+    }
+    var bouton = '<button class="ext-gros lecture" data-act="lireMaintenant" data-lecture="' + r._id + '" aria-label="Lire maintenant">' + ic('play') + '</button>';
+    if (s && s.lectureId === r._id) {
+      bouton = '<button class="ext-gros" data-act="pageMinuteur" aria-label="Voir le minuteur">' + ic('timer') + '</button>';
+    }
+    return '<div class="ext-page"><div class="ext-haut"><div class="cv">' + cover(b) + '</div><div class="ext-titre">' + esc(titre(b)) + '<small>' + esc(infos.join(' · ')) + '</small></div></div>' + bouton + '<div class="ext-prog"><i style="width:' + pct + '%"></i></div></div>';
+  }).join('');
+  var points = '';
+  if (enCours.length > 1) {
+    points = '<div class="ext-points" aria-hidden="true">' + enCours.map(function (r, i) {
+      var cls = '';
+      if (!i) {
+        cls = ' class="on"';
+      }
+      return '<i' + cls + '></i>';
+    }).join('') + '</div>';
+  }
+  return '<div class="ext"><div class="ext-rail">' + pages + '</div>' + points + '</div>';
+}
+vExterne.apres = function () {
+  if (minuteurAOuvrir) {
+    minuteurAOuvrir = false;
+    if (sessionEnCours() && !document.getElementById('pageMinuteur')) {
+      ACTIONS.pageMinuteur();
+      return;
+    }
+  }
+  // les points suivent le livre affiché
+  var rail = document.querySelector('.ext-rail');
+  var points = document.querySelectorAll('.ext-points i');
+  if (!rail || !points.length) {
+    return;
+  }
+  rail.addEventListener('scroll', function () {
+    var n = Math.round(rail.scrollLeft / Math.max(1, rail.clientWidth));
+    Array.prototype.forEach.call(points, function (p, i) {
+      p.classList.toggle('on', i === n);
+    });
+  }, {passive: true});
+};
+// la page du minuteur, version écran extérieur : les mêmes identifiants que la grande (majPageMinuteur la tient à jour)
+function htmlMinuteurExterne(s, l) {
+  return '<div class="bandeau-pause">⏸ EN PAUSE ⏸ EN PAUSE ⏸ EN PAUSE ⏸ EN PAUSE</div>' +
+    '<div class="pm-haut"><button data-act="fermerPageMinuteur">' + ic('chevron-left') + ' Retour</button><span class="t">' + esc(titreCourt(l)) + '</span><button data-act="annulerMinuteur" aria-label="Annuler le minuteur">' + ic('x') + '</button></div>' +
+    '<div class="pm-milieu">' + htmlAnneauMinuteur(false) +
+    '<div class="pm-colonne"><div class="pm-livre"><div class="cv">' + couvSession(s) + '</div><small id="infosMinuteur"></small></div>' +
+    '<div class="pm-rangee"><button class="rond-m annot" data-act="annoterMinuteur">' + ic('quote') + '<small>annoter</small></button><button class="rond-m" data-act="arreterMinuteur">' + ic('square') + '<small>terminer</small></button></div></div></div>';
+}
+function messageOuvrirTelephone() {
+  var p = document.getElementById('pageMinuteur');
+  if (!p || p.querySelector('.pm-voile')) {
+    return;
+  }
+  p.insertAdjacentHTML('beforeend', '<div class="pm-voile"><div class="pm-msg" role="dialog" aria-labelledby="titreOuvrir"><div class="em" aria-hidden="true">📖</div><b id="titreOuvrir">Ouvre ton téléphone pour écrire</b><p>Le minuteur est en pause. Dès que tu ouvres le Flip, le formulaire d\'annotation de ce livre s\'affiche.</p><button data-act="annulerAnnoterExterne">Annuler</button></div></div>');
+}
+ACTIONS.annulerAnnoterExterne = function () {
+  annoterEnAttente = null;
+  var v = document.querySelector('#pageMinuteur .pm-voile');
+  if (v) {
+    v.remove();
+  }
+};
+// fermer ou ouvrir le Flip : l'appli change de présentation (et le minuteur ouvert aussi)
+function changementEcranExterne() {
+  var ext = ecranExterne();
+  var racine = document.documentElement;
+  if (ext === racine.classList.contains('externe')) {
+    return;
+  }
+  racine.classList.toggle('externe', ext);
+  if (ext) {
+    minuteurAOuvrir = true;
+  } else if (document.fullscreenElement && document.exitFullscreen) {
+    document.exitFullscreen().catch(function () {});
+  }
+  if (!M) {
+    return;
+  }
+  rendre();
+  if (document.getElementById('pageMinuteur') && sessionEnCours()) {
+    ACTIONS.pageMinuteur();
+  }
+  // le Flip vient de s'ouvrir pour écrire une annotation
+  if (!ext && annoterEnAttente) {
+    var id = annoterEnAttente;
+    annoterEnAttente = null;
+    ACTIONS.formCitation({dataset: {livre: id, minuteur: '1'}});
+  }
+}
+document.documentElement.classList.toggle('externe', ecranExterne());
+minuteurAOuvrir = ecranExterne();
+if (window.matchMedia) {
+  var requeteExterne = matchMedia(ECRAN_EXTERNE);
+  if (requeteExterne.addEventListener) {
+    requeteExterne.addEventListener('change', changementEcranExterne);
+  }
+}
+// plein écran sur l'écran extérieur, au premier toucher (le navigateur ne le permet qu'après un geste) : plus de marge noire
+document.addEventListener('pointerup', function () {
+  if (!ecranExterne() || document.fullscreenElement || !document.documentElement.requestFullscreen) {
+    return;
+  }
+  document.documentElement.requestFullscreen({navigationUI: 'hide'}).catch(function () {});
+}, true);
 </script>
 
 <style>
@@ -14047,6 +14294,10 @@ ACTIONS.formElement = function (el) {
 
 <style>
 .seg-cit{margin:12px 0 4px;box-shadow:none}
+/* le titre « Annotations » de la fiche, avec son bouton « + Ajouter » */
+.sheet h4.titre-annot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.titre-annot .act-h{display:inline-flex;align-items:center;gap:4px;border:0;font:700 12px Nunito,sans-serif;text-transform:none;letter-spacing:0;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:5px 11px;cursor:pointer}
+.titre-annot .act-h .ic{width:14px;height:14px}
 .seg-cit button{display:inline-flex;align-items:center;justify-content:center;gap:5px}
 .seg-cit .ic{width:15px;height:15px}
 .seg-cit .gl{font:400 1.2em/1 Georgia,serif}
@@ -14093,15 +14344,6 @@ var fc = null;
 var TYPES_CITATION = [['citation', '❝ Citation'], ['pensee', '💭 Pensée'], ['note', '📝 Note']];
 var INDICES_CITATION = {citation: 'La phrase qui t\'a marquée…', pensee: 'Ce que ça t\'inspire…', note: 'Un personnage, une info, un rappel…'};
 var NOMS_CITATION = {citation: 'la citation', pensee: 'la pensée', note: 'la note'};
-function iconeTypeCitation(type) {
-  if (type === 'pensee' || type === 'THOUGHT') {
-    return '💭 ';
-  }
-  if (type === 'note' || type === 'NOTE') {
-    return '📝 ';
-  }
-  return '';
-}
 
 // filtre du carnet : [type de l'adaptateur, libellé, icône]
 // les mêmes caractères que devant chaque entrée du carnet (version texte, \uFE0E, pour ne pas devenir des émojis)
@@ -14141,12 +14383,12 @@ function carteCitations() {
       return '<button' + cls + ' data-act="filtreCitations" data-f="' + f[0] + '">' + icone + '<span>' + f[1] + '</span></button>';
     }).join('') + '</div>';
   }
-  return card(TITRE_CARNET + ' (' + cit.length + ')', '<div class="row"><button class="act" data-act="formCitation">' + ic('plus') + ' Ajouter</button></div>' + filtres + cit.map(entreeCarnet).join(''), 'citations, pensées et notes');
+  return card(TITRE_CARNET + ' (' + cit.length + ')', '<div class="row"><button class="act" data-act="formCitation">' + ic('plus') + ' Ajouter</button></div>' + filtres + cit.map(function (n) { return entreeCarnet(n); }).join(''), 'citations, pensées et notes');
 }
 var TITRE_CARNET = 'Mes annotations';
 // une entrée du carnet : son texte, précédé de sa marque (❝ … ❞ pour une citation, ☁ pour une pensée, ✒ pour une note), sa photo dessous, et le pied ;
-// une photo sans texte garde sa marque au-dessus
-function entreeCarnet(n) {
+// une photo sans texte garde sa marque au-dessus. dansFiche : dans la fiche de son livre, le pied ne redit pas le titre et « Modifier » y ramène
+function entreeCarnet(n, dansFiche) {
   var genre = 'citation';
   var marque = '❝';
   if (n.type === 'THOUGHT') {
@@ -14163,11 +14405,19 @@ function entreeCarnet(n) {
     src.push('⭐');
   }
   var livre = '';
-  if (n.book) {
+  if (dansFiche) {
+    if (n.page) {
+      livre = 'p. ' + esc(n.page);
+    }
+  } else if (n.book) {
     livre = esc(titre(n.book));
     if (n.page) {
       livre += ', p. ' + esc(n.page);
     }
+  }
+  var retour = '';
+  if (dansFiche && n.book) {
+    retour = ' data-livre="' + esc(n.book.id) + '"';
   }
   if (livre) {
     src.push(livre);
@@ -14190,36 +14440,21 @@ function entreeCarnet(n) {
     image = '<button class="mini-btn" aria-label="En faire une image" data-act="imageCitation" data-k="' + esc(n._key) + '">' + ic('image') + '</button>';
   }
   return '<div class="cit-e ' + genre + '">' + (n.texte ? '' : '<span class="cit-marque" aria-hidden="true">' + marque + '</span>') + texte + photo +
-    '<div class="cit-pied"><span class="cit-src">✦ ' + src.join(' · ') + '</span>' + image + '<button class="mini-btn" aria-label="Modifier" data-act="formCitation" data-id="' + esc(n._key) + '">' + ic('pencil') + '</button></div></div>';
+    '<div class="cit-pied"><span class="cit-src">✦ ' + src.join(' · ') + '</span>' + image + '<button class="mini-btn" aria-label="Modifier" data-act="formCitation" data-id="' + esc(n._key) + '"' + retour + '>' + ic('pencil') + '</button></div></div>';
 }
 
-// citations d'un livre, pour sa fiche
+// les annotations d'un livre, pour sa fiche : comme dans le carnet, triées par page, « + Ajouter » dans le titre
 function blocCitationsLivre(id) {
-  var l = valeurs(D.citations).filter(function (c) { return c.livreId === id; }).sort(function (a, b) { return (a.page || 0) - (b.page || 0); });
-  return '<h4>Citations (' + l.length + ')</h4>' + l.map(function (c) {
-    var t = c.texte || '(photo)';
-    if (t.length > 120) {
-      t = t.slice(0, 120) + '…';
-    }
-    var p = '';
-    if (c.page) {
-      p = 'p. ' + esc(c.page) + ' · ';
-    }
-    var icone = iconeTypeCitation(c.type);
-
-    var vignette = '';
-    if (c.photoId && urlPhoto(c.photoId)) {
-      vignette = '<img class="cit-vignette" style="width:48px;height:48px" src="' + esc(urlPhoto(c.photoId)) + '" alt="">';
-    }
-    return '<div class="ligne-ed">' + vignette + '<div class="small" style="flex:1"><span class="muted">' + p + '</span>' + icone + '<i>' + esc(t) + '</i></div><div class="boutons"><button aria-label="Modifier la citation" class="mini-btn" data-act="formCitation" data-id="' + esc(c.id) + '">' + ic('pencil') + '</button></div></div>';
-  }).join('') + '<button class="lien" data-act="formCitation" data-livre="' + id + '">' + ic('plus') + ' Ajouter une citation</button>';
+  var l = M.notes.filter(function (n) { return n.book && n.book.id === id; }).sort(function (a, b) { return (a.page || 0) - (b.page || 0); });
+  return '<h4 class="titre-annot"><span>Annotations (' + l.length + ')</span><button class="act-h" data-act="formCitation" data-livre="' + esc(id) + '">' + ic('plus') + ' Ajouter</button></h4>' +
+    l.map(function (n) { return entreeCarnet(n, true); }).join('');
 }
 
 ACTIONS.formCitation = function (el) {
   var id = el.dataset.id;
   var c = (id && D.citations[id]) || null;
   var livreId = (c && c.livreId) || el.dataset.livre || '';
-  fc = {id: c ? c.id : null, livreId: livreId, photo: null, photoId: c ? c.photoId : null, retour: el.dataset.livre ? livreId : ''};
+  fc = {id: c ? c.id : null, livreId: livreId, photo: null, photoId: c ? c.photoId : null, retour: (el.dataset.livre && !el.dataset.minuteur) ? livreId : ''};
   var v = c || {type: 'citation', texte: '', page: null, pageFin: null, favori: false};
   var livre = D.livres[livreId];
   var choixLivre = '';
@@ -16445,7 +16680,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-07 13:13:57';
+var VERSION_APPLI = '2026-10-08 09:32:22';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
