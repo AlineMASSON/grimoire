@@ -1387,10 +1387,20 @@ document.addEventListener('keydown', function (e) {
 // une fête, un autre onglet), une entrée « garde » est posée dans l'historique : « retour » la consomme et fait ce que
 // ferait l'écran, en commençant par ce qui est au-dessus : ‹ Retour s'il y en a un, sinon la croix ; une boîte de
 // question répond comme un toucher à côté ; sur un autre onglet, on revient à l'accueil. Sur l'accueil, pas de garde :
-// « retour » ferme l'appli comme avant. Revenu à l'accueil par l'écran, la garde est retirée (history.back, ignoré).
-// La garde n'est posée qu'après un premier toucher (Chrome saute les entrées posées sans geste de l'utilisatrice).
+// « retour » ferme l'appli comme avant. Revenu à l'accueil, les gardes sont retirées (history.go, ignoré).
+// Chrome saute une entrée posée sans geste récent de l'utilisatrice : après « retour », on ne peut pas en reposer une
+// qui compte. Les gardes sont donc posées d'avance, GARDES_RETOUR à la fois, à chaque toucher ou touche du clavier ;
+// chaque « retour » en consomme une. L'état de l'entrée dit combien il y en a au-dessus de la page de départ.
+var GARDES_RETOUR = 4;
 var ignorerRetour = false;
 var toucherFait = false;
+// au démarrage : des gardes laissées avant un rechargement (mise à jour…) étaient celles de l'ancienne page
+if (history.state && history.state.grimoire) {
+  history.replaceState(null, '');
+}
+function gardesRetour() {
+  return (history.state && history.state.grimoire) || 0;
+}
 function aLaRacine() {
   if (document.querySelector('#feteJeu, .boite-fond, #recadrage, #scan, .story, #feuille, #pageMinuteur')) {
     return false;
@@ -1445,26 +1455,42 @@ function retourTelephone() {
     window.scrollTo(0, 0);
   }
 }
-function synchroRetour() {
-  var garde = !!(history.state && history.state.grimoire);
+// geste : true quand on vient d'un toucher ou d'une touche (les gardes posées comptent pour Chrome)
+function synchroRetour(geste) {
+  var n = gardesRetour();
   if (!aLaRacine()) {
-    if (!garde && toucherFait) {
-      history.pushState({grimoire: true}, '');
+    if (!toucherFait) {
+      return;
     }
-  } else if (garde) {
+    // sans geste (juste après « retour ») : une seule, s'il n'en reste plus ; avec un geste : de quoi revenir plusieurs fois
+    var voulu = 1;
+    if (geste) {
+      voulu = GARDES_RETOUR;
+    }
+    while (n < voulu) {
+      n++;
+      history.pushState({grimoire: n}, '');
+    }
+  } else if (n) {
     ignorerRetour = true;
-    history.back();
+    history.go(-n);
   }
 }
 var synchroPrevue = false;
-function prevoirSynchroRetour() {
+var synchroGeste = false;
+function prevoirSynchroRetour(geste) {
+  if (geste === true) {
+    synchroGeste = true;
+  }
   if (synchroPrevue) {
     return;
   }
   synchroPrevue = true;
   setTimeout(function () {
+    var g = synchroGeste;
     synchroPrevue = false;
-    synchroRetour();
+    synchroGeste = false;
+    synchroRetour(g);
   }, 0);
 }
 window.addEventListener('popstate', function () {
@@ -1475,11 +1501,21 @@ window.addEventListener('popstate', function () {
   retourTelephone();
   prevoirSynchroRetour();
 });
+// un geste (le doigt qui se relève, un clic, une touche) : les gardes se remplissent, même si rien ne s'ouvre
+// (une fiche rouverte au démarrage qu'on fait juste défiler)
 document.addEventListener('pointerdown', function () {
   toucherFait = true;
 }, true);
-// une couche ajoutée ou retirée du body (feuille, boîte, minuteur…) : la garde suit
-new MutationObserver(prevoirSynchroRetour).observe(document.body, {childList: true});
+['click', 'touchend', 'keydown'].forEach(function (type) {
+  document.addEventListener(type, function () {
+    toucherFait = true;
+    prevoirSynchroRetour(true);
+  }, true);
+});
+// une couche ajoutée ou retirée du body (feuille, boîte, minuteur…) : les gardes suivent
+new MutationObserver(function () {
+  prevoirSynchroRetour();
+}).observe(document.body, {childList: true});
 
 // clics et changements délégués : data-seg, data-act, data-chg
 document.addEventListener('click', function (e) {
@@ -2205,7 +2241,7 @@ function pagesAnnee(y) {
 // heures de lecture minutées dans l'année
 function heuresAnnee(y) {
   var s = 0;
-  (M.sessions || []).forEach(function (x) {
+  (M.sessions || []).concat(M.estimations || []).forEach(function (x) {
     if (compte(x.book) && x.dureeSec && annee(x.debut) === y) {
       s += x.dureeSec;
     }
@@ -2651,7 +2687,8 @@ function colonnesParAnnee(vals, unite) {
 }
 // temps de lecture d'après les sessions minutées : heures, minutes par jour, vitesse, heure préférée
 function statsTemps() {
-  var ss = (M.sessions || []).filter(function (s) { return compte(s.book) && s.dureeSec > 0 && dansAnStats(s.debut); });
+  var ss = (M.sessions || []).concat(M.estimations || []).filter(function (s) { return compte(s.book) && s.dureeSec > 0 && dansAnStats(s.debut); });
+  var secEstimees = ss.filter(function (s) { return s.estime; }).reduce(function (t, s) { return t + s.dureeSec; }, 0);
   if (!ss.length) {
     return '';
   }
@@ -2667,8 +2704,17 @@ function statsTemps() {
     }
   });
   var jours = Object.keys(parJour);
-  var moyJour = moy(jours.map(function (k) { return parJour[k]; })) / 60;
+  // par jour de lecture : les jours des vraies séances (le temps estimé n'en fait pas des jours lus)
+  var parJourReel = {};
+  ss.forEach(function (s) {
+    if (!s.estime) {
+      var k = dkey(new Date(s.debut));
+      parJourReel[k] = (parJourReel[k] || 0) + s.dureeSec;
+    }
+  });
+  var moyJour = moy(Object.keys(parJourReel).map(function (k) { return parJourReel[k]; })) / 60;
   var hPref = heures.indexOf(Math.max.apply(null, heures));
+  var heureConnue = Math.max.apply(null, heures) > 0;
   // vitesse : pages gagnées pendant une session minutée d'au moins 5 min (livres suivis en pages)
   var lecturesPages = {};
   M.lectures.forEach(function (r) {
@@ -2715,7 +2761,9 @@ function statsTemps() {
   if (vitesses.length >= 3) {
     tuiles.push([Math.round(mediane(vitesses)) + ' p./h', 'ta vitesse (papier, numérique)']);
   }
-  tuiles.push([hPref + ' h', 'ton heure préférée']);
+  if (heureConnue) {
+    tuiles.push([hPref + ' h', 'ton heure préférée']);
+  }
   // les mois de l'année choisie, ou une colonne par année
   var graphe;
   if (anStats) {
@@ -2730,7 +2778,11 @@ function statsTemps() {
     });
     graphe = '<p class="small muted" style="margin:12px 0 4px">Heures de lecture par année</p>' + colonnesParAnnee(parAnH, ' h');
   }
-  return card('Mon temps de lecture', kpis(tuiles) + graphe, 'd\'après tes sessions minutées');
+  var sousTemps = 'd\'après tes sessions minutées';
+  if (secEstimees >= 3600) {
+    sousTemps += ' · dont ' + Math.round(secEstimees / 3600) + ' h estimées (livres audio terminés sans leurs séances)';
+  }
+  return card('Mon temps de lecture', kpis(tuiles) + graphe, sousTemps);
 }
 
 function vGouts() {
@@ -8258,7 +8310,8 @@ function donneesBilan(y) {
     d.pages = fin.reduce(function (s, r) { return s + pagesLecture(r); }, 0);
     d.secAudio = fin.filter(function (r) { return r.page_type === 'TIME'; }).reduce(function (s, r) { return s + r.total_page; }, 0);
     var sessions = (M.sessions || []).filter(function (s) { return compte(s.book) && annee(s.debut) === y; });
-    d.secMinuteur = sessions.reduce(function (s, x) { return s + x.dureeSec; }, 0);
+    var estimees = (M.estimations || []).filter(function (s) { return compte(s.book) && annee(s.debut) === y; });
+    d.secMinuteur = sessions.concat(estimees).reduce(function (s, x) { return s + x.dureeSec; }, 0);
     var joursAn = Object.keys(jours()).filter(function (k) { return k.slice(0, 4) === String(y); });
     d.jours = joursAn.length;
     d.serie = series_jours(function (k) { return k.slice(0, 4) === String(y); }).best;
@@ -8283,7 +8336,7 @@ function donneesBilan(y) {
     d.moisMax = Math.max.apply(null, d.mois);
     // heures minutées par mois : les lunes suivent le temps passé à lire (d.mois reste le nombre de livres finis)
     d.heuresMois = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    sessions.forEach(function (s) {
+    sessions.concat(estimees).forEach(function (s) {
       if (s.dureeSec) {
         d.heuresMois[new Date(s.debut).getMonth()] += s.dureeSec / 3600;
       }
@@ -8392,7 +8445,12 @@ function portraitBilan(d, sessions, joursAn) {
   }
   // heure préférée : le temps au minuteur, sinon le nombre de relevés
   var heures = new Array(24).fill(0);
-  sessions.forEach(function (s) { heures[new Date(s.debut).getHours()] += s.dureeSec || 60; });
+  // (une séance importée dont on ne connaît que le jour ne dit rien de l'heure)
+  sessions.forEach(function (s) {
+    if (!s.sansHeure) {
+      heures[new Date(s.debut).getHours()] += s.dureeSec || 60;
+    }
+  });
   var h = heures.indexOf(Math.max.apply(null, heures));
   if (Math.max.apply(null, heures) > 0) {
     var moment = ['🦉', 'Lectrice de minuit'];
@@ -8679,7 +8737,7 @@ function vBilanCorps() {
   var heures = d.secMinuteur || d.secAudio;
   var chiffres = [['📖', nombreFr(d.pages), 'pages']];
   if (heures) {
-    chiffres.push(['⏱️', Math.round(heures / 3600) + ' h', d.secMinuteur ? 'au minuteur' : 'd\'écoute']);
+    chiffres.push(['⏱️', Math.round(heures / 3600) + ' h', d.secMinuteur ? 'de lecture' : 'd\'écoute']);
   }
   chiffres.push(['📅', d.jours, 'jours de lecture'], ['🔥', d.serie + ' j', 'plus belle série'], ['✒️', d.nouvellesPlumes, 'nouvelles plumes']);
   if (d.noteMoy) {
@@ -10517,6 +10575,34 @@ function modeleDepuisBase() {
   var sessions = valeurs(D.sessions).filter(function (s) { return parId[s.livreId] && !s.enCours; }).map(function (s) {
     return {id: s.id, book: parId[s.livreId], lectureId: s.lectureId, debut: s.debut, fin: s.fin, dureeSec: s.dureeSec || 0, position: s.position, origine: s.origine, sansHeure: !!s.sansHeure};
   });
+  // le temps d'un livre audio terminé qui manque à ses séances (écouté avant l'historique, ailleurs…) : estimé, réparti
+  // également sur les jours de la lecture. Seulement si ses séances couvrent moins de 80 % du livre : écouté en
+  // accéléré (jusqu'à ×1,2), un livre fini en entier en a au moins 83 %, sans rien qui manque.
+  // À part des séances : il ne compte que dans les stats de temps (temps de lecture, objectif d'heures, heures et
+  // lunes du Bilan), jamais dans les jours lus, les quêtes, la moyenne par jour lu ou les heures de la journée
+  var estimations = [];
+  var ecoute = {};
+  sessions.forEach(function (s) {
+    ecoute[s.lectureId] = (ecoute[s.lectureId] || 0) + s.dureeSec;
+  });
+  valeurs(D.lectures).forEach(function (x) {
+    if (x.statut !== 'terminee' || x.unite !== 'secondes' || !x.total || !x.fin || !parId[x.livreId]) {
+      return;
+    }
+    var manque = x.total - (ecoute[x.id] || 0);
+    if (manque < 600 || (ecoute[x.id] || 0) >= 0.8 * x.total) {
+      return;
+    }
+    var d0 = new Date(x.debut || x.fin);
+    var d1 = new Date(x.fin);
+    var premier = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate(), 12).getTime();
+    var dernier = new Date(d1.getFullYear(), d1.getMonth(), d1.getDate(), 12).getTime();
+    var nb = Math.max(1, Math.round((dernier - premier) / 86400000) + 1);
+    for (var i = 0; i < nb; i++) {
+      var t = new Date(d0.getFullYear(), d0.getMonth(), d0.getDate() + i, 12).getTime();
+      estimations.push({id: x.id + ':E:' + i, book: parId[x.livreId], lectureId: x.id, debut: t, fin: t, dureeSec: manque / nb, position: null, origine: 'estimation', sansHeure: true, estime: true});
+    }
+  });
 
   // carnet et exclusions, au format attendu par les vues actuelles
   EXCLUS = {};
@@ -10549,7 +10635,7 @@ function modeleDepuisBase() {
     NOTES[a.id] = n;
   });
 
-  return {livres: livres, lectures: lectures, notes: notes, series: series, jours: jours, joursLivres: jl, parId: parId, sessions: sessions};
+  return {livres: livres, lectures: lectures, notes: notes, series: series, jours: jours, joursLivres: jl, parId: parId, sessions: sessions, estimations: estimations};
 }
 
 // ---------- écritures venues des vues actuelles (carnet, exclusions, objectif) ----------
@@ -18064,7 +18150,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-09 16:14:16';
+var VERSION_APPLI = '2026-10-09 16:27:17';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
