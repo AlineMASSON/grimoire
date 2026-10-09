@@ -11673,7 +11673,7 @@ function libellePosition(unite) {
   }
   return 'Page atteinte';
 }
-// un choix en boutons à toucher (icône + mot) au lieu d'une liste déroulante : la valeur va dans un champ caché du même id,
+// un choix en boutons à toucher (icône ou caractère + mot) au lieu d'une liste déroulante : la valeur va dans un champ caché du même id,
 // lu par val(), qui reçoit « change » comme une liste (écouteurs du formulaire, enregistrement automatique).
 // Si les options ont une valeur vide (« Non précisé »), toucher le bouton choisi le désélectionne.
 function choixBoutons(id, options, valeur) {
@@ -11691,6 +11691,9 @@ function choixBoutons(id, options, valeur) {
     var icone = '';
     if (o[2]) {
       icone = ic(o[2]) + ' ';
+    } else if (o[3]) {
+      // un caractère déjà mis en forme à la place de l'icône (les annotations : ❝ ☁︎ ✒︎)
+      icone = o[3] + ' ';
     }
     return '<button type="button" class="' + cls + '" role="radio" aria-checked="' + on + '" data-act="choisirBouton" data-pour="' + id + '" data-v="' + esc(o[0]) + '"' + (videPossible ? ' data-vide="1"' : '') + '>' + icone + esc(o[1]) + '</button>';
   }).join('') + '</div>';
@@ -13080,7 +13083,7 @@ function suitesFin(lid) {
   var l = D.livres[x.livreId];
   var h = '<h3>Bravo ! 🎉</h3><p class="small muted" style="margin:0 0 12px">« ' + esc(l.titre) + ' » est terminé. Et maintenant ?</p><div class="suites-fin">';
   h += '<button class="act" data-act="noter" data-id="' + l.id + '">' + ic('feather') + ' Le glisser dans le carnet</button>';
-  h += '<button class="act doux" data-act="formCitation" data-livre="' + l.id + '">' + ic('quote') + ' Ajouter une citation</button>';
+  h += '<button class="act doux" data-act="formCitation" data-livre="' + l.id + '">' + carAnnot('citation') + ' Ajouter une citation</button>';
   var suivant = tomeSuivant(l);
   if (suivant) {
     h += '<button class="act doux" data-act="commencerLecture" data-livre="' + suivant.id + '">' + ic('book-open') + ' Commencer le tome ' + nombre(suivant.tome) + '</button>';
@@ -14297,7 +14300,7 @@ body.minuteur-actif main{padding-bottom:180px}
 .commandes{display:flex;align-items:center;justify-content:center;gap:24px;margin-top:auto;padding-top:18px}
 .rond-m{width:60px;height:60px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:20px;color:var(--ink);cursor:pointer}
 .rond-m small{font:700 11px Nunito,sans-serif;color:var(--ink);margin-top:1px}
-.rond-m.annot .ic{color:var(--accent)}
+.rond-m .car-annot{display:block;height:22px;font-size:34px;line-height:30px;vertical-align:0}
 .eveil{font-size:11px;color:var(--muted);margin-top:14px}
 .bandeau-pause{display:none;pointer-events:none}
 .bandeau-pause .ic{width:1.1em;height:1.1em;margin:0 4px 0 10px;vertical-align:-.2em;fill:currentColor}
@@ -14309,7 +14312,7 @@ body.minuteur-actif main{padding-bottom:180px}
 .page-minuteur.pause .anneau-m::before{background:var(--line);animation:none}
 .page-minuteur.pause .chrono-m{color:var(--muted);animation:clignote 1.2s steps(2) infinite}
 .page-minuteur.pause .icone-m{color:var(--gold)}
-.page-minuteur.pause .rond-m.annot .ic{color:var(--muted)}
+.page-minuteur.pause .rond-m .car-annot{color:var(--muted)}
 .page-minuteur.pause .bandeau-pause{display:block;position:absolute;z-index:3;top:calc(64px + env(safe-area-inset-top));left:-40px;right:-40px;transform:rotate(-6deg);background:var(--gold);color:#2a1a08;font:800 13px Nunito,sans-serif;letter-spacing:3px;padding:6px 0;box-shadow:0 6px 16px rgba(0,0,0,.3);white-space:nowrap;overflow:hidden}
 /* fenêtre d'arrêt */
 .grand-chrono{font:700 46px/1 "Cormorant Garamond",Georgia,serif;text-align:center;margin:8px 0 4px}
@@ -14509,7 +14512,7 @@ ACTIONS.pageMinuteur = function () {
     '<div class="couv">' + couvSession(s) + '</div><div class="titre" data-fiche="' + s.livreId + '">' + esc(titreCourt(l)) + '</div><div class="auteur">' + esc(auteurs) + '</div>' +
     htmlAnneauMinuteur(true) +
     '<div class="infos-m" id="infosMinuteur"></div>' +
-    '<div class="commandes"><button class="rond-m annuler" data-act="annulerMinuteur">' + ic('x') + '<small>annuler</small></button><button class="rond-m annot" data-act="annoterMinuteur">' + ic('quote') + '<small>annoter</small></button><button class="rond-m" data-act="arreterMinuteur">' + ic('square') + '<small>terminer</small></button></div>';
+    '<div class="commandes"><button class="rond-m annuler" data-act="annulerMinuteur">' + ic('x') + '<small>annuler</small></button><button class="rond-m annot" data-act="annoterMinuteur">' + carAnnot('citation') + '<small>annoter</small></button><button class="rond-m" data-act="arreterMinuteur">' + ic('square') + '<small>terminer</small></button></div>';
   majPageMinuteur();
   majVerrouEcran();
 };
@@ -14935,6 +14938,7 @@ html.externe main{padding:0 !important;margin:0;max-width:none}
 .pm-rangee{display:flex;gap:16px;align-self:flex-start;padding-left:14px;margin:8px 0 -20px}
 .externe-m .rond-m{width:min(58px,14vh);height:min(58px,14vh);gap:1px;font-size:11px}
 .externe-m .rond-m .ic{width:20px;height:20px}
+.externe-m .rond-m .car-annot{height:20px;font-size:31px;line-height:27px}
 .externe-m .rond-m small{display:block;margin-top:0}
 .page-minuteur.externe-m.pause .bandeau-pause{display:block;top:calc(66px + env(safe-area-inset-top));transform:rotate(-4deg);font-size:11px;letter-spacing:2px;padding:4px 0}
 /* « annoter » : l'écran est trop petit pour écrire, on propose d'ouvrir le téléphone */
@@ -15033,7 +15037,7 @@ function htmlMinuteurExterne(s, l) {
     '<div class="pm-haut"><span class="t">' + esc(titreCourt(l)) + '</span></div>' +
     '<div class="pm-milieu"><div class="pm-anneau-rangee"><button class="rond-m" data-act="fermerPageMinuteur" aria-label="Retour à la liste">' + ic('chevron-left') + '<small>retour</small></button>' + htmlAnneauMinuteur(false) + '<button class="rond-m" data-act="annulerMinuteur" aria-label="Annuler le minuteur">' + ic('x') + '<small>annuler</small></button></div>' +
     '<div class="pm-livre"><div class="cv">' + couvSession(s) + '</div><small id="infosMinuteur"></small></div></div>' +
-    '<div class="pm-rangee"><button class="rond-m annot" data-act="annoterMinuteur">' + ic('quote') + '<small>annoter</small></button><button class="rond-m" data-act="arreterMinuteur">' + ic('square') + '<small>terminer</small></button></div>';
+    '<div class="pm-rangee"><button class="rond-m annot" data-act="annoterMinuteur">' + carAnnot('citation') + '<small>annoter</small></button><button class="rond-m" data-act="arreterMinuteur">' + ic('square') + '<small>terminer</small></button></div>';
 }
 function messageOuvrirTelephone() {
   var p = document.getElementById('pageMinuteur');
@@ -15379,8 +15383,7 @@ ACTIONS.formElement = function (el) {
 <style>
 .seg-cit{margin:12px 0 4px;box-shadow:none}
 .seg-cit button{display:inline-flex;align-items:center;justify-content:center;gap:5px}
-.seg-cit .ic{width:15px;height:15px}
-@media (max-width:380px){.seg-cit .ic{display:none}}
+@media (max-width:380px){.seg-cit .car-annot{display:none}}
 .quotebox.note-cit{background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 16%,transparent),var(--lav-soft))}
 .note-cit .quote{font:600 15px/1.55 Nunito,sans-serif;text-align:left;padding-top:12px}
 .note-cit .quote::before{content:none}
@@ -15392,13 +15395,17 @@ ACTIONS.formElement = function (el) {
 .cit-e.pensee{background:linear-gradient(160deg,var(--lav-soft),color-mix(in srgb,var(--lav) 10%,var(--card)))}
 .cit-e.note{background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 16%,var(--card)),var(--card))}
 .cit-marque{display:block;height:30px;color:var(--accent);font:400 34px/1 Georgia,serif}
-.cit-marque svg{width:24px;height:24px;margin-top:4px}
 .cit-e .cit-photo{margin:8px auto 2px}
 .cit-txt{font:italic 600 18px/1.5 "Cormorant Garamond",Georgia,serif;text-align:left;white-space:pre-wrap}
 .cit-e.note .cit-txt{font:600 14.5px/1.55 Nunito,sans-serif}
 .cit-fin{color:var(--accent);font:400 1.6em/0 Georgia,serif;vertical-align:-.38em;margin-left:4px}
 .cit-debut{color:var(--accent);font:400 1.6em/0 Georgia,serif;vertical-align:-.38em;margin-right:6px}
-.cit-debut .ic{width:18px;height:18px;vertical-align:-3px}
+.cit-e.pensee .cit-debut{font-size:1.2em;vertical-align:-.15em}
+.cit-e.note .cit-debut{font-size:1.35em;vertical-align:0}
+/* le caractère d'une annotation ailleurs que dans le carnet (choix du type, filtres, boutons), dans la couleur du thème */
+.car-annot{font:400 1.5em/0 Georgia,serif;color:var(--accent);vertical-align:-.33em}
+.car-annot.car-pensee{font-size:1.1em;vertical-align:-.08em}
+.car-annot.car-note{font-size:1.2em;vertical-align:-.08em}
 .cit-src .ic{width:13px;height:13px;vertical-align:-2px;color:var(--gold)}
 .cit-pied{display:flex;align-items:center;gap:8px;margin-top:8px}
 .cit-src{flex:1;min-width:0;font-size:12px;color:var(--muted)}
@@ -15417,13 +15424,19 @@ var TESSERACT = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/';
 var TESSERACT_CORE = 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5.1.1';
 var TESSERACT_FRA = 'https://cdn.jsdelivr.net/npm/@tesseract.js-data/fra@1.0.0/4.0.0_best_int';
 var fc = null;
-// types d'une entrée du carnet ; les notes (infos, rappels…) ne s'affichent pas comme des citations
-var TYPES_CITATION = [['citation', 'Citation', 'quote'], ['pensee', 'Pensée', 'cloud'], ['note', 'Note', 'pen-line']];
+// le caractère de chaque type d'annotation, partout (carnet, filtres, choix du type, boutons, messages) : jamais d'émoji ni d'icône ;
+// \uFE0E force la version texte du nuage et de la plume, pour qu'ils ne deviennent pas des émojis
+var CAR_ANNOT = {citation: '❝', pensee: '☁\uFE0E', note: '✒\uFE0E'};
+function carAnnot(genre) {
+  return '<span class="car-annot car-' + genre + '" aria-hidden="true">' + CAR_ANNOT[genre] + '</span>';
+}
+// types d'une entrée du carnet : [valeur, mot, pas d'icône, son caractère] ; les notes (infos, rappels…) ne s'affichent pas comme des citations
+var TYPES_CITATION = [['citation', 'Citation', '', carAnnot('citation')], ['pensee', 'Pensée', '', carAnnot('pensee')], ['note', 'Note', '', carAnnot('note')]];
 var INDICES_CITATION = {citation: 'La phrase qui t\'a marquée…', pensee: 'Ce que ça t\'inspire…', note: 'Un personnage, une info, un rappel…'};
 var NOMS_CITATION = {citation: 'la citation', pensee: 'la pensée', note: 'la note'};
 
-// filtre du carnet : [type de l'adaptateur, libellé, icône] — les icônes du vocabulaire (citation, pensée, note)
-var FILTRES_CITATIONS = [['tout', 'Tout', ''], ['BOOK_CONTENT', 'Citations', 'quote'], ['THOUGHT', 'Pensées', 'cloud'], ['NOTE', 'Notes', 'pen-line']];
+// filtre du carnet : [type de l'adaptateur, libellé, genre dont il prend le caractère]
+var FILTRES_CITATIONS = [['tout', 'Tout', ''], ['BOOK_CONTENT', 'Citations', 'citation'], ['THOUGHT', 'Pensées', 'pensee'], ['NOTE', 'Notes', 'note']];
 ACTIONS.filtreCitations = function (el) {
   lsSet('bm_filtre_cit', el.dataset.f);
   rendre();
@@ -15454,7 +15467,7 @@ function carteCitations() {
       }
       var icone = '';
       if (f[2]) {
-        icone = ic(f[2]);
+        icone = carAnnot(f[2]);
       }
       return '<button' + cls + ' data-act="filtreCitations" data-f="' + f[0] + '">' + icone + '<span>' + f[1] + '</span></button>';
     }).join('') + '</div>';
@@ -15463,18 +15476,16 @@ function carteCitations() {
   return card(TITRE_CARNET + compteTitre(cit.length) + '<button class="act-h" data-act="formCitation">' + ic('plus') + ' Ajouter</button>', filtres + cit.map(function (n) { return entreeCarnet(n); }).join(''), 'citations, pensées et notes');
 }
 var TITRE_CARNET = 'Mes annotations';
-// une entrée du carnet : son texte, précédé de sa marque (❝ … ❞ pour une citation, l'icône nuage pour une pensée, la plume pour une note), sa photo dessous, et le pied ;
+// une entrée du carnet : son texte, précédé de sa marque (❝ … ❞ pour une citation, ☁︎ pour une pensée, ✒︎ pour une note), sa photo dessous, et le pied ;
 // une photo sans texte garde sa marque au-dessus. dansFiche : dans la fiche de son livre, le pied ne redit pas le titre et « Modifier » y ramène
 function entreeCarnet(n, dansFiche) {
   var genre = 'citation';
-  var marque = '❝';
   if (n.type === 'THOUGHT') {
     genre = 'pensee';
-    marque = ic('cloud');
   } else if (n.type === 'NOTE') {
     genre = 'note';
-    marque = ic('pen-line');
   }
+  var marque = CAR_ANNOT[genre];
   var src = [];
   if (n.favori) {
     src.push(ic('star'));
@@ -15706,7 +15717,9 @@ ACTIONS.ciEnregistrer = function () {
     } else {
       fermerFeuille();
     }
-    toast('❝ Citation enregistrée');
+    // « ❝ Citation enregistrée », « ☁︎ Pensée enregistrée », « ✒︎ Note enregistrée »
+    var type = TYPES_CITATION.filter(function (o) { return o[0] === champs.type; })[0] || TYPES_CITATION[0];
+    toast(CAR_ANNOT[type[0]] + ' ' + type[1] + ' enregistrée');
   }).catch(erreurEcriture);
 };
 ACTIONS.ciSupprimer = function () {
@@ -17912,16 +17925,17 @@ function idbGet(k) {
 }
 
 // un message qui commence par un émoji d'interface (« 🗑️ Citation supprimée ») : l'icône de l'appli à la place, comme partout
-// (les émojis restent pour le contenu : humeurs, fêtes, quêtes, Bergamote)
+// (les émojis restent pour le contenu : humeurs, fêtes, quêtes, Bergamote ; les caractères des annotations ❝ ☁︎ ✒︎ restent des caractères)
 var ICONES_MESSAGE = [['✨', 'check'], ['💾', 'check'], ['✅', 'check'], ['✓', 'check'], ['🗑', 'trash-2'], ['↩', 'rotate-ccw'], ['⏱', 'timer'], ['☁', 'cloud'],
-  ['⚠', 'triangle-alert'], ['❝', 'quote'], ['🎯', 'target'], ['🎲', 'shuffle'], ['🐞', 'bug'], ['📋', 'copy'], ['📖', 'book-open'], ['📷', 'camera'],
+  ['⚠', 'triangle-alert'], ['🎯', 'target'], ['🎲', 'shuffle'], ['🐞', 'bug'], ['📋', 'copy'], ['📖', 'book-open'], ['📷', 'camera'],
   ['🔎', 'search'], ['🔗', 'link'], ['🔤', 'scan-text'], ['🔦', 'flashlight'], ['🗺', 'map'], ['🛟', 'life-buoy'], ['🤝', 'handshake'], ['🏳', 'flag'],
   ['🔆', 'sun'], ['🤔', 'triangle-alert']];
 function texteAvecIcone(texte) {
   var s = String(texte);
   var icone = '';
   ICONES_MESSAGE.some(function (x) {
-    if (s.indexOf(x[0]) === 0) {
+    // un caractère forcé en version texte (\uFE0E : ☁︎ d'une pensée) reste un caractère
+    if (s.indexOf(x[0]) === 0 && s.charAt(x[0].length) !== '\uFE0E') {
       icone = ic(x[1]);
       s = s.slice(x[0].length).replace(/^\uFE0F/, '').replace(/^\s+/, '');
       return true;
@@ -18150,7 +18164,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-09 16:27:17';
+var VERSION_APPLI = '2026-10-09 16:37:04';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
