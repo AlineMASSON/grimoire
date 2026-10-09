@@ -2219,12 +2219,17 @@ ACTIONS.objectifs = function () {
     '<label>📚 Livres terminés</label>' + champ('objLivres', o.livres || '', 'inputmode="numeric" placeholder="25"') +
     '<label>📖 Pages lues</label>' + champ('objPages', o.pages || '', 'inputmode="numeric" placeholder="par ex. 10000"') +
     '<label>⏱️ Heures de lecture (minutées)</label>' + champ('objHeures', o.heures || '', 'inputmode="numeric" placeholder="par ex. 150"') +
-    '<div class="row" style="margin-top:16px"><button class="act" data-act="objEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="fermer">Annuler</button></div></div>');
-  ACTIONS.objEnregistrer = function () {
-    sauverObjectif(y, {livres: parseInt(val('objLivres'), 10) || null, pages: parseInt(val('objPages'), 10) || null, heures: parseInt(val('objHeures'), 10) || null});
-    fermerFeuille();
-    toast('🎯 Objectifs enregistrés');
-  };
+    rangAutoForm('', 'data-act="fermer"') + '</div>');
+  // chaque objectif s'enregistre tout seul ; « Annuler mes modifications » remet ceux d'avant
+  activerAutoForm({
+    sauver: function () {
+      return [{t: 'objectifs', o: Object.assign({}, objectifAnnee(y), {livres: parseInt(val('objLivres'), 10) || null, pages: parseInt(val('objPages'), 10) || null, heures: parseInt(val('objHeures'), 10) || null})}];
+    },
+    defaire: function () {
+      return [{t: 'objectifs', o: o}];
+    },
+    rouvrir: ACTIONS.objectifs
+  });
 };
 // ---------- Stats : rythme, goûts, coût ----------
 function vStats() {
@@ -12077,23 +12082,29 @@ ACTIONS.livre = function (el) {
   ouvrirFiche(el.dataset.id);
 };
 
-// ---------- enregistrement automatique : modifier un livre, une lecture ou un achat qui existe déjà ----------
+// ---------- enregistrement automatique : modifier tout ce qui existe déjà (livre, lecture, session, achat, prêt, revente,
+// citation, série, auteur·ice, élément d'une liste, objectifs) ----------
 // Chaque champ s'enregistre quand on le quitte (change), regroupé sur un peu moins d'une seconde ; on reste sur le formulaire.
 // « ↩️ Annuler mes modifications » réécrit ce qui était là à l'ouverture. La fermeture de la feuille envoie ce qui attendait.
-// Pas pour un ajout : le bouton Enregistrer reste, pour ne pas créer de doublons.
-// o = {livreId, ignorer: [ids des champs de saisie intermédiaire], sauver(final, a) → ops ou null, defaire() → ops}
+// Pas pour un ajout : un seul bouton « Ajouter », pour ne rien créer à l'ouverture ni en double.
+// o = {livreId (s'il y a un livre), ignorer: [ids des champs de saisie intermédiaire], sauver(final, a) → ops ou null,
+//      defaire() → ops, apres() : après chaque enregistrement, rouvrir() : après « Annuler mes modifications » (sinon la fiche
+//      du livre), rafraichir() : si le formulaire est déjà fermé quand l'enregistrement arrive (sinon la fiche ou la page)}
+// Un champ rempli par un bouton (+1, une suggestion, une photo…) appelle formModifie() lui-même.
 var autoForm = null;
 function activerAutoForm(o) {
-  autoForm = {livreId: o.livreId, sauver: o.sauver, defaire: o.defaire, minuteur: null, attente: false};
+  autoForm = {livreId: o.livreId, sauver: o.sauver, defaire: o.defaire, apres: o.apres, rouvrir: o.rouvrir, rafraichir: o.rafraichir, minuteur: null, attente: false};
   document.getElementById('feuille').addEventListener('change', function (e) {
     if ((o.ignorer || []).indexOf(e.target.id) < 0) {
       formModifie();
     }
   });
 }
-function rangAutoForm(livreId) {
+// terminer : les attributs du bouton « Terminé » (par défaut : retour à la fiche du livre)
+function rangAutoForm(livreId, terminer) {
+  var t = terminer || 'data-act="retourFiche" data-id="' + livreId + '"';
   return '<p class="small muted etat-auto" id="etatAuto" role="status">' + ic('check') + ' tes changements s\'enregistrent tout seuls</p>' +
-    '<div class="row"><button class="act" data-act="retourFiche" data-id="' + livreId + '">' + ic('check') + ' Terminé</button><button type="button" class="lien" data-act="defaireAutoForm" id="defaireAuto" hidden>' + ic('rotate-ccw') + ' Annuler mes modifications</button></div>';
+    '<div class="row"><button class="act" ' + t + '>' + ic('check') + ' Terminé</button><button type="button" class="lien" data-act="defaireAutoForm" id="defaireAuto" hidden>' + ic('rotate-ccw') + ' Annuler mes modifications</button></div>';
 }
 function etatAutoForm(t) {
   var e = document.getElementById('etatAuto');
@@ -12122,6 +12133,9 @@ function sauverAutoForm(a, final) {
   }
   return ecrire(ops).then(function () {
     apresEcritureSansRendu();
+    if (a.apres) {
+      a.apres();
+    }
     if (autoForm === a) {
       etatAutoForm('✓ enregistré');
       var d = document.getElementById('defaireAuto');
@@ -12131,9 +12145,11 @@ function sauverAutoForm(a, final) {
       return;
     }
     // le formulaire est déjà fermé : ce qui s'affiche maintenant se met à jour
-    if (!document.getElementById('feuille')) {
+    if (a.rafraichir) {
+      a.rafraichir();
+    } else if (!document.getElementById('feuille')) {
       rendre();
-    } else {
+    } else if (a.livreId) {
       rafraichirFeuille('fiche', a.livreId, ouvrirFiche);
     }
   }).catch(erreurEcriture);
@@ -12159,7 +12175,11 @@ ACTIONS.defaireAutoForm = function () {
   abandonnerAutoForm();
   ecrire(a.defaire()).then(function () {
     apresEcriture();
-    ouvrirFiche(a.livreId);
+    if (a.rouvrir) {
+      a.rouvrir();
+    } else {
+      ouvrirFiche(a.livreId);
+    }
     toast('↩️ Modifications annulées');
   }).catch(erreurEcriture);
 };
@@ -12251,7 +12271,7 @@ function ouvrirFormLivre(id, prerempli) {
   if (id) {
     h += rangAutoForm(id);
   } else {
-    h += '<div class="row" style="margin-top:16px"><button class="act" data-act="flEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="flAnnuler">Annuler</button></div>';
+    h += '<div class="row" style="margin-top:16px"><button class="act" data-act="flEnregistrer">' + ic('plus') + ' Ajouter</button><button class="act doux" data-act="flAnnuler">Annuler</button></div>';
   }
   if (id) {
     h += '<button class="lien danger" data-act="supprimerLivre" data-id="' + id + '" style="margin-top:14px">' + ic('trash-2') + ' Supprimer ce livre</button>';
@@ -12826,7 +12846,7 @@ function ouvrirFormLecture(lid, livreId) {
   if (x) {
     h += rangAutoForm(l.id);
   } else {
-    h += '<div class="row" style="margin-top:16px"><button class="act" data-act="leEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
+    h += '<div class="row" style="margin-top:16px"><button class="act" data-act="leEnregistrer">' + ic('plus') + ' Ajouter</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
   }
   if (x) {
     h += '<button class="lien danger" data-act="leSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer cette lecture</button>';
@@ -13249,7 +13269,7 @@ ACTIONS.formSession = function (el) {
       '<div class="se-bloc"><div class="se-t">' + ic('calendar') + ' Quand</div>' + champ('seDate', dateVersChamp(v.debut), 'type="date" aria-label="Date"') +
       '<div class="se-heures">' + champ('seHeure', heureVersChamp(v.debut), 'type="time" aria-label="Début"') + '<span class="fl" aria-hidden="true">→</span>' + champ('seFin', fin, 'type="time" aria-label="Fin"') + '</div></div>' +
       '<div class="se-bloc"><div class="se-t">' + ic('timer') + ' Temps de lecture (min)</div><div class="champ-page"><button class="rond-m" data-act="seMinutesPas" data-n="-1" aria-label="Une minute de moins">' + ic('minus') + '</button>' + champ('seMinutes', v.dureeSec ? Math.round(v.dureeSec / 60) : '', 'type="number" min="0" inputmode="numeric" aria-label="Temps de lecture en minutes"') + '<button class="rond-m" data-act="seMinutesPas" data-n="1" aria-label="Une minute de plus">' + ic('plus') + '</button></div><p class="se-note" id="seNoteTemps"></p></div>' +
-      '<div class="row" style="margin-top:12px"><button class="act" data-act="seEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="seRetour">Annuler</button></div>';
+      (s ? rangAutoForm(x.livreId, 'data-act="seRetour"') : '<div class="row" style="margin-top:12px"><button class="act" data-act="seEnregistrer">' + ic('plus') + ' Ajouter</button><button class="act doux" data-act="seRetour">Annuler</button></div>');
     if (s) {
       h += '<button class="lien danger" data-act="seSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer cette session</button>';
     }
@@ -13321,10 +13341,12 @@ ACTIONS.formSession = function (el) {
       }
       document.getElementById('seMinutes').value = Math.max(0, mn + parseFloat(el.dataset.n));
       majNotes();
+      formModifie();
     };
     ACTIONS.pasPage = function (el) {
       pasPosition('sePosition', x, v.position || positionAvant(v.debut) || 0, parseFloat(el.dataset.n));
       majNotes();
+      formModifie();
     };
     function retour() {
       if (depuisAccueil) {
@@ -13336,11 +13358,12 @@ ACTIONS.formSession = function (el) {
       }
     }
     ACTIONS.seRetour = retour;
-    ACTIONS.seEnregistrer = function () {
+    // la session d'après les champs, et la lecture qui avance ; prevenir(message) dit ce qui ne va pas
+    function lireSession(prevenir) {
       var jour = val('seDate');
       if (!jour) {
-        avertir('Indique la date.');
-        return;
+        prevenir('Indique la date.');
+        return null;
       }
       var debut = new Date(jour + 'T' + (val('seHeure') || '12:00') + ':00').getTime();
       var mn = valNombre('seMinutes');
@@ -13358,8 +13381,8 @@ ACTIONS.formSession = function (el) {
         finSession = debut + (mn || 0) * 60000;
       }
       if (mn && finSession > debut && mn * 60000 > finSession - debut + 59000) {
-        avertir('Le temps de lecture (' + mn + ' min) dépasse le temps entre le début et la fin (' + Math.round((finSession - debut) / 60000) + ' min).');
-        return;
+        prevenir('Le temps de lecture (' + mn + ' min) dépasse le temps entre le début et la fin (' + Math.round((finSession - debut) / 60000) + ' min).');
+        return null;
       }
       var pos = lireLongueur('sePosition', x.unite);
       var ses = Object.assign({}, s || {id: nouvelId(), lectureId: x.id, livreId: x.livreId, origine: 'manuel'}, {
@@ -13383,9 +13406,17 @@ ACTIONS.formSession = function (el) {
       // la lecture avance si c'est la position la plus récente
       var plusRecente = valeurs(D.sessions).filter(function (y) { return y.lectureId === x.id && y.id !== ses.id && y.position !== null && y.position !== undefined; }).every(function (y) { return (y.fin || y.debut) <= ses.fin; });
       if (pos !== null && plusRecente) {
-        ops.push({t: 'lectures', o: Object.assign({}, x, {position: pos})});
+        ops.push({t: 'lectures', o: Object.assign({}, D.lectures[x.id] || x, {position: pos})});
       }
-      ecrire(ops).then(function () {
+      return {ses: ses, ops: ops, pos: pos};
+    }
+    ACTIONS.seEnregistrer = function () {
+      var r = lireSession(avertir);
+      if (!r) {
+        return;
+      }
+      var pos = r.pos;
+      ecrire(r.ops).then(function () {
         apresEcriture();
         // arrivée au bout du livre : on propose de le terminer
         var lec = D.lectures[x.id];
@@ -13412,6 +13443,32 @@ ACTIONS.formSession = function (el) {
         }).catch(erreurEcriture);
       });
     };
+    // une session qui existe : chaque changement s'enregistre tout seul ; « Annuler mes modifications » remet la session et
+    // la position de la lecture d'avant
+    if (s) {
+      activerAutoForm({
+        livreId: x.livreId,
+        sauver: function () {
+          var r = lireSession(function (m) { etatAutoForm('⚠️ ' + m + ' Rien n\'est enregistré.'); });
+          if (!r) {
+            return null;
+          }
+          return r.ops;
+        },
+        defaire: function () {
+          return [{t: 'sessions', o: s}, {t: 'lectures', o: x}];
+        },
+        rouvrir: retour,
+        rafraichir: function () {
+          if (!document.getElementById('feuille')) {
+            rendre();
+            return;
+          }
+          rafraichirFeuille('fiche', x.livreId, ouvrirFiche);
+          rafraichirFeuille('sessions', x.id, afficherSessions);
+        }
+      });
+    }
   });
 };
 
@@ -13496,13 +13553,14 @@ ACTIONS.formPret = function (el) {
       '<label>À qui ?</label>' + champ('ptA', v.a, 'list="dlPrets" autocomplete="off" placeholder="Prénom…"') + listeDeChoix('dlPrets', noms) + sugg +
       '<div class="deux"><div><label>Depuis le</label>' + champ('ptDepuis', dateVersChamp(v.depuis), 'type="date"') + '</div><div><label>À rendre vers (si tu veux)</label>' + champ('ptRendre', v.rendreVers ? dateVersChamp(v.rendreVers) : '', 'type="date"') + '</div></div>' +
       '<label>Un mot</label>' + champ('ptMot', v.mot, 'placeholder="pour les vacances…"') +
-      '<div class="row" style="margin-top:16px"><button class="act" data-act="ptEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
+      (actuel ? rangAutoForm(l.id) : '<div class="row" style="margin-top:16px"><button class="act" data-act="ptEnregistrer">' + ic('plus') + ' Ajouter</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>');
     if (actuel) {
       h += '<button class="lien danger" data-act="ptSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer ce prêt</button>';
     }
     ouvrirFeuille(h + '</div>');
     ACTIONS.pretNom = function (b) {
       document.getElementById('ptA').value = b.dataset.n;
+      formModifie();
     };
     function enregistrer(prets) {
       return ecrire([{t: 'livres', o: Object.assign({}, l, {prets: prets})}]).then(function () {
@@ -13510,11 +13568,12 @@ ACTIONS.formPret = function (el) {
         ouvrirFiche(l.id);
       }).catch(erreurEcriture);
     }
-    ACTIONS.ptEnregistrer = function () {
+    // les prêts du livre d'après le formulaire ; prevenir(message) dit ce qui manque
+    function lirePrets(prevenir) {
       var a = val('ptA');
       if (!a) {
-        avertir('Indique à qui tu l\'as prêté.');
-        return;
+        prevenir('Indique à qui tu l\'as prêté.');
+        return null;
       }
       var p = {a: a, depuis: champVersDate(val('ptDepuis'), v.depuis) || Date.now(), rendreVers: champVersDate(val('ptRendre'), v.rendreVers), mot: val('ptMot'), retour: null};
       var prets = (l.prets || []).slice();
@@ -13524,15 +13583,38 @@ ACTIONS.formPret = function (el) {
       } else {
         prets.push(p);
       }
-      enregistrer(prets);
+      return prets;
+    }
+    ACTIONS.ptEnregistrer = function () {
+      var prets = lirePrets(avertir);
+      if (prets) {
+        enregistrer(prets);
+      }
     };
     ACTIONS.ptSupprimer = function () {
       demander('Supprimer ce prêt ? (pour une erreur ; quand le livre revient, touche plutôt « Il est revenu »)', {oui: 'Supprimer', danger: true}).then(function (ok) {
         if (ok) {
+          abandonnerAutoForm();
           enregistrer((l.prets || []).filter(function (x) { return x !== actuel; }));
         }
       });
     };
+    // un prêt en cours : chaque changement s'enregistre tout seul
+    if (actuel) {
+      activerAutoForm({
+        livreId: l.id,
+        sauver: function () {
+          var prets = lirePrets(function (m) { etatAutoForm('⚠️ ' + m + ' Rien n\'est enregistré.'); });
+          if (!prets) {
+            return null;
+          }
+          return [{t: 'livres', o: Object.assign({}, D.livres[l.id], {prets: prets})}];
+        },
+        defaire: function () {
+          return [{t: 'livres', o: Object.assign({}, D.livres[l.id], {prets: l.prets || []})}];
+        }
+      });
+    }
   });
 };
 // le livre est revenu : le prêt passe dans l'historique (avec « Annuler » quelques secondes)
@@ -13627,26 +13709,42 @@ function ouvrirFormRevente(livreId) {
   var h = '<h3>' + (deja ? 'Modifier la revente' : 'Revendu') + '</h3><p class="small muted">' + esc(l.titre) + ' · le livre quitte ta bibliothèque, ses lectures et son carnet restent</p><div class="form">' +
     '<div class="deux"><div><label>Prix de revente</label>' + champ('rvPrix', v.prix === null || v.prix === undefined ? '' : String(v.prix).replace('.', ','), 'inputmode="decimal" placeholder="0,00"') + '</div><div><label>Devise</label>' + choix('rvDevise', DEVISES, v.devise) + '</div></div>' +
     '<div class="deux"><div><label>Date</label>' + champ('rvDate', dateVersChamp(v.date), 'type="date"') + '</div><div><label>Où</label>' + champ('rvLieu', v.lieu, 'list="dlLieux" autocomplete="off" placeholder="Vinted…"') + '</div></div>' + listeDeChoix('dlLieux', lieux) +
-    '<div class="row" style="margin-top:16px"><button class="act" data-act="rvEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
+    (deja ? rangAutoForm(l.id) : '<div class="row" style="margin-top:16px"><button class="act" data-act="rvEnregistrer">' + ic('plus') + ' Ajouter</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>');
   if (deja) {
     h += '<button class="lien danger" data-act="rvAnnuler" style="margin-top:14px">' + ic('rotate-ccw') + ' Finalement, je l\'ai encore</button>';
   }
   ouvrirFeuille(h + '</div>');
+  function lireRevente() {
+    return {prix: valNombre('rvPrix') || 0, devise: val('rvDevise') || 'EUR', date: champVersDate(val('rvDate'), deja && deja.date), lieu: val('rvLieu')};
+  }
   ACTIONS.rvEnregistrer = function () {
-    var revente = {prix: valNombre('rvPrix') || 0, devise: val('rvDevise') || 'EUR', date: champVersDate(val('rvDate'), deja && deja.date), lieu: val('rvLieu')};
+    var revente = lireRevente();
     ecrire([{t: 'livres', o: Object.assign({}, l, {possession: 'revendu', revente: revente})}]).then(function () {
       apresEcriture();
       ouvrirFiche(l.id);
     }).catch(erreurEcriture);
   };
   ACTIONS.rvAnnuler = function () {
-    var o = Object.assign({}, l, {possession: 'possede'});
+    abandonnerAutoForm();
+    var o = Object.assign({}, D.livres[l.id], {possession: 'possede'});
     delete o.revente;
     ecrire([{t: 'livres', o: o}]).then(function () {
       apresEcriture();
       ouvrirFiche(l.id);
     }).catch(erreurEcriture);
   };
+  // une revente déjà notée : chaque changement s'enregistre tout seul
+  if (deja) {
+    activerAutoForm({
+      livreId: l.id,
+      sauver: function () {
+        return [{t: 'livres', o: Object.assign({}, D.livres[l.id], {possession: 'revendu', revente: lireRevente()})}];
+      },
+      defaire: function () {
+        return [{t: 'livres', o: Object.assign({}, D.livres[l.id], {possession: l.possession, revente: l.revente})}];
+      }
+    });
+  }
 }
 ACTIONS.formAchat = function (el) {
   var aid = el.dataset.id;
@@ -13688,7 +13786,7 @@ function ouvrirFormAchat(aid, livreId) {
   if (a) {
     h += rangAutoForm(l.id);
   } else {
-    h += '<div class="row" style="margin-top:16px"><button class="act" data-act="acEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
+    h += '<div class="row" style="margin-top:16px"><button class="act" data-act="acEnregistrer">' + ic('plus') + ' Ajouter</button><button class="act doux" data-act="retourFiche" data-id="' + l.id + '">Annuler</button></div>';
   }
   if (a) {
     h += '<button class="lien danger" data-act="acSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer cet achat</button>';
@@ -13772,55 +13870,90 @@ ACTIONS.formSerie = function (el) {
     ouvrirFeuille('<h3>Modifier la série</h3><div class="form"><label>Nom</label>' + champ('srNom', s.nom) +
       '<label>Parution</label>' + choixBoutons('srStatut', STATUTS_SERIE, s.statut || '') + '<label>Nombre de tomes</label>' + champ('srTomes', s.nbTomes, 'type="number" min="1" inputmode="numeric" placeholder="?"') +
       '<p class="small muted">' + tomes + ' livre(s) de cette série dans ton grimoire. Les numéros de tome se modifient depuis chaque livre.</p>' +
-      '<div class="row" style="margin-top:12px"><button class="act" data-act="srEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="fermer">Annuler</button></div>' +
+      rangAutoForm('', 'data-act="retourPage"') +
       '<button class="lien danger" data-act="srSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer la série (les livres restent)</button></div>');
-    ACTIONS.srEnregistrer = function () {
+    // chaque changement s'enregistre tout seul ; l'abandon attend la réponse à la question sur ses tomes pas encore lus
+    var abandon = {attente: false, demande: false, ok: false, lectures: []};
+    function nonLusSerie() {
+      return valeurs(D.livres).filter(function (l) { return l.serieId === sid && M.parId[l.id] && M.parId[l.id].statut === 'NOT_STARTED'; });
+    }
+    function lireSerie(prevenir) {
       var nom = val('srNom');
       if (!nom) {
-        avertir('Il manque le nom.');
-        return;
+        prevenir('Il manque le nom.');
+        return null;
       }
       var statut = val('srStatut');
-      var ops = [{t: 'series', o: Object.assign({}, s, {nom: nom, statut: statut, nbTomes: parseInt(val('srTomes'), 10) || null})}];
-      function valider(message) {
-        ecrire(ops).then(function () {
-          fermerFeuille();
-          apresEcriture();
-          if (message) {
-            toast(message);
-          }
-        }).catch(erreurEcriture);
+      if (statut === 'abandonnee' && s.statut !== 'abandonnee' && !abandon.ok && nonLusSerie().length) {
+        statut = D.series[sid].statut || '';
+        abandon.attente = true;
       }
-      // abandonner la série : ses tomes pas encore commencés passent en « plus envie »
-      var nonLus = [];
-      if (statut === 'abandonnee' && s.statut !== 'abandonnee') {
-        nonLus = valeurs(D.livres).filter(function (l) { return l.serieId === sid && M.parId[l.id] && M.parId[l.id].statut === 'NOT_STARTED'; });
-      }
-      if (!nonLus.length) {
-        valider(statut === 'abandonnee' && s.statut !== 'abandonnee' ? '🏳️ Série abandonnée' : '');
+      return Object.assign({}, D.series[sid], {nom: nom, statut: statut, nbTomes: parseInt(val('srTomes'), 10) || null});
+    }
+    // la série abandonnée : ses tomes pas encore commencés passent en « plus envie » ; « non » remet la parution d'avant
+    function proposerAbandon() {
+      if (!abandon.attente || abandon.demande) {
         return;
       }
+      abandon.demande = true;
+      var nonLus = nonLusSerie();
       var titres = nonLus.map(function (l) { return '• ' + l.titre; }).join('\n');
-      demander('Ses ' + nonLus.length + ' tome' + (nonLus.length > 1 ? 's' : '') + ' pas encore lu' + (nonLus.length > 1 ? 's' : '') + ' passer' + (nonLus.length > 1 ? 'ont' : 'a') + ' en « 🥀 Plus envie » et quitter' + (nonLus.length > 1 ? 'ont' : 'a') + ' ta pile à lire et tes envies :\n' + titres, {titre: 'Abandonner « ' + nom + ' » ?', oui: 'Abandonner la série'}).then(function (ok) {
+      demander('Ses ' + nonLus.length + ' tome' + (nonLus.length > 1 ? 's' : '') + ' pas encore lu' + (nonLus.length > 1 ? 's' : '') + ' passer' + (nonLus.length > 1 ? 'ont' : 'a') + ' en « 🥀 Plus envie » et quitter' + (nonLus.length > 1 ? 'ont' : 'a') + ' ta pile à lire et tes envies :\n' + titres, {titre: 'Abandonner « ' + val('srNom') + ' » ?', oui: 'Abandonner la série'}).then(function (ok) {
         if (!ok) {
+          // « non » : la parution d'avant revient ; rechoisir « abandonnée » reposera la question
+          abandon.attente = false;
+          abandon.demande = false;
+          var c = document.getElementById('srStatut');
+          if (c) {
+            c.value = s.statut || '';
+            c.parentNode.querySelectorAll('.choix-boutons .chip').forEach(function (b) {
+              var on = b.dataset.v === c.value;
+              b.classList.toggle('on', on);
+              b.setAttribute('aria-checked', String(on));
+            });
+          }
           return;
         }
+        abandon.ok = true;
+        var ops = [{t: 'series', o: Object.assign({}, D.series[sid], {statut: 'abandonnee'})}];
         nonLus.forEach(function (l) {
           var ls = lecturesDe(l.id);
           var nth = 1;
           if (ls.length) {
             nth = Math.max.apply(null, ls.map(function (y) { return y.nth || 0; })) + 1;
           }
-          ops.push({t: 'lectures', o: {id: nouvelId(), livreId: l.id, nth: nth, format: l.format || 'papier', debut: null, fin: Date.now(), statut: 'plusenvie', unite: l.unite || 'pages', total: l.total || 0, position: 0, etoiles: null, commentaire: '', origine: 'appli'}});
+          var nid = nouvelId();
+          abandon.lectures.push(nid);
+          ops.push({t: 'lectures', o: {id: nid, livreId: l.id, nth: nth, format: l.format || 'papier', debut: null, fin: Date.now(), statut: 'plusenvie', unite: l.unite || 'pages', total: l.total || 0, position: 0, etoiles: null, commentaire: '', origine: 'appli'}});
         });
-        valider('🏳️ Série abandonnée · ' + nonLus.length + ' tome' + (nonLus.length > 1 ? 's' : '') + ' en « plus envie »');
+        ecrire(ops).then(function () {
+          apresEcritureSansRendu();
+          toast('🏳️ Série abandonnée · ' + nonLus.length + ' tome' + (nonLus.length > 1 ? 's' : '') + ' en « plus envie »');
+        }).catch(erreurEcriture);
       });
-    };
+    }
+    activerAutoForm({
+      sauver: function () {
+        var o = lireSerie(function (m) { etatAutoForm('⚠️ ' + m + ' Rien n\'est enregistré.'); });
+        if (!o) {
+          return null;
+        }
+        return [{t: 'series', o: o}];
+      },
+      apres: proposerAbandon,
+      defaire: function () {
+        return [{t: 'series', o: s}].concat(abandon.lectures.map(function (id) { return {t: 'lectures', suppr: id}; }));
+      },
+      rouvrir: function () {
+        ACTIONS.formSerie({dataset: {id: sid}});
+      }
+    });
     ACTIONS.srSupprimer = function () {
       demander('Supprimer la série « ' + s.nom + ' » ? Ses ' + tomes + ' livre(s) restent dans ton grimoire, sans série.', {oui: 'Supprimer', danger: true}).then(function (ok) {
         if (!ok) {
           return;
         }
+        abandonnerAutoForm();
         var ops = [{t: 'series', suppr: sid}];
         valeurs(D.livres).forEach(function (l) {
           if (l.serieId === sid) {
@@ -13861,11 +13994,16 @@ ACTIONS.formAuteur = function (el) {
     ouvrirFeuille('<h3>' + esc(a.nom) + '</h3><p class="small muted">' + livres.map(function (l) { return esc(l.titre); }).slice(0, 8).join(' · ') + (livres.length > 8 ? '…' : '') + '</p><div class="form"><label>Nom</label>' + champ('auNom', a.nom) +
       '<label>Fusionner avec (doublon)</label>' + champ('auCible', '', 'list="dlAuCible" placeholder="Nom de l\'autre fiche" autocomplete="off"') + listeDeChoix('dlAuCible', valeurs(D.auteurs).filter(function (x) { return x.id !== aid; }).map(function (x) { return x.nom; })) +
       '<p class="small muted">En fusionnant, ses livres passent sur l\'autre fiche, puis celle-ci disparaît.</p>' +
-      '<div class="row" style="margin-top:12px"><button class="act" data-act="auEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="auteurs">' + ic('chevron-left') + ' Retour</button></div>' +
+      '<button type="button" class="act doux" data-act="auFusionner">' + ic('link') + ' Fusionner</button>' +
+      rangAutoForm('', 'data-act="auteurs"') +
       (livres.length ? '' : '<button class="lien danger" data-act="auSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer</button>') + '</div>');
-    ACTIONS.auEnregistrer = function () {
+    ACTIONS.auFusionner = function () {
       var cibleNom = val('auCible');
-      if (cibleNom) {
+      if (!cibleNom) {
+        avertir('Indique le nom de l\'autre fiche (commence à le taper).');
+        return;
+      }
+      {
         var cible = auteurParNom(cibleNom);
         if (!cible || cible.id === aid) {
           avertir('Je ne trouve pas « ' + cibleNom + ' » parmi tes auteur·ices.');
@@ -13875,6 +14013,7 @@ ACTIONS.formAuteur = function (el) {
           if (!ok) {
             return;
           }
+          abandonnerAutoForm();
           var ops = [{t: 'auteurs', suppr: aid}];
           livres.forEach(function (l) {
             var cs = [];
@@ -13895,15 +14034,27 @@ ACTIONS.formAuteur = function (el) {
         });
         return;
       }
-      var nom = val('auNom');
-      if (!nom) {
-        return;
-      }
-      enregistrer('auteurs', Object.assign({}, a, {nom: nom, tri: slug(nom.split(' ').pop())})).then(function () {
-        ACTIONS.auteurs();
-      }).catch(erreurEcriture);
     };
+    // le nom s'enregistre tout seul (la fusion, elle, attend « Fusionner »)
+    activerAutoForm({
+      ignorer: ['auCible'],
+      sauver: function () {
+        var nom = val('auNom');
+        if (!nom) {
+          etatAutoForm('⚠️ Il manque le nom. Rien n\'est enregistré.');
+          return null;
+        }
+        return [{t: 'auteurs', o: Object.assign({}, D.auteurs[aid], {nom: nom, tri: slug(nom.split(' ').pop())})}];
+      },
+      defaire: function () {
+        return [{t: 'auteurs', o: a}];
+      },
+      rouvrir: function () {
+        ACTIONS.formAuteur({dataset: {id: aid}});
+      }
+    });
     ACTIONS.auSupprimer = function () {
+      abandonnerAutoForm();
       ecrire([{t: 'auteurs', suppr: aid}]).then(function () {
         apresEcriture();
         ACTIONS.auteurs();
@@ -14578,7 +14729,7 @@ ACTIONS.arreterMinuteur = function () {
     '<p class="small" style="margin:6px 0 0;text-align:center">' + question + '</p>' + estimation +
     champPosition('arPosition', x, propose, true) + '<p class="small muted" style="text-align:center;margin:8px 0 0" id="arResume"></p>' +
     '<div class="form" style="margin-top:6px"><label>Temps de lecture (min, pauses déduites)</label>' + champ('arMinutes', mn, 'type="number" min="1" inputmode="numeric"') + '</div>' +
-    '<div class="row" style="margin-top:14px"><button class="act" data-act="validerArret">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="reprendreApresArret">' + ic('play') + ' Reprendre</button></div>');
+    '<div class="row" style="margin-top:14px"><button class="act" data-act="validerArret">' + ic('plus') + ' Ajouter</button><button class="act doux" data-act="reprendreApresArret">' + ic('play') + ' Reprendre</button></div>');
   function resume() {
     var pos = lireLongueur('arPosition', x.unite);
     var el = document.getElementById('arResume');
@@ -14707,7 +14858,7 @@ html.externe main{padding:0 !important;margin:0;max-width:none}
 .pm-msg b{display:block;font:700 19px/1.2 "Cormorant Garamond",Georgia,serif;margin:8px 0 4px}
 .pm-msg p{margin:0 0 12px;font-size:12.5px;color:var(--muted);line-height:1.45}
 .pm-msg button{border:1px solid var(--line);background:var(--card);color:var(--ink);font:700 13px Nunito,sans-serif;border-radius:999px;padding:8px 16px;cursor:pointer}
-/* la fin de session, compacte : tout tient sans défiler, « Enregistrer » et « Reprendre » toujours visibles */
+/* la fin de session, compacte : tout tient sans défiler, « Ajouter » et « Reprendre » toujours visibles */
 html.externe .sheet{padding:0 14px 10px}
 html.externe .barre-feuille{margin:0 -14px 6px;padding:6px 10px 6px 14px}
 html.externe .sheet h3{font-size:19px}
@@ -15039,7 +15190,11 @@ ACTIONS.formElement = function (el) {
   if (x) {
     h += '<label class="small" style="text-transform:none;letter-spacing:0;margin-top:14px"><input type="checkbox" id="elArchive"' + (x.archive ? ' checked' : '') + '> archivé (caché des choix, gardé sur les livres déjà notés)</label>';
   }
-  h += '<div class="row" style="margin-top:16px"><button class="act" data-act="elEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="mesListes">' + ic('chevron-left') + ' Retour</button></div>';
+  if (x) {
+    h += rangAutoForm('', 'data-act="mesListes"');
+  } else {
+    h += '<div class="row" style="margin-top:16px"><button class="act" data-act="elEnregistrer">' + ic('plus') + ' Ajouter</button><button class="act doux" data-act="mesListes">' + ic('chevron-left') + ' Retour</button></div>';
+  }
   if (x) {
     var avec = '';
     if (n) {
@@ -15048,6 +15203,35 @@ ACTIONS.formElement = function (el) {
     h += '<button class="lien danger" data-act="elSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer' + avec + '</button>';
   }
   ouvrirFeuille(h + '</div>');
+  // l'élément d'après le formulaire
+  function lireElement(nom) {
+    var o = Object.assign({}, D[t][x.id] || x, {nom: nom, emoji: val('elEmoji')});
+    var arch = document.getElementById('elArchive');
+    o.archive = !!(arch && arch.checked);
+    if (t === 'genres') {
+      o.couleur = document.getElementById('elSansCouleur').checked ? '' : val('elCouleur');
+    }
+    return o;
+  }
+  // un élément qui existe : chaque changement s'enregistre tout seul
+  if (x) {
+    activerAutoForm({
+      sauver: function () {
+        var nom = val('elNom');
+        if (!nom) {
+          etatAutoForm('⚠️ Il manque le nom. Rien n\'est enregistré.');
+          return null;
+        }
+        return [{t: t, o: lireElement(nom)}];
+      },
+      defaire: function () {
+        return [{t: t, o: x}];
+      },
+      rouvrir: function () {
+        ACTIONS.formElement({dataset: {t: t, id: x.id}});
+      }
+    });
+  }
   ACTIONS.elEnregistrer = function () {
     var nom = val('elNom');
     if (!nom) {
@@ -15056,13 +15240,7 @@ ACTIONS.formElement = function (el) {
     }
     var p;
     if (x) {
-      var o = Object.assign({}, x, {nom: nom, emoji: val('elEmoji')});
-      var arch = document.getElementById('elArchive');
-      o.archive = !!(arch && arch.checked);
-      if (t === 'genres') {
-        o.couleur = document.getElementById('elSansCouleur').checked ? '' : val('elCouleur');
-      }
-      p = enregistrer(t, o);
+      p = enregistrer(t, lireElement(nom));
     } else {
       p = creerElementListe(t, nom, val('elEmoji')).then(function (nv) {
         if (t === 'genres' && !document.getElementById('elSansCouleur').checked) {
@@ -15075,6 +15253,7 @@ ACTIONS.formElement = function (el) {
     }).catch(erreurEcriture);
   };
   ACTIONS.elSupprimer = function () {
+    abandonnerAutoForm();
     demander('Supprimer « ' + x.nom + ' » ?' + (n ? ' Il sera retiré de ' + n + ' livre(s).' : ''), {oui: 'Supprimer', danger: true}).then(function (ok) {
       if (!ok) {
         return;
@@ -15283,7 +15462,7 @@ ACTIONS.formCitation = function (el) {
     '<label>Texte</label><textarea class="champ" id="ciTexte" placeholder="' + esc(INDICES_CITATION[v.type] || '') + '">' + esc(v.texte) + '</textarea>' +
     '<div class="deux"><div><label>Page</label>' + champ('ciPage', v.page, 'inputmode="numeric"') + '</div><div><label>Jusqu\'à la page</label>' + champ('ciPageFin', v.pageFin, 'inputmode="numeric"') + '</div></div>' +
     '<label class="small" style="text-transform:none;letter-spacing:0;margin-top:12px"><input type="checkbox" id="ciFavori"' + (v.favori ? ' checked' : '') + '> ⭐ favorite</label>' +
-    '<div class="row" style="margin-top:16px"><button class="act" data-act="ciEnregistrer">' + ic('check') + ' Enregistrer</button><button class="act doux" data-act="ciAnnuler">Annuler</button></div>';
+    (c ? rangAutoForm(livreId, 'data-act="ciAnnuler"') : '<div class="row" style="margin-top:16px"><button class="act" data-act="ciEnregistrer">' + ic('plus') + ' Ajouter</button><button class="act doux" data-act="ciAnnuler">Annuler</button></div>');
   if (c) {
     h += '<button class="lien danger" data-act="ciSupprimer" style="margin-top:14px">' + ic('trash-2') + ' Supprimer</button>';
   }
@@ -15301,11 +15480,55 @@ ACTIONS.formCitation = function (el) {
     redimensionnerImage(fic, 2000).then(function (blob) {
       fc.photo = blob;
       rendrePhotoCitation();
+      formModifie();
     }).catch(function () {
       avertir('Je n\'arrive pas à lire cette image.');
     });
     e.target.value = '';
   });
+  // une citation qui existe : chaque changement s'enregistre tout seul. Une nouvelle photo n'est écrite qu'une fois ; l'ancienne
+  // (remplacée ou retirée) n'est effacée qu'à la fermeture, pour que « Annuler mes modifications » puisse la remettre.
+  if (c) {
+    var etat = fc;
+    var nouvellesPhotos = [];
+    activerAutoForm({
+      livreId: etat.retour || '',
+      ignorer: ['ciFichier'],
+      sauver: function (final, a) {
+        var champs = lireCitation(etat, function (m) { etatAutoForm('⚠️ ' + m + ' Rien n\'est enregistré.'); });
+        if (!champs) {
+          return null;
+        }
+        var ops = [];
+        if (etat.photo) {
+          var pid = 'p:' + nouvelId();
+          ops.push({t: 'photos', o: {id: pid, blob: etat.photo, type: 'image/jpeg', origine: 'appli'}});
+          nouvellesPhotos.push(pid);
+          etat.photo = null;
+          etat.photoId = pid;
+        }
+        if (c.photoId && c.photoId !== etat.photoId) {
+          if (final) {
+            ops.push({t: 'photos', suppr: c.photoId});
+          } else {
+            a.attente = true;
+          }
+        }
+        ops.push({t: 'citations', o: Object.assign({}, D.citations[c.id] || c, champs, {photoId: etat.photoId || null})});
+        return ops;
+      },
+      defaire: function () {
+        var ops = [{t: 'citations', o: c}];
+        nouvellesPhotos.forEach(function (p) {
+          ops.push({t: 'photos', suppr: p});
+        });
+        return ops;
+      },
+      rouvrir: function () {
+        ACTIONS.formCitation({dataset: {id: c.id, livre: etat.retour}});
+      }
+    });
+  }
 };
 function srcPhotoCitation() {
   if (fc.photo) {
@@ -15335,6 +15558,7 @@ ACTIONS.ciSansPhoto = function () {
   fc.photo = null;
   fc.photoId = null;
   rendrePhotoCitation();
+  formModifie();
 };
 ACTIONS.ciAnnuler = function () {
   var retour = fc && fc.retour;
@@ -15352,19 +15576,27 @@ function livreDepuisTitre(t) {
   }
   return M.livres.find(function (b) { return slug(titre(b)) === s; }) || M.livres.find(function (b) { return slug(b.title) === s; }) || null;
 }
-ACTIONS.ciEnregistrer = function () {
-  var livreId = fc.livreId;
+// la citation d'après le formulaire (sans la photo) ; prevenir(message) dit ce qui manque
+function lireCitation(etat, prevenir) {
+  var livreId = etat.livreId;
   if (document.getElementById('ciLivre')) {
     var b = livreDepuisTitre(val('ciLivre'));
     if (!b) {
-      avertir('Choisis le livre dans la liste (commence à taper son titre).');
-      return;
+      prevenir('Choisis le livre dans la liste (commence à taper son titre).');
+      return null;
     }
     livreId = b.id;
   }
   var texte = val('ciTexte');
-  if (!texte && !fc.photo && !fc.photoId) {
-    avertir('Écris le texte ou ajoute une photo.');
+  if (!texte && !etat.photo && !etat.photoId) {
+    prevenir('Écris le texte ou ajoute une photo.');
+    return null;
+  }
+  return {livreId: livreId, type: val('ciType'), texte: texte, page: parseInt(val('ciPage'), 10) || null, pageFin: parseInt(val('ciPageFin'), 10) || null, favori: document.getElementById('ciFavori').checked};
+}
+ACTIONS.ciEnregistrer = function () {
+  var champs = lireCitation(fc, avertir);
+  if (!champs) {
     return;
   }
   var ancienne = (fc.id && D.citations[fc.id]) || null;
@@ -15377,15 +15609,7 @@ ACTIONS.ciEnregistrer = function () {
   if (ancienne && ancienne.photoId && ancienne.photoId !== photoId) {
     ops.push({t: 'photos', suppr: ancienne.photoId});
   }
-  var cit = Object.assign({}, ancienne || {id: nouvelId(), origine: 'appli', commentaires: []}, {
-    livreId: livreId,
-    type: val('ciType'),
-    texte: texte,
-    page: parseInt(val('ciPage'), 10) || null,
-    pageFin: parseInt(val('ciPageFin'), 10) || null,
-    favori: document.getElementById('ciFavori').checked,
-    photoId: photoId || null
-  });
+  var cit = Object.assign({}, ancienne || {id: nouvelId(), origine: 'appli', commentaires: []}, champs, {photoId: photoId || null});
   ops.push({t: 'citations', o: cit});
   var retour = fc.retour;
   ecrire(ops).then(function () {
@@ -15559,6 +15783,7 @@ function lancerOcr(zoneSeule) {
     }
     if (!t.value.trim()) {
       t.value = texte;
+      formModifie();
       toast('✨ Texte lu : relis-le et corrige si besoin');
       return;
     }
@@ -15568,6 +15793,7 @@ function lancerOcr(zoneSeule) {
       } else {
         t.value = t.value.trim() + '\n' + texte;
       }
+      formModifie();
       toast('✨ Texte lu : relis-le et corrige si besoin');
     });
   }).catch(function (e) {
@@ -17838,7 +18064,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-09 16:04:57';
+var VERSION_APPLI = '2026-10-09 16:14:16';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
