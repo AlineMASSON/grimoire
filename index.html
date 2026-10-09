@@ -337,6 +337,12 @@ html:has(.sheet-bg,.boite-fond,.page-minuteur,.scan,.recadrage,.story,.fete-jeu)
 @keyframes guirlande{0%,100%{opacity:1}50%{opacity:.4}}
 .rangs{display:flex;flex-wrap:wrap;align-items:flex-end;column-gap:3px;row-gap:14px}
 .place-l,.deco-e{height:168px;display:flex;align-items:flex-end;flex:none}
+.place-l{position:relative}
+/* un livre de mes envies : un bouton rond pour le mettre dans ma pile à lire, sur sa tranche ou au coin de sa couverture */
+.pal-rapide{position:absolute;z-index:4;width:26px;height:26px;padding:0;border-radius:50%;border:1.5px solid color-mix(in srgb,var(--gold) 70%,#fff);background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.45);cursor:pointer}
+.pal-rapide .ic{width:14px;height:14px}
+.place-l .pal-rapide{left:50%;bottom:10px;transform:translateX(-50%)}
+.cadre-v .pal-rapide{right:-7px;bottom:-7px}
 .deco-e{margin-left:4px}
 .deco-e .deco-emoji{font-size:46px;margin-bottom:-2px}
 .deco-e .deco-st img{width:56px;height:56px;margin-bottom:-2px}
@@ -2531,7 +2537,7 @@ function vRythme() {
   var heures = new Array(24).fill(0);
   lect().forEach(function (r) {
     r.logs.forEach(function (l) {
-      if (dansAnStats(l.created_at)) {
+      if (dansAnStats(l.created_at) && !l.sansHeure) {
         heures[new Date(l.created_at).getHours()]++;
       }
     });
@@ -2651,7 +2657,9 @@ function statsTemps() {
   ss.forEach(function (s) {
     var k = dkey(new Date(s.debut));
     parJour[k] = (parJour[k] || 0) + s.dureeSec;
-    heures[new Date(s.debut).getHours()] += s.dureeSec;
+    if (!s.sansHeure) {
+      heures[new Date(s.debut).getHours()] += s.dureeSec;
+    }
   });
   var jours = Object.keys(parJour);
   var moyJour = moy(jours.map(function (k) { return parJour[k]; })) / 60;
@@ -3161,9 +3169,14 @@ function titreTranche(b) {
   }
   return t;
 }
+// un livre de mes envies : « Dans ma pile à lire » en un toucher, sur la tranche, la couverture ou la ligne (ACTIONS.versPal)
+function boutonVersPal(b, cls) {
+  return '<button class="' + cls + '" data-act="versPal" data-id="' + b.id + '" aria-label="Dans ma pile à lire" title="Dans ma pile à lire">' + ic('layers') + '</button>';
+}
 // une tranche ; penche : le dernier livre de l'étagère, posé de biais
 // pasLu : un tome pas encore lu, estompé (meubles des Séries) ; un coup de cœur a son étoile et sa lueur dorée
-function tranche(b, penche, pasLu) {
+// versPal : un livre de mes envies, avec son bouton rond pour le mettre dans ma pile à lire
+function tranche(b, penche, pasLu, versPal) {
   var p = b.total_page || 300;
   if (b.book_type === 'audioBook' || b.page_type === 'TIME') {
     p = 380;
@@ -3188,16 +3201,23 @@ function tranche(b, penche, pasLu) {
   if (pasLu) {
     cls += ' pas-lu';
   }
+  var bouton = '';
+  if (versPal) {
+    bouton = boutonVersPal(b, 'pal-rapide');
+  }
   var place = '<div class="place-l">';
   if (penche) {
     // la marge à droite laisse la place au haut du livre penché
     place = '<div class="place-l penche" style="margin:0 ' + (Math.round(haut * 0.23) + 2) + 'px 0 6px">';
   }
-  return place + '<div class="' + cls + '" data-act="livre" data-id="' + b.id + '" title="' + esc(titre(b)) + '" style="--c:' + couleurLivre(b) + ';height:' + haut + 'px;width:' + larg + 'px">' + plus + '<div class="t"><span>' + esc(titreTranche(b)) + '</span></div></div></div>';
+  return place + '<div class="' + cls + '" data-act="livre" data-id="' + b.id + '" title="' + esc(titre(b)) + '" style="--c:' + couleurLivre(b) + ';height:' + haut + 'px;width:' + larg + 'px">' + plus + '<div class="t"><span>' + esc(titreTranche(b)) + '</span></div></div>' + bouton + '</div>';
 }
 // une couverture de face (vue « Couvertures »)
-function couvertureVitrine(b, pasLu) {
+function couvertureVitrine(b, pasLu, versPal) {
   var badges = '';
+  if (versPal) {
+    badges += boutonVersPal(b, 'pal-rapide');
+  }
   if (b.coupDeCoeur) {
     badges += '<span class="coeur-v">' + ic('heart') + '</span>';
   }
@@ -3245,14 +3265,20 @@ function meuble(livres, plaque, n) {
     return '<p class="small muted">Rien sur cette étagère pour l\'instant.</p>';
   }
   if (vueEtagere() === 'liste') {
-    return '<div class="liste-etagere">' + livres.map(function (x) { return ligneLivre(x.b, sousTitreLivre(x.b), 'data-act="livre" data-id="' + x.b.id + '"'); }).join('') + '</div>';
+    return '<div class="liste-etagere">' + livres.map(function (x) {
+      var fin = '';
+      if (x.versPal) {
+        fin = boutonVersPal(x.b, 'bouton-ic');
+      }
+      return ligneLivre(x.b, sousTitreLivre(x.b), 'data-act="livre" data-id="' + x.b.id + '"', fin);
+    }).join('') + '</div>';
   }
   var hab = habillageMeuble(plaque, n);
   var contenu;
   if (vueEtagere() === 'couvertures') {
-    contenu = '<div class="vitrine">' + livres.map(function (x) { return couvertureVitrine(x.b, x.pasLu); }).join('') + '</div>';
+    contenu = '<div class="vitrine">' + livres.map(function (x) { return couvertureVitrine(x.b, x.pasLu, x.versPal); }).join('') + '</div>';
   } else {
-    contenu = '<div class="rangs">' + livres.map(function (x) { return tranche(x.b, false, x.pasLu); }).join('') + '</div>';
+    contenu = '<div class="rangs">' + livres.map(function (x) { return tranche(x.b, false, x.pasLu, x.versPal); }).join('') + '</div>';
   }
   return hab.debut + '<div class="fond-meuble">' + contenu + '</div>' + hab.fin;
 }
@@ -3989,7 +4015,7 @@ function vShelf() {
     if (envie) {
       court = 'Envies';
     }
-    rayons = debutEtagere(nom + ' <span class="small muted">· ' + nbLivres(l.length) + '</span>', l.length) + '<p class="small muted" style="margin:-2px 0 8px">Les plus anciens en premier.</p>' + meuble(l.map(function (b) { return {b: b}; }), court + ' <small>· ' + l.length + '</small>', 0) + '</div>';
+    rayons = debutEtagere(nom + ' <span class="small muted">· ' + nbLivres(l.length) + '</span>', l.length) + '<p class="small muted" style="margin:-2px 0 8px">Les plus anciens en premier.</p>' + meuble(l.map(function (b) { return {b: b, versPal: envie}; }), court + ' <small>· ' + l.length + '</small>', 0) + '</div>';
   }
   var vue = vueEtagere();
   var bascule = '';
@@ -4036,7 +4062,7 @@ function vALire() {
     astuceEnvies = '<p class="small muted" style="margin:-4px 0 6px">' + ic('layers') + ' le met dans ta pile à lire, en un toucher</p>';
   }
   h += card('Mes envies' + compteTitre(envies.length), astuceEnvies + envies.map(function (b) {
-    var versPal = '<button class="bouton-ic" data-act="versPal" data-id="' + b.id + '" aria-label="Dans ma pile à lire" title="Dans ma pile à lire">' + ic('layers') + '</button>';
+    var versPal = boutonVersPal(b, 'bouton-ic');
     return ligneLivre(b, 'depuis ' + depuis(b.created_at), 'data-act="livre" data-id="' + b.id + '"', versPal);
   }).join(''), 'les plus anciennes d\'abord');
   return h;
@@ -10409,7 +10435,8 @@ function modeleDepuisBase() {
       var logs = (sessionsPar[x.id] || []).filter(function (s) {
         return s.position !== null && s.position !== undefined && s.fin;
       }).map(function (s) {
-        return {page: s.position, created_at: s.fin};
+        // sansHeure : une séance importée (appli d'écoute) dont on ne connaît que le jour
+        return {page: s.position, created_at: s.fin, sansHeure: !!s.sansHeure};
       }).sort(function (p, q) { return p.created_at - q.created_at; });
       var r = {
         _id: x.id,
@@ -10483,7 +10510,7 @@ function modeleDepuisBase() {
   Object.keys(jl).forEach(function (k) { jours[k] = jl[k].length; });
 
   var sessions = valeurs(D.sessions).filter(function (s) { return parId[s.livreId] && !s.enCours; }).map(function (s) {
-    return {id: s.id, book: parId[s.livreId], lectureId: s.lectureId, debut: s.debut, fin: s.fin, dureeSec: s.dureeSec || 0, position: s.position, origine: s.origine};
+    return {id: s.id, book: parId[s.livreId], lectureId: s.lectureId, debut: s.debut, fin: s.fin, dureeSec: s.dureeSec || 0, position: s.position, origine: s.origine, sansHeure: !!s.sansHeure};
   });
 
   // carnet et exclusions, au format attendu par les vues actuelles
@@ -15582,8 +15609,15 @@ ACTIONS.ocrTout = function () {
 //  langue, source, confiance, note, couverture: {image: 'data:image/…' ou 'https://…', source},
 //  infos: {parution: 'AAAA-MM-JJ', editeur, isbn, langue, resume, unite: 'pages'},
 //  achats: [{id, etat: 'neuf'|'occasion', cadeau, boutique, prix, memo, date: 'AAAA-MM-JJ', format}],
-//  revente: {prix, date: 'AAAA-MM-JJ', lieu}, possession: 'possede'|'envie'|'emprunte'}]}
+//  revente: {prix, date: 'AAAA-MM-JJ', lieu}, possession: 'possede'|'envie'|'emprunte',
+//  duree: secondes (un livre audio compté en durée, sa durée réelle),
+//  lectures: [{id: une lecture du livre, ou rien pour en ajouter une ; statut, debut: 'AAAA-MM-JJ', fin, position, format}],
+//  seances: [{jour: 'AAAA-MM-JJ', dureeSec, position}] (séances d'une appli d'écoute : le jour, pas l'heure),
+//  nouveau: {auteurs: [], format, langue, editeur, possession} (un livre absent du grimoire : il est créé)}]}
 // (un achat qui existe déjà, retrouvé par son id, n'est que complété ; une revente ne touche pas un livre déjà revendu)
+// (lectures, durée et séances : seulement ce qui diffère, jamais de suppression ; une séance d'un jour où le livre en a
+//  déjà une n'est pas proposée, et une nouvelle lecture pareille à une existante (même statut, même début) non plus :
+//  appliquer deux fois le même fichier ne crée rien en double)
 // (langue = langue d'origine d'une traduction ; infos.langue = langue de l'édition du livre)
 // Les infos ne remplissent que ce qui manque au livre (une date plus précise que l'année seule compte comme manquante).
 // Une couverture en data: est rangée dans la table photos (elle ne peut plus casser), une adresse est gardée telle quelle.
@@ -15620,6 +15654,11 @@ function propParNom(t, nom) {
   var s = slug(nom);
   return valeurs(D[t]).find(function (x) { return slug(x.nom) === s; }) || null;
 }
+// un livre absent du grimoire (p.nouveau) : le livre qu'on créerait, pas encore écrit
+function livreNouveauProp(p) {
+  var nv = p.nouveau || {};
+  return {id: nouvelId(), titre: String(p.titre).trim(), contributeurs: [], serieId: null, tome: null, format: nv.format || 'papier', unite: 'pages', total: 0, possession: nv.possession || '', isbns: [], editeur: nv.editeur || '', parution: '', annee: null, langue: nv.langue || '', genreIds: [], couverture: '', resume: '', exclusions: {}, origine: 'propositions'};
+}
 function propLivre(p) {
   if (p.id && D.livres[p.id]) {
     return D.livres[p.id];
@@ -15645,8 +15684,16 @@ function libelleRole(r) {
 }
 
 // ce qu'on propose pour un livre : [{type: genre|trope|role, etat: ajout|retrait|change|deja, nom, on…}]
-function propChoix(l, p) {
+function propChoix(l, p, nouveau) {
   var choix = [];
+  if (nouveau) {
+    var nv = p.nouveau || {};
+    var quoi = [FORMATS[FORMAT_BM[l.format]] || l.format];
+    if ((nv.auteurs || []).length) {
+      quoi.push(nv.auteurs.join(', '));
+    }
+    choix.push({type: 'livre', etat: 'ajout', texte: 'ajouter ce livre · ' + quoi.join(' · '), nom: 'livre', on: true});
+  }
   var couv = p.couverture || {};
   var photo = D.photos[l.couverture] || {};
   if (/^(data:image\/|https?:\/\/)/.test(couv.image || '') && couv.image !== l.couverture && photo.empreinte !== empreinteImage(couv.image)) {
@@ -15718,7 +15765,99 @@ function propChoix(l, p) {
       choix.push({type: 'role', etat: 'ajout', nom: r.nom, vers: r.role, on: true});
     }
   });
-  return choix.concat(propChoixInfos(l, p.infos || {}), propChoixAchats(l, p));
+  return choix.concat(propChoixInfos(l, p.infos || {}), propChoixLectures(l, p), propChoixAchats(l, p));
+}
+
+// deux instants le même jour ?
+function memeJourProp(a, b) {
+  if (!a || !b) {
+    return !a && !b;
+  }
+  return dkey(new Date(a)) === dkey(new Date(b));
+}
+// lectures, durée et séances (une appli d'écoute comme Audible) : [{type: 'lecture', quoi: duree|statut|dates|position|nouvelle}, {type: 'seances'}]
+function propChoixLectures(l, p) {
+  var choix = [];
+  var ls = valeurs(D.lectures).filter(function (x) { return x.livreId === l.id; });
+  var duree = Math.round(Number(p.duree) || 0);
+  var enDuree = l.unite === 'secondes';
+  if (duree > 0 && (!enDuree || Math.abs((l.total || 0) - duree) >= 60)) {
+    var texte = 'durée : ' + hm(duree);
+    if (l.total && !enDuree) {
+      texte += ' au lieu de ' + texteLongueur(l.unite || 'pages', l.total);
+    }
+    choix.push({type: 'lecture', quoi: 'duree', etat: 'change', valeur: duree, texte: texte, nom: 'duree ' + duree, on: true});
+    enDuree = true;
+  }
+  (Array.isArray(p.lectures) ? p.lectures : []).forEach(function (pl) {
+    if (!pl || typeof pl !== 'object') {
+      return;
+    }
+    var debut = dateMidi(pl.debut);
+    var fin = dateMidi(pl.fin);
+    var x = pl.id && D.lectures[pl.id];
+    if (pl.id && !x) {
+      return;
+    }
+    if (x) {
+      if (pl.statut && MOT_STATUT[pl.statut] && pl.statut !== x.statut) {
+        choix.push({type: 'lecture', quoi: 'statut', etat: 'change', lid: x.id, valeur: pl.statut, texte: 'lecture : ' + (MOT_STATUT[x.statut] || x.statut).toLowerCase() + ' → ' + MOT_STATUT[pl.statut].toLowerCase(), nom: 'statut ' + x.id + ' ' + pl.statut, on: true});
+      }
+      if ((debut && !memeJourProp(debut, x.debut)) || (fin && !memeJourProp(fin, x.fin))) {
+        var d1 = debut || x.debut;
+        var f1 = fin || x.fin;
+        var td = 'dates : ' + fdate(d1);
+        if (f1) {
+          td += ' → ' + fdate(f1);
+        }
+        if (x.debut) {
+          td += ' (au lieu du ' + fdate(x.debut) + (x.fin ? ' → ' + fdate(x.fin) : '') + ')';
+        }
+        choix.push({type: 'lecture', quoi: 'dates', etat: 'change', lid: x.id, debut: debut, fin: fin, texte: td, nom: 'dates ' + x.id + ' ' + (pl.debut || '') + ' ' + (pl.fin || ''), on: true});
+      }
+      var pos = Math.round(Number(pl.position));
+      if (enDuree && pl.position !== undefined && pl.position !== null && !isNaN(pos) && x.statut !== 'terminee' && pl.statut !== 'terminee' && Math.abs((x.unite === 'secondes' ? x.position || 0 : -1) - pos) >= 60) {
+        choix.push({type: 'lecture', quoi: 'position', etat: 'change', lid: x.id, valeur: pos, texte: 'écouté jusqu\'à ' + hm(pos), nom: 'position ' + x.id + ' ' + pos, on: true});
+      }
+      return;
+    }
+    // une nouvelle lecture : pas si le livre en a déjà une pareille (même statut, même début)
+    if (!MOT_STATUT[pl.statut] || ls.some(function (y) { return y.statut === pl.statut && memeJourProp(y.debut, debut); })) {
+      return;
+    }
+    var tn = 'lecture ' + MOT_STATUT[pl.statut].toLowerCase();
+    if (debut) {
+      tn += ' · ' + fdate(debut);
+      if (fin && !memeJourProp(debut, fin)) {
+        tn += ' → ' + fdate(fin);
+      }
+    }
+    choix.push({type: 'lecture', quoi: 'nouvelle', etat: 'ajout', lecture: pl, texte: tn, nom: 'nouvelle ' + pl.statut + ' ' + (pl.debut || ''), on: true});
+  });
+  // séances : une puce pour toutes celles qui manquent (un jour où le livre a déjà une séance : déjà là)
+  var jours = {};
+  valeurs(D.sessions).forEach(function (s) {
+    if (s.livreId === l.id && s.debut) {
+      jours[dkey(new Date(s.debut))] = 1;
+    }
+  });
+  var vues = {};
+  var manquantes = (Array.isArray(p.seances) ? p.seances : []).filter(function (s) {
+    if (!s || !dateMidi(s.jour) || !(Number(s.dureeSec) > 0) || jours[s.jour] || vues[s.jour]) {
+      return false;
+    }
+    vues[s.jour] = 1;
+    return true;
+  });
+  if (manquantes.length) {
+    var total = manquantes.reduce(function (m, s) { return m + Number(s.dureeSec); }, 0);
+    var mot = ' séance';
+    if (manquantes.length > 1) {
+      mot = ' séances';
+    }
+    choix.push({type: 'seances', etat: 'ajout', seances: manquantes, texte: manquantes.length + mot + ' · ' + hm(total), nom: 'seances ' + manquantes.length, on: true});
+  }
+  return choix;
 }
 
 // « AAAA-MM-JJ » → midi ce jour-là (ou null)
@@ -15744,6 +15883,9 @@ function texteAchatProp(a) {
   }
   if (a.prix) {
     t.push(prix(a.prix, a.devise || 'EUR'));
+  }
+  if (a.memo) {
+    t.push(a.memo);
   }
   return t.join(' · ') || 'achat';
 }
@@ -15849,16 +15991,25 @@ function proposerPropositions(d) {
   var aJour = 0;
   d.livres.forEach(function (p) {
     var l = propLivre(p);
+    var nouveau = null;
+    if (!l && p.nouveau && p.titre) {
+      nouveau = livreNouveauProp(p);
+      l = nouveau;
+    }
     if (!l) {
       absents.push(p.titre || p.id);
       return;
     }
-    var choix = propChoix(l, p);
+    var choix = propChoix(l, p, !!nouveau);
     if (!choix.some(function (c) { return c.etat !== 'deja'; })) {
       aJour++;
       return;
     }
-    items.push({id: l.id, p: p, choix: choix});
+    var cle = l.id;
+    if (nouveau) {
+      cle = 'nouveau:' + slug(p.titre);
+    }
+    items.push({id: l.id, p: p, choix: choix, nouveau: nouveau, cle: cle});
   });
   // les choix déjà faits sur ce fichier (si l'appli a été fermée au milieu de la relecture)
   var cle = 'bm_propositions_' + (d.date || '');
@@ -15906,6 +16057,9 @@ function proposerPropositions(d) {
 
 function htmlPropLivre(it, i) {
   var b = M.parId[it.id];
+  if (!b) {
+    b = {title: it.p.titre, authors: (it.p.nouveau && it.p.nouveau.auteurs) || []};
+  }
   var p = it.p;
   var cls = 'prop-livre';
   if (p.confiance === 'faible') {
@@ -15934,6 +16088,7 @@ function htmlPropLivre(it, i) {
     }
     h += '<div class="prop-groupe prop-couv"><i>Couverture</i><img src="' + esc(c.image) + '" alt="">' + htmlPuceProp(i, j, c) + src + '</div>';
   });
+  h += groupe('livre', 'Nouveau livre');
   h += groupe('genre', 'Genres');
   h += groupe('trope', 'Tropes');
   var trad = 'Traduction et rôles';
@@ -15950,6 +16105,8 @@ function htmlPropLivre(it, i) {
   }
   h += groupe('role', trad, lien);
   h += groupe('info', 'Infos de l\'édition');
+  h += groupe('lecture', 'Lectures');
+  h += groupe('seances', 'Séances d\'écoute', ' <span class="small muted">le jour, sans l\'heure</span>');
   h += groupe('achat', 'Achats');
   h += groupe('revente', 'Revente');
   h += groupe('possession', 'Chez moi');
@@ -15962,7 +16119,7 @@ function htmlPropLivre(it, i) {
   return h;
 }
 function textePuceProp(c) {
-  if (c.type === 'info' || c.type === 'achat' || c.type === 'revente' || c.type === 'possession') {
+  if (c.type === 'info' || c.type === 'achat' || c.type === 'revente' || c.type === 'possession' || c.type === 'livre' || c.type === 'lecture' || c.type === 'seances') {
     if (c.etat === 'change') {
       return c.texte;
     }
@@ -16015,7 +16172,7 @@ function htmlPuceProp(i, j, c) {
 }
 // un choix se retrouve par son contenu (pas par sa place), même si le livre a changé entre-temps
 function cleChoixProp(it, c) {
-  return [it.id, c.type, c.etat, slug(c.nom), c.vers || ''].join('|');
+  return [it.cle || it.id, c.type, c.etat, slug(c.nom), c.vers || ''].join('|');
 }
 // les puces décochées restent décochées si on rouvre le même fichier, même après « Appliquer »
 function garderChoixProp() {
@@ -16097,7 +16254,7 @@ function propOperations(blobs) {
   ['genres', 'tropes'].forEach(function (t) {
     ordres[t] = valeurs(D[t]).reduce(function (m, x) { return Math.max(m, x.ordre || 0); }, -1);
   });
-  var n = {changements: 0, livres: 0, genres: 0, retraits: 0, tropes: 0, roles: 0, couvertures: 0, infos: 0, achats: 0, reventes: 0};
+  var n = {changements: 0, livres: 0, genres: 0, retraits: 0, tropes: 0, roles: 0, couvertures: 0, infos: 0, achats: 0, reventes: 0, nouveaux: 0, lectures: 0, seances: 0};
   function idListe(t, nom) {
     var x = propParNom(t, nom);
     if (x) {
@@ -16142,8 +16299,15 @@ function propOperations(blobs) {
   }
   ((propEtat && propEtat.items) || []).forEach(function (it) {
     var l = D.livres[it.id];
+    var cree = false;
     if (!l) {
-      return;
+      // un livre à créer : seulement si sa puce est cochée (sinon rien de ce qu'on propose pour lui)
+      if (!it.nouveau || !it.choix.some(function (c) { return c.type === 'livre' && c.on; })) {
+        return;
+      }
+      l = Object.assign({}, it.nouveau, {contributeurs: ((it.p.nouveau && it.p.nouveau.auteurs) || []).map(function (nom) { return {auteurId: idPersonne(String(nom)), role: 'auteur'}; })});
+      cree = true;
+      n.nouveaux++;
     }
     var genreIds = (l.genreIds || []).slice();
     var couverture = l.couverture || '';
@@ -16157,6 +16321,17 @@ function propOperations(blobs) {
     var possession = '';
     var acquis = false;
     var achatsChange = false;
+    var lecs = {};
+    function lec(id) {
+      if (!lecs[id]) {
+        lecs[id] = Object.assign({}, D.lectures[id]);
+      }
+      return lecs[id];
+    }
+    var duree = 0;
+    var positions = {};
+    var nouvelles = [];
+    var seances = [];
     it.choix.forEach(function (c) {
       if (c.etat === 'deja') {
         return;
@@ -16255,8 +16430,98 @@ function propOperations(blobs) {
         possession = c.valeur;
         livreChange = true;
         n.infos++;
+      } else if (c.type === 'lecture' && c.on) {
+        if (c.quoi === 'duree') {
+          duree = c.valeur;
+          livreChange = true;
+        } else if (c.quoi === 'statut') {
+          lec(c.lid).statut = c.valeur;
+        } else if (c.quoi === 'dates') {
+          if (c.debut) {
+            lec(c.lid).debut = c.debut;
+          }
+          if (c.fin) {
+            lec(c.lid).fin = c.fin;
+          }
+        } else if (c.quoi === 'position') {
+          positions[c.lid] = c.valeur;
+        } else if (c.quoi === 'nouvelle') {
+          nouvelles.push(c.lecture);
+        }
+        n.lectures++;
+      } else if (c.type === 'seances' && c.on) {
+        seances = c.seances;
       }
     });
+    // la durée : le livre et ses lectures passent en durée (une lecture terminée l'est jusqu'au bout)
+    var unite = l.unite || 'pages';
+    var totalLivre = l.total || 0;
+    var maintenant = Date.now();
+    var lecturesLivre = valeurs(D.lectures).filter(function (x) { return x.livreId === l.id; });
+    if (duree) {
+      unite = 'secondes';
+      totalLivre = duree;
+      lecturesLivre.forEach(function (x) {
+        var o = lec(x.id);
+        o.unite = 'secondes';
+        o.total = duree;
+        if (x.unite !== 'secondes') {
+          o.position = 0;
+          if (x.total && x.position) {
+            o.position = Math.round(duree * Math.min(1, x.position / x.total));
+          }
+        }
+      });
+    }
+    Object.keys(positions).forEach(function (id) {
+      if (lec(id).unite === 'secondes') {
+        lec(id).position = positions[id];
+      }
+    });
+    Object.keys(lecs).forEach(function (id) {
+      if (lecs[id].statut === 'terminee' && lecs[id].total) {
+        lecs[id].position = lecs[id].total;
+      }
+    });
+    var nth = lecturesLivre.reduce(function (m, x) { return Math.max(m, x.nth || 0); }, 0);
+    nouvelles.forEach(function (pl) {
+      nth++;
+      // sans date de début : elle commence aujourd'hui (une lecture a toujours un début)
+      var o = {id: l.id + ':' + nth, livreId: l.id, nth: nth, format: pl.format || l.format || 'papier', debut: dateMidi(pl.debut) || maintenant, fin: dateMidi(pl.fin), statut: pl.statut, unite: unite, total: totalLivre || null, position: 0, etoiles: null, commentaire: '', creeLe: maintenant, modifieLe: maintenant, origine: 'propositions'};
+      if (pl.statut === 'terminee') {
+        o.position = totalLivre || 0;
+      } else if (unite === 'secondes' && Number(pl.position) > 0) {
+        o.position = Math.round(Number(pl.position));
+      }
+      lecs[o.id] = o;
+    });
+    Object.keys(lecs).forEach(function (id) {
+      ops.push({t: 'lectures', o: lecs[id]});
+    });
+    // les séances : rattachées à la lecture qui couvre ce jour, sinon à la dernière commencée avant, sinon à la première
+    if (seances.length) {
+      var toutes = lecturesLivre.map(function (x) { return lecs[x.id] || x; }).concat(Object.keys(lecs).filter(function (id) { return !D.lectures[id]; }).map(function (id) { return lecs[id]; }));
+      toutes.sort(function (a, b) { return (a.debut || 0) - (b.debut || 0); });
+      seances.forEach(function (s) {
+        var t = dateMidi(s.jour);
+        var jour = s.jour;
+        var cible = toutes.filter(function (x) { return x.debut && dkey(new Date(x.debut)) <= jour && (!x.fin || dkey(new Date(x.fin)) >= jour); })[0];
+        if (!cible) {
+          cible = toutes.filter(function (x) { return x.debut && dkey(new Date(x.debut)) <= jour; }).pop() || toutes[0];
+        }
+        var id = l.id + ':S:' + jour;
+        if (!cible || D.sessions[id]) {
+          return;
+        }
+        var dureeSec = Math.round(Number(s.dureeSec));
+        var position = null;
+        if (cible.unite === 'secondes' && s.position !== undefined && s.position !== null && !isNaN(Number(s.position))) {
+          position = Math.round(Number(s.position));
+        }
+        ops.push({t: 'sessions', o: {id: id, lectureId: cible.id, livreId: l.id, debut: t, fin: t + dureeSec * 1000, dureeSec: dureeSec, position: position, sansHeure: true, origine: 'propositions', creeLe: maintenant, modifieLe: maintenant}});
+        n.seances++;
+      });
+    }
     var champs = {};
     // un achat ajouté met le livre dans la bibliothèque ; une revente le passe « revendu »
     if (acquis && (!l.possession || l.possession === 'envie')) {
@@ -16282,6 +16547,10 @@ function propOperations(blobs) {
     if (infos.isbn) {
       champs.isbns = [infos.isbn].concat((l.isbns || []).filter(function (x) { return x !== infos.isbn; }));
     }
+    if (duree) {
+      champs.unite = 'secondes';
+      champs.total = duree;
+    }
     if (infos.unite) {
       champs.unite = 'pages';
       valeurs(D.lectures).forEach(function (x) {
@@ -16300,11 +16569,17 @@ function propOperations(blobs) {
         ops.push({t: 'avis', o: {id: it.id, notes: {}, humeurIds: [], tropeIds: tropeIds, mot: ''}});
       }
     }
-    if (livreChange || avisChange || achatsChange) {
+    if (cree) {
+      livreChange = true;
+    }
+    if (livreChange && !ops.some(function (op) { return op.t === 'livres' && op.o.id === l.id; })) {
+      ops.push({t: 'livres', o: Object.assign({}, l, {genreIds: genreIds, contributeurs: contributeurs, couverture: couverture}, champs)});
+    }
+    if (livreChange || avisChange || achatsChange || Object.keys(lecs).length || seances.length) {
       n.livres++;
     }
   });
-  n.changements = n.genres + n.retraits + n.tropes + n.roles + n.couvertures + n.infos + n.achats + n.reventes;
+  n.changements = n.genres + n.retraits + n.tropes + n.roles + n.couvertures + n.infos + n.achats + n.reventes + n.nouveaux + n.lectures + (n.seances ? 1 : 0);
   var morceaux = [];
   if (n.genres) {
     morceaux.push(n.genres + ' genre' + (n.genres > 1 ? 's' : '') + ' ajouté' + (n.genres > 1 ? 's' : ''));
@@ -16329,6 +16604,15 @@ function propOperations(blobs) {
   }
   if (n.reventes) {
     morceaux.push(n.reventes + ' revente' + (n.reventes > 1 ? 's' : ''));
+  }
+  if (n.nouveaux) {
+    morceaux.push(n.nouveaux + ' livre' + (n.nouveaux > 1 ? 's' : '') + ' ajouté' + (n.nouveaux > 1 ? 's' : ''));
+  }
+  if (n.lectures) {
+    morceaux.push(n.lectures + ' changement' + (n.lectures > 1 ? 's' : '') + ' de lecture');
+  }
+  if (n.seances) {
+    morceaux.push(n.seances + ' séance' + (n.seances > 1 ? 's' : ''));
   }
   return {ops: ops, changements: n.changements, livres: n.livres, resume: morceaux.join(', ')};
 }
@@ -17554,7 +17838,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-09 15:34:20';
+var VERSION_APPLI = '2026-10-09 16:04:57';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
