@@ -9480,6 +9480,12 @@ ACTIONS.isbnManuel = function () {
 };
 
 // ---------- recherche du livre ----------
+// Trois sources, interrogées depuis le téléphone :
+// - le catalogue de la BnF (dépôt légal : toutes les éditions parues en France, même un poche de la veille) ;
+//   il répond aux pages web, sans clé ;
+// - Google Books en même temps (sans clé, il répond souvent « quota dépassé ») ;
+// - Open Library en dernier recours.
+// Couverture : celle d'ePagine (les images des librairies indépendantes) par ISBN, sinon celle de la BnF.
 function infosDepuisVolume(v) {
   var image = '';
   if (v.imageLinks) {
@@ -9497,58 +9503,363 @@ function infosDepuisVolume(v) {
   }
   return {titre: titreComplet, titreCourt: v.title || '', auteurs: v.authors || [], categories: v.categories || [], image: image, pages: v.pageCount, date: v.publishedDate || '', isbn: isbn, editeur: v.publisher || '', resume: v.description || ''};
 }
-function infosEnLigne(isbn) {
-  return fetch('https://www.googleapis.com/books/v1/volumes?q=isbn:' + isbn).then(function (r) { return r.json(); }).then(function (j) {
-    var v = j.items && j.items[0] && j.items[0].volumeInfo;
-    if (!v) {
-      throw new Error('inconnu');
-    }
-    var inf = infosDepuisVolume(v);
-    inf.isbn = isbn;
-    return inf;
-  }).catch(function () {
-    return fetch('https://openlibrary.org/api/books?bibkeys=ISBN:' + isbn + '&format=json&jscmd=data').then(function (r) { return r.json(); }).then(function (j) {
-      var v = j['ISBN:' + isbn];
-      if (!v) {
-        return null;
+
+// ----- BnF : SRU, notices UNIMARC -----
+var BNF_SRU = 'https://catalogue.bnf.fr/api/SRU?version=1.2&operation=searchRetrieve&recordSchema=unimarcxchange&maximumRecords=';
+var BNF_ROLES = {'070': 'auteur', '730': 'traduction', '440': 'illustration', '080': 'preface'};
+var BNF_LANGUES = {fre: 'Français', eng: 'Anglais', spa: 'Espagnol', ger: 'Allemand', ita: 'Italien', jpn: 'Japonais', kor: 'Coréen'};
+var ROMAINS = {I: 1, V: 5, X: 10};
+// les zones d'une notice : {'200': [{ind2: ' ', a: ['Le livre…'], e: ['roman']}], …}
+function zonesBnf(notice) {
+  var z = {};
+  Array.prototype.forEach.call(notice.getElementsByTagNameNS('*', 'datafield'), function (df) {
+    var zone = {ind2: df.getAttribute('ind2') || ' '};
+    Array.prototype.forEach.call(df.getElementsByTagNameNS('*', 'subfield'), function (sf) {
+      var code = sf.getAttribute('code');
+      if (!zone[code]) {
+        zone[code] = [];
       }
-      var image = '';
-      if (v.cover) {
-        image = v.cover.medium || v.cover.small || '';
-      }
-      return {titre: v.title, titreCourt: v.title, auteurs: (v.authors || []).map(function (a) { return a.name; }), categories: (v.subjects || []).map(function (s) { return s.name; }), image: image, pages: v.number_of_pages, date: v.publish_date || '', isbn: isbn, editeur: ((v.publishers || [])[0] || {}).name || '', resume: ''};
+      // sans les caractères de non-classement (le « Le » de « Le livre… »)
+      zone[code].push(sf.textContent.replace(/[\u0088\u0089\u0098\u009c]/g, '').trim());
     });
-  }).catch(function () {
+    var tag = df.getAttribute('tag');
+    if (!z[tag]) {
+      z[tag] = [];
+    }
+    z[tag].push(zone);
+  });
+  return z;
+}
+// « L'assassin royal. » → « L'assassin royal »
+function sansPonctuationFinale(s) {
+  return String(s || '').replace(/[\s.,;:\/=]+$/, '');
+}
+// « tome 1 », « T1 », « 2 », « III » → 1, 1, 2, 3
+function numeroTome(v) {
+  var s = String(v || '');
+  var n = /\d+(?:[.,]\d+)?/.exec(s);
+  if (n) {
+    return parseFloat(n[0].replace(',', '.'));
+  }
+  var r = /\b([IVX]{1,5})\b/.exec(s);
+  if (!r) {
     return null;
+  }
+  var total = 0;
+  r[1].split('').forEach(function (c, i, t) {
+    if (ROMAINS[t[i + 1]] > ROMAINS[c]) {
+      total -= ROMAINS[c];
+    } else {
+      total += ROMAINS[c];
+    }
+  });
+  return total;
+}
+function infosDepuisNoticeBnf(notice) {
+  var z = zonesBnf(notice);
+  var isbn = '';
+  (z['010'] || []).concat(z['073'] || []).some(function (x) {
+    isbn = isbn13((x.a || [])[0]);
+    return isbn;
+  });
+  // titre ; « L'assassin royal. 1, L'apprenti assassin » : titre de la partie, série et numéro
+  var t = (z['200'] || [{}])[0];
+  var principal = sansPonctuationFinale((t.a || [''])[0]);
+  var titreCourt = principal;
+  var serie = '';
+  var tome = null;
+  if (t.i && t.i[0]) {
+    titreCourt = sansPonctuationFinale(t.i[0]);
+    serie = principal;
+    tome = numeroTome((t.h || [])[0]);
+  } else if (t.h && t.h[0]) {
+    titreCourt = principal + ' ' + sansPonctuationFinale(t.h[0]);
+  }
+  var titreComplet = titreCourt;
+  var complement = (t.e || [])[0];
+  if (complement && !/^(roman|r[ée]cit|nouvelle|conte|th[ée][aâ]tre|po[ée]sie|po[eè]me|essai|t[ée]moignage|novel)s?\b/i.test(complement)) {
+    titreComplet += ' : ' + sansPonctuationFinale(complement);
+  }
+  // série : le lien vers l'ensemble (461), sinon une collection dont le numéro est dit « T1 », « tome 2 », « livre 3 »
+  // (un numéro seul est presque toujours celui d'une collection d'éditeur : Le livre de poche 37988, Classiques Hatier 20…)
+  if (!serie) {
+    var lien = (z['461'] || []).find(function (x) { return x.t && x.t[0]; });
+    var coll = (z['225'] || []).find(function (x) { return x.a && x.a[0] && /^\s*(t\.?|tome|vol\.?|volume|livre)\s*(\d{1,2}|[IVX]{1,5})\s*$/i.test((x.v || [])[0] || ''); });
+    if (lien) {
+      serie = sansPonctuationFinale(lien.t[0]);
+      tome = numeroTome((lien.v || [])[0]);
+    } else if (coll) {
+      serie = sansPonctuationFinale(coll.a[0]);
+      tome = numeroTome(coll.v[0]);
+    }
+  }
+  // auteur·ices et traduction, « Lawrence, Mark » → « Mark Lawrence »
+  var auteurs = [];
+  var traducteurs = [];
+  var sansRole = [];
+  ['700', '701', '702'].forEach(function (tag) {
+    (z[tag] || []).forEach(function (x) {
+      var nom = [(x.b || [])[0], (x.a || [])[0]].filter(Boolean).join(' ');
+      var role = BNF_ROLES[(x['4'] || [])[0]];
+      if (!role && tag !== '702') {
+        role = 'auteur';
+      }
+      if (role === 'auteur') {
+        auteurs.push(nom);
+      } else if (role === 'traduction') {
+        traducteurs.push(nom);
+      } else if (!role) {
+        sansRole.push(nom);
+      }
+    });
+  });
+  // notice toute neuve : l'auteur·ice est parfois rangé·e en 702, sans rôle
+  if (!auteurs.length) {
+    auteurs = sansRole;
+  }
+  var pub = (z['214'] || []).concat(z['210'] || []).find(function (x) { return x.ind2 !== '3' && x.c && x.c[0]; }) || {};
+  var editeur = sansPonctuationFinale((pub.c || [])[0]).replace(/^[ÉE]ditions\s+(?=[A-ZÀ-Ý])/, '');
+  var an = /\d{4}/.exec((pub.d || [])[0] || '') || /^.{9}(\d{4})/.exec(((z['100'] || [{}])[0].a || [''])[0]);
+  var pages = 0;
+  (((z['215'] || [{}])[0].a || []).join(' ').match(/\d+(?=\s*p\b)/g) || []).forEach(function (n) {
+    pages = Math.max(pages, parseInt(n, 10));
+  });
+  // le résumé de la 4e de couverture, dont les paragraphes arrivent collés (« étoiles...Evar »)
+  var resume = (z['330'] || []).map(function (x) { return (x.a || []).join(' '); }).join('\n\n').replace(/([a-zà-ÿ][.!?…]+)(?=[A-ZÀ-Ý«])/g, '$1 ');
+  var couvertureBnf = '';
+  if ((z['856'] || []).some(function (x) { return /couverture/i.test((x.b || []).join(' ')); }) && notice.getAttribute('id')) {
+    couvertureBnf = 'https://catalogue.bnf.fr/couverture?&appName=NE&idArk=' + encodeURIComponent(notice.getAttribute('id')) + '&couverture=1';
+  }
+  return {titre: titreComplet, titreCourt: titreCourt, auteurs: auteurs, traducteurs: traducteurs, serie: serie, tome: tome, categories: [], image: '', couvertureBnf: couvertureBnf, pages: pages || undefined, date: an ? (an[1] || an[0]) : '', isbn: isbn, editeur: editeur, resume: resume, langue: BNF_LANGUES[((z['101'] || [{}])[0].a || [''])[0]] || ''};
+}
+function bnfNotices(requete, nombre) {
+  return fetch(BNF_SRU + nombre + '&query=' + encodeURIComponent(requete)).then(function (r) {
+    if (!r.ok) {
+      throw new Error('bnf');
+    }
+    return r.text();
+  }).then(function (xml) {
+    var doc = new DOMParser().parseFromString(xml, 'application/xml');
+    // sans ISBN, c'est un ensemble (la série elle-même) ou un livre ancien ; un code 3… est celui d'un DVD ou d'un CD
+    return Array.prototype.map.call(doc.getElementsByTagNameNS('info:lc/xmlns/marcxchange-v2', 'record'), infosDepuisNoticeBnf).filter(function (x) { return x.titre && /^97[89]/.test(x.isbn); });
+  }).catch(function () {
+    return [];
   });
 }
-// recherche par titre / auteur : Google Books, sinon Open Library → [infos]
-function chercherLivres(q) {
-  return fetch('https://www.googleapis.com/books/v1/volumes?maxResults=12&printType=books&q=' + encodeURIComponent(q)).then(function (r) {
+function bnfParIsbn(isbn) {
+  return bnfNotices('bib.isbn all "' + isbn + '"', 3).then(function (l) {
+    return l.find(function (x) { return x.isbn === isbn; }) || l[0] || null;
+  });
+}
+// titre seul (« La Belle et la Bête » d'abord) et n'importe où (titre + auteur·ice, titre original…), livres imprimés
+function bnfRecherche(q) {
+  var texte = q.replace(/["\\]/g, ' ').trim();
+  var imprime = ' and bib.doctype any "a"';
+  return Promise.all([bnfNotices('bib.title all "' + texte + '"' + imprime, 12), bnfNotices('bib.anywhere all "' + texte + '"' + imprime, 20)]).then(function (r) {
+    return fusionnerResultats(r[0], r[1]);
+  });
+}
+
+// ----- Google Books -----
+function googleVolumes(q, nombre) {
+  return fetch('https://www.googleapis.com/books/v1/volumes?printType=books&maxResults=' + nombre + '&q=' + encodeURIComponent(q)).then(function (r) {
     if (!r.ok) {
       throw new Error('google');
     }
     return r.json();
   }).then(function (j) {
-    var l = (j.items || []).map(function (it) { return infosDepuisVolume(it.volumeInfo || {}); }).filter(function (x) { return x.titre; });
-    if (!l.length) {
-      throw new Error('vide');
-    }
-    return l;
+    return (j.items || []).map(function (it) { return infosDepuisVolume(it.volumeInfo || {}); }).filter(function (x) { return x.titre; });
   }).catch(function () {
-    // lang=fr + champs « key » et « editions.* » : Open Library renvoie l'édition française la plus proche
-    var champs = 'key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,editions,editions.title,editions.isbn,editions.publisher,editions.cover_i,editions.number_of_pages,editions.publish_date';
-    return fetch('https://openlibrary.org/search.json?limit=12&lang=fr&fields=' + champs + '&q=' + encodeURIComponent(q)).then(function (r) { return r.json(); }).then(function (j) {
-      return (j.docs || []).map(function (d) {
-        var ed = (d.editions && d.editions.docs && d.editions.docs[0]) || {};
-        var image = '';
-        var couv = ed.cover_i || d.cover_i;
-        if (couv) {
-          image = 'https://covers.openlibrary.org/b/id/' + couv + '-M.jpg';
-        }
-        var isbns = (ed.isbn || []).map(isbn13).filter(Boolean);
-        var t = ed.title || d.title;
-        return {titre: t, titreCourt: t, auteurs: d.author_name || [], categories: (d.subject || []).slice(0, 12), image: image, pages: ed.number_of_pages || d.number_of_pages_median, date: String(ed.publish_date || d.first_publish_year || ''), isbn: isbns[0] || '', editeur: (ed.publisher || [])[0] || '', resume: ''};
+    return [];
+  });
+}
+function googleParIsbn(isbn) {
+  return googleVolumes('isbn:' + isbn, 1).then(function (l) {
+    return l[0] || null;
+  });
+}
+
+// ----- Open Library -----
+function openLibraryParIsbn(isbn) {
+  return fetch('https://openlibrary.org/api/books?bibkeys=ISBN:' + isbn + '&format=json&jscmd=data').then(function (r) { return r.json(); }).then(function (j) {
+    var v = j['ISBN:' + isbn];
+    if (!v) {
+      return null;
+    }
+    var image = '';
+    if (v.cover) {
+      image = v.cover.medium || v.cover.small || '';
+    }
+    return {titre: v.title, titreCourt: v.title, auteurs: (v.authors || []).map(function (a) { return a.name; }), categories: (v.subjects || []).map(function (s) { return s.name; }), image: image, pages: v.number_of_pages, date: v.publish_date || '', isbn: isbn, editeur: ((v.publishers || [])[0] || {}).name || '', resume: ''};
+  }).catch(function () {
+    return null;
+  });
+}
+function openLibraryRecherche(q) {
+  // lang=fr + champs « key » et « editions.* » : Open Library renvoie l'édition française la plus proche
+  var champs = 'key,title,author_name,cover_i,first_publish_year,number_of_pages_median,subject,editions,editions.title,editions.isbn,editions.publisher,editions.cover_i,editions.number_of_pages,editions.publish_date';
+  return fetch('https://openlibrary.org/search.json?limit=12&lang=fr&fields=' + champs + '&q=' + encodeURIComponent(q)).then(function (r) { return r.json(); }).then(function (j) {
+    return (j.docs || []).map(function (d) {
+      var ed = (d.editions && d.editions.docs && d.editions.docs[0]) || {};
+      var image = '';
+      var couv = ed.cover_i || d.cover_i;
+      if (couv) {
+        image = 'https://covers.openlibrary.org/b/id/' + couv + '-M.jpg';
+      }
+      var isbns = (ed.isbn || []).map(isbn13).filter(Boolean);
+      var t = ed.title || d.title;
+      return {titre: t, titreCourt: t, auteurs: d.author_name || [], categories: (d.subject || []).slice(0, 12), image: image, pages: ed.number_of_pages || d.number_of_pages_median, date: String(ed.publish_date || d.first_publish_year || ''), isbn: isbns[0] || '', editeur: (ed.publisher || [])[0] || '', resume: ''};
+    });
+  }).catch(function () {
+    return [];
+  });
+}
+
+// ----- réunir, classer, couvertures -----
+// complète a (la notice gardée) avec ce que b sait en plus : genres de Google, résumé…
+function completerInfos(a, b) {
+  if (!a || !b) {
+    return a || b;
+  }
+  ['image', 'resume', 'pages', 'editeur', 'date'].forEach(function (k) {
+    if (!a[k] && b[k]) {
+      a[k] = b[k];
+    }
+  });
+  if (!a.categories.length) {
+    a.categories = b.categories || [];
+  }
+  return a;
+}
+// une seule fois chaque ISBN, les premiers gardés et complétés par les suivants
+function fusionnerResultats(premiers, autres) {
+  var l = premiers.slice();
+  autres.forEach(function (x) {
+    var meme = x.isbn && l.find(function (y) { return y.isbn === x.isbn; });
+    if (meme) {
+      completerInfos(meme, x);
+    } else {
+      l.push(x);
+    }
+  });
+  return l;
+}
+var MOTS_VIDES = ['le', 'la', 'les', 'de', 'du', 'des', 'un', 'une', 'et', 'en', 'au', 'aux', 'qui', 'the', 'of', 'and', 'an', 'to'];
+function motsDe(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(function (m) { return m.length > 1; });
+}
+// mots cherchés trouvés dans le titre, sinon chez l'auteur·ice ou dans la série, sinon ailleurs (titre original…) ;
+// un titre tapé en entier passe devant (« La Belle et la Bête » avant « Histoire éternelle : … la Bête »)
+function pertinence(motsQ, inf) {
+  var titre = motsDe(inf.titre);
+  var autour = motsDe((inf.auteurs || []).join(' ') + ' ' + (inf.serie || ''));
+  var score = 0;
+  motsQ.forEach(function (m) {
+    if (titre.indexOf(m) >= 0) {
+      score += 1;
+    } else if (autour.indexOf(m) >= 0) {
+      score += 0.8;
+    } else {
+      score += 0.2;
+    }
+  });
+  score = score / motsQ.length;
+  var motsTitre = motsDe(inf.titreCourt).filter(function (m) { return MOTS_VIDES.indexOf(m) < 0; });
+  if (motsTitre.length && motsTitre.every(function (m) { return motsQ.indexOf(m) >= 0; })) {
+    score += 0.5;
+  }
+  return score;
+}
+// → [{inf, s: score, i: rang d'arrivée}], les plus proches de la recherche d'abord
+function classerResultats(q, l) {
+  var motsQ = motsDe(q).filter(function (m) { return MOTS_VIDES.indexOf(m) < 0; });
+  if (!motsQ.length) {
+    motsQ = motsDe(q);
+  }
+  return l.map(function (inf, i) {
+    var s = 0;
+    if (motsQ.length) {
+      s = pertinence(motsQ, inf);
+    }
+    return {inf: inf, s: s, i: i};
+  }).sort(function (a, b) {
+    return b.s - a.s || a.i - b.i;
+  });
+}
+function couvertureEpagine(isbn, taille) {
+  return 'https://images.epagine.fr/' + isbn.slice(-3) + '/' + isbn + '_1_' + taille + '.jpg';
+}
+// charge l'image pour savoir si elle existe : ePagine répond par une image « pas de couverture » de 154 × 173 px
+function imageExiste(url) {
+  return new Promise(function (ok) {
+    var img = new Image();
+    var delai = setTimeout(function () { ok(false); }, 5000);
+    img.onload = function () {
+      clearTimeout(delai);
+      ok(img.naturalWidth > 1 && !(img.naturalWidth === 154 && img.naturalHeight === 173));
+    };
+    img.onerror = function () {
+      clearTimeout(delai);
+      ok(false);
+    };
+    img.src = url;
+  });
+}
+// image = la couverture gardée avec le livre (600 px) ; miniature = celle des résultats (150 px, plus légère)
+function choisirCouverture(inf) {
+  if (!inf.isbn) {
+    inf.miniature = inf.image;
+    return Promise.resolve(inf);
+  }
+  var mini = couvertureEpagine(inf.isbn, 'm');
+  return imageExiste(mini).then(function (existe) {
+    if (existe) {
+      inf.image = couvertureEpagine(inf.isbn, '75');
+      inf.miniature = mini;
+    } else {
+      inf.image = inf.couvertureBnf || inf.image;
+      inf.miniature = inf.image;
+    }
+    return inf;
+  });
+}
+
+// par ISBN : BnF et Google en même temps, Open Library si aucun ne connaît le livre → infos ou null
+function infosEnLigne(isbn) {
+  return Promise.all([bnfParIsbn(isbn), googleParIsbn(isbn)]).then(function (r) {
+    return completerInfos(r[0], r[1]) || openLibraryParIsbn(isbn);
+  }).then(function (inf) {
+    if (!inf) {
+      return null;
+    }
+    inf.isbn = isbn;
+    return choisirCouverture(inf);
+  }).catch(function () {
+    return null;
+  });
+}
+// par titre / auteur·ice (ou un ISBN tapé à la main) → [infos], les plus proches de la recherche d'abord
+function chercherLivres(q) {
+  var i = isbn13(q);
+  if (/^97[89]\d{10}$/.test(i)) {
+    return infosEnLigne(i).then(function (inf) {
+      return inf ? [inf] : [];
+    });
+  }
+  return Promise.all([bnfRecherche(q), googleVolumes(q, 12)]).then(function (r) {
+    var l = fusionnerResultats(r[0], r[1]);
+    if (l.length) {
+      return l;
+    }
+    return openLibraryRecherche(q);
+  }).then(function (l) {
+    var classes = classerResultats(q, l).slice(0, 12);
+    return Promise.all(classes.map(function (x) { return choisirCouverture(x.inf); })).then(function () {
+      // à égalité, une édition avec sa couverture passe devant
+      return classes.sort(function (a, b) {
+        return b.s - a.s || (b.inf.miniature ? 1 : 0) - (a.inf.miniature ? 1 : 0) || a.i - b.i;
+      }).map(function (x) {
+        return x.inf;
       });
     });
   }).catch(function () {
@@ -9686,8 +9997,8 @@ function resultatScan(isbn) {
         jauge = '<p class="small" style="margin:8px 0 0"><b>Affinité estimée : ' + nombre(a) + '/5</b> · ' + avis + '</p><div class="jauge"><i style="width:' + Math.max(0, Math.min(100, a * 20)) + '%"></i></div>';
       }
       var img = '<div class="ph">' + esc(String(infos.titreCourt || '').slice(0, 40)) + '</div>';
-      if (infos.image) {
-        img = '<img src="' + esc(infos.image) + '" alt="">';
+      if (infos.miniature || infos.image) {
+        img = '<img src="' + esc(infos.miniature || infos.image) + '" alt="">';
       }
       var details = [];
       var an = /\d{4}/.exec(String(infos.date || ''));
@@ -12312,8 +12623,8 @@ function ouvrirFormLivre(id, prerempli) {
     contributeurs: (l.contributeurs || []).filter(function (c) { return D.auteurs[c.auteurId]; }).map(function (c) {
       return {auteurId: c.auteurId, nom: D.auteurs[c.auteurId].nom, role: c.role};
     }),
-    serieNom: (l.serieId && D.series[l.serieId] && D.series[l.serieId].nom) || '',
-    tome: l.tome,
+    serieNom: (l.serieId && D.series[l.serieId] && D.series[l.serieId].nom) || p.serie || '',
+    tome: id ? l.tome : p.tome,
     format: l.format || p.format || 'papier',
     unite: l.unite || 'pages',
     total: l.total || p.pages || null,
@@ -12321,7 +12632,7 @@ function ouvrirFormLivre(id, prerempli) {
     isbn: (l.isbns || [])[0] || p.isbn || '',
     editeur: l.editeur || p.editeur || '',
     parution: l.parution || (l.annee ? String(l.annee) : '') || normaliserParution(p.parution) || (p.annee ? String(p.annee) : ''),
-    langue: l.langue || '',
+    langue: l.langue || p.langue || '',
     genres: (l.genreIds || []).filter(function (g) { return D.genres[g]; }).map(function (g) { return D.genres[g].nom; }),
     couverture: l.couverture || p.image || '',
     photo: null,
@@ -12331,6 +12642,10 @@ function ouvrirFormLivre(id, prerempli) {
     (p.auteurs || []).forEach(function (n) {
       var a = auteurParNom(n);
       fl.contributeurs.push({auteurId: a && a.id, nom: (a && a.nom) || n, role: 'auteur'});
+    });
+    (p.traducteurs || []).forEach(function (n) {
+      var a = auteurParNom(n);
+      fl.contributeurs.push({auteurId: a && a.id, nom: (a && a.nom) || n, role: 'traduction'});
     });
     (p.genres || []).forEach(function (g) {
       if (fl.genres.indexOf(g) < 0) {
@@ -12675,6 +12990,13 @@ ACTIONS.flCompleter = function () {
     remplir('flEditeur', inf.editeur);
     remplirParution(normaliserParution(inf.date));
     remplir('flResume', inf.resume);
+    remplir('flLangue', inf.langue);
+    if (inf.serie && !val('flSerie')) {
+      remplir('flSerie', inf.serie);
+      if (inf.tome !== null && inf.tome !== undefined) {
+        remplir('flTome', String(inf.tome).replace('.', ','));
+      }
+    }
     if (fl.unite === 'pages') {
       remplir('flTotal', inf.pages);
     }
@@ -12683,6 +13005,10 @@ ACTIONS.flCompleter = function () {
       (inf.auteurs || []).forEach(function (n) {
         var a = auteurParNom(n);
         fl.contributeurs.push({auteurId: a && a.id, nom: (a && a.nom) || n, role: 'auteur'});
+      });
+      (inf.traducteurs || []).forEach(function (n) {
+        var a = auteurParNom(n);
+        fl.contributeurs.push({auteurId: a && a.id, nom: (a && a.nom) || n, role: 'traduction'});
       });
       rendreContrib();
     }
@@ -14197,11 +14523,11 @@ ACTIONS.lancerRecherche = function () {
     z.innerHTML = l.map(function (inf, i) {
       var deja = biblio.livres.length && trouverDansBibliothequeDe(biblio, inf.isbn, inf);
       var img = '<div class="ph">' + esc(String(inf.titreCourt || '').slice(0, 30)) + '</div>';
-      if (inf.image) {
-        img = '<img loading="lazy" src="' + esc(inf.image) + '" alt="">';
+      if (inf.miniature || inf.image) {
+        img = '<img loading="lazy" src="' + esc(inf.miniature || inf.image) + '" alt="">';
       }
       var an = (/\d{4}/.exec(String(inf.date || '')) || [''])[0];
-      return '<div class="book resultat" data-act="choisirResultat" data-i="' + i + '">' + img + '<div><div class="t">' + esc(inf.titre) + '</div><div class="small muted">' + esc(inf.auteurs.join(', ')) + '</div><div class="small muted">' + [an, inf.pages ? esc(inf.pages) + ' p.' : ''].filter(Boolean).join(' · ') + (deja ? ' <span class="etiquette-deja">déjà chez toi</span>' : '') + '</div></div></div>';
+      return '<div class="book resultat" data-act="choisirResultat" data-i="' + i + '">' + img + '<div><div class="t">' + esc(inf.titre) + '</div><div class="small muted">' + esc(inf.auteurs.join(', ')) + '</div><div class="small muted">' + [an, esc(inf.editeur || ''), inf.pages ? esc(inf.pages) + ' p.' : ''].filter(Boolean).join(' · ') + (deja ? ' <span class="etiquette-deja">déjà chez toi</span>' : '') + '</div></div></div>';
     }).join('');
   });
 };
@@ -14214,7 +14540,7 @@ ACTIONS.choisirResultat = function (el) {
     return;
   }
   siIndependant(function () {
-    ouvrirFormLivre(null, {titre: inf.titre, auteurs: inf.auteurs, isbn: inf.isbn, pages: inf.pages, image: inf.image, parution: normaliserParution(inf.date), editeur: inf.editeur, resume: inf.resume, genres: genresDepuis(inf.categories || [])});
+    ouvrirFormLivre(null, {titre: inf.titre, auteurs: inf.auteurs, traducteurs: inf.traducteurs, serie: inf.serie, tome: inf.tome, langue: inf.langue, isbn: inf.isbn, pages: inf.pages, image: inf.image, parution: normaliserParution(inf.date), editeur: inf.editeur, resume: inf.resume, genres: genresDepuis(inf.categories || [])});
   });
 };
 
@@ -14226,9 +14552,12 @@ function ajouterDepuisInfos(infos, isbn, mode) {
       contributeurs: (infos.auteurs || []).map(function (n) {
         var a = auteurParNom(n);
         return {auteurId: a && a.id, nom: (a && a.nom) || n, role: 'auteur'};
-      }),
-      serieNom: '',
-      tome: null,
+      }).concat((infos.traducteurs || []).map(function (n) {
+        var a = auteurParNom(n);
+        return {auteurId: a && a.id, nom: (a && a.nom) || n, role: 'traduction'};
+      })),
+      serieNom: infos.serie || '',
+      tome: infos.tome === undefined ? null : infos.tome,
       format: 'papier',
       unite: 'pages',
       total: infos.pages || 0,
@@ -14236,7 +14565,7 @@ function ajouterDepuisInfos(infos, isbn, mode) {
       isbn: isbn || infos.isbn || '',
       editeur: infos.editeur || '',
       parution: normaliserParution(infos.date),
-      langue: '',
+      langue: infos.langue || '',
       genres: genresDepuis(infos.categories || []),
       couverture: infos.image || '',
       photo: null,
@@ -18164,7 +18493,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-09 16:37:04';
+var VERSION_APPLI = '2026-10-20 15:20:28';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
