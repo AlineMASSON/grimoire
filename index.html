@@ -10035,7 +10035,8 @@ rendre = function () {
 // Tout est chargé en mémoire dans D (D.livres = {id: objet}…) ; une seule fonction écrit : ecrire().
 // L'adaptateur modeleDepuisBase() fabrique ensuite le modèle M attendu par les vues.
 var BASE_NOM = 'grimoire-base';
-var BASE_VERSION = 1;
+// version 2 : table « suppressions » (synchronisation entre appareils)
+var BASE_VERSION = 2;
 var TABLES = {
   livres: ['serieId'],
   auteurs: [],
@@ -10052,7 +10053,9 @@ var TABLES = {
   avis: [],
   objectifs: [],
   photos: [],
-  reglages: []
+  reglages: [],
+  // une trace par fiche supprimée ({id: 'livres/abc', t, cle, le}) : la synchronisation la transmet à l'autre appareil
+  suppressions: []
 };
 var D = {};
 // adresses blob: des photos (couvertures, citations), créées au chargement
@@ -10298,7 +10301,9 @@ function chargerBase() {
 
 // ecrire([{t: 'livres', o: objet}, {t: 'sessions', suppr: id}…]) : une seule transaction pour tout.
 // Ce qui est asynchrone (réseau, photos) doit être fait AVANT. D n'est mis à jour qu'une fois tout écrit.
-// {garderDate: true} conserve modifieLe (import).
+// {garderDate: true} conserve modifieLe (import). majLe, la date qui sert à la synchronisation entre appareils, change à chaque
+// écriture faite ici (même avec garderDate : « Annuler mes modifications » doit gagner sur l'autre appareil) ;
+// {synchro: true} la conserve, pour une fiche reçue de l'autre appareil (Sauvegarde.html).
 function ecrire(ops) {
   // un clic qui écrit ne sera jamais rejoué par « ‹ Retour » (App.html, pilePages)
   if (clicEnCours) {
@@ -10317,6 +10322,11 @@ function ecrire(ops) {
         tables.push(op.t);
       }
     });
+    if (tables.indexOf('suppressions') < 0) {
+      tables.push('suppressions');
+    }
+    // traces de suppression posées (objet) ou retirées (null) par ces écritures
+    var traces = {};
     return new Promise(function (ok, ko) {
       var tx = db.transaction(tables, 'readwrite');
       var maintenant = Date.now();
@@ -10324,8 +10334,15 @@ function ecrire(ops) {
       try {
         ops.forEach(function (op) {
           var s = tx.objectStore(op.t);
+          var k = '';
           if (op.suppr !== undefined) {
             s.delete(op.suppr);
+            // op.le : date de la suppression faite sur l'autre appareil (synchronisation)
+            if (suppressionSuivie(op.t, op.suppr) && D[op.t] && D[op.t][op.suppr] !== undefined) {
+              k = cleSuppression(op.t, op.suppr);
+              traces[k] = {id: k, t: op.t, cle: op.suppr, le: op.le || maintenant};
+              tx.objectStore('suppressions').put(traces[k]);
+            }
             return;
           }
           if (!op.o.id) {
@@ -10337,7 +10354,18 @@ function ecrire(ops) {
           if (!op.garderDate || !op.o.modifieLe) {
             op.o.modifieLe = maintenant;
           }
+          if (!op.synchro || !op.o.majLe) {
+            op.o.majLe = maintenant;
+          }
           s.put(op.o);
+          // une fiche qui revient (« Annuler » une suppression, synchronisation) n'est plus supprimée
+          if (suppressionSuivie(op.t, op.o.id)) {
+            k = cleSuppression(op.t, op.o.id);
+            if (traces[k] || (D.suppressions && D.suppressions[k])) {
+              traces[k] = null;
+              tx.objectStore('suppressions').delete(k);
+            }
+          }
         });
       } catch (e) {
         try {
@@ -10348,6 +10376,16 @@ function ecrire(ops) {
       }
       tx.oncomplete = function () {
         viderCacheCalculs();
+        if (!D.suppressions) {
+          D.suppressions = {};
+        }
+        Object.keys(traces).forEach(function (k) {
+          if (traces[k]) {
+            D.suppressions[k] = traces[k];
+          } else {
+            delete D.suppressions[k];
+          }
+        });
         ops.forEach(function (op) {
           if (op.suppr !== undefined) {
             delete D[op.t][op.suppr];
@@ -11488,8 +11526,11 @@ function importerBookmory(buf) {
 var FORMAT_SAUVEGARDE = 'grimoire';
 // réglages qui ne quittent jamais le téléphone
 // propres au téléphone, jamais remplacés par une restauration : le code de liaison, et la dernière sauvegarde
-// (sinon une vieille sauvegarde restaurée désarmerait le garde-fou contre un grimoire soudain vidé)
-var REGLAGES_PRIVES = ['liaison', 'derniereSauvegarde'];
+// (sinon une vieille sauvegarde restaurée désarmerait le garde-fou contre un grimoire soudain vidé) ;
+// pour la synchronisation : la dernière sauvegarde du Drive déjà prise en compte, et la génération (plus bas)
+var REGLAGES_PRIVES = ['liaison', 'derniereSauvegarde', 'syncConnu', 'generation'];
+// envoyés dans la sauvegarde, mais jamais fusionnés : la lecture de texte est téléchargée sur chaque appareil
+var REGLAGES_NON_SYNCHRO = ['ocrPret'];
 
 function nomFichierPhoto(id, type) {
   var ext = 'jpg';
@@ -11519,9 +11560,9 @@ function fabriquerSauvegarde() {
       var f = nomFichierPhoto(p.id, p.type);
       // les photos sont déjà compressées (JPEG) : les recompresser coûte du temps pour rien
       z.file(f, p.blob, {compression: 'STORE'});
-      return {id: p.id, type: p.type, fichier: f, creeLe: p.creeLe, modifieLe: p.modifieLe, origine: p.origine};
+      return {id: p.id, type: p.type, fichier: f, creeLe: p.creeLe, modifieLe: p.modifieLe, majLe: p.majLe, origine: p.origine};
     });
-    z.file('donnees.json', JSON.stringify({format: FORMAT_SAUVEGARDE, version: BASE_VERSION, date: Date.now(), tables: tables, photos: photos}));
+    z.file('donnees.json', JSON.stringify({format: FORMAT_SAUVEGARDE, version: BASE_VERSION, date: Date.now(), generation: reglage('generation', 0), tables: tables, photos: photos}));
     return z.generateAsync({type: 'blob', compression: 'DEFLATE', compressionOptions: {level: 6}});
   });
 }
@@ -11556,17 +11597,21 @@ function resumeSauvegarde(d) {
 }
 
 // Remplace TOUTE la base par la sauvegarde (les réglages privés du téléphone sont gardés).
+// une photo de la sauvegarde (p : sa ligne dans donnees.photos) → Promise<enregistrement de la table photos | null>
+function photoDuZip(lu, p) {
+  var f = lu.zip.file(p.fichier);
+  if (!f) {
+    return Promise.resolve(null);
+  }
+  return f.async('blob').then(function (b) {
+    return {id: p.id, blob: new Blob([b], {type: p.type || 'image/jpeg'}), type: p.type, creeLe: p.creeLe, modifieLe: p.modifieLe, majLe: p.majLe, origine: p.origine};
+  });
+}
 function restaurerSauvegarde(lu) {
   var d = lu.donnees;
   var photos = d.photos || [];
   return Promise.all(photos.map(function (p) {
-    var f = lu.zip.file(p.fichier);
-    if (!f) {
-      return null;
-    }
-    return f.async('blob').then(function (b) {
-      return {id: p.id, blob: new Blob([b], {type: p.type || 'image/jpeg'}), type: p.type, creeLe: p.creeLe, modifieLe: p.modifieLe, origine: p.origine};
-    });
+    return photoDuZip(lu, p);
   })).then(function (ph) {
     var tables = {};
     Object.keys(TABLES).forEach(function (t) {
@@ -11736,7 +11781,8 @@ var ECART_SAUVEGARDES = 5 * 60 * 1000;
 var versionDonnees = 0;
 var sauvegardeARefaire = false;
 function planifierSauvegarde() {
-  if (!liaison()) {
+  // ce qu'on vient de recevoir de l'autre appareil est déjà dans le Drive
+  if (!liaison() || fusionAffichee) {
     return;
   }
   versionDonnees++;
@@ -11752,6 +11798,7 @@ function planifierSauvegarde() {
 apresEcritureHooks.push(planifierSauvegarde);
 
 // force : passe outre le garde-fou (envoi demandé à la main)
+// Avant d'envoyer, on prend ce que l'autre appareil a déposé dans le Drive (synchroniser) : la sauvegarde part avec.
 function sauvegarderMaintenant(force) {
   clearTimeout(minuteurSauvegarde);
   minuteurSauvegarde = null;
@@ -11763,26 +11810,44 @@ function sauvegarderMaintenant(force) {
     sauvegardeARefaire = true;
     return Promise.resolve();
   }
-  var version = versionDonnees;
-  var n = valeurs(D.livres).length;
-  var avant = reglage('derniereSauvegarde');
-  // garde-fou : un grimoire soudain vidé ne doit pas écraser les sauvegardes
-  if (force !== true && avant && avant.livres && n < avant.livres * 0.8) {
-    majTemoin('⚠️ sauvegarde suspendue (' + n + ' livres au lieu de ' + avant.livres + ')');
-    return Promise.resolve();
-  }
   sauvegardeEnCours = true;
   majTemoin('☁️ sauvegarde…');
-  return fabriquerSauvegarde().then(blobEnBase64).then(function (b64) {
-    return appelRelais('sauver', {contenu: b64, jour: dkey(new Date())});
-  }).then(function (rep) {
+  var version = versionDonnees;
+  var n = 0;
+  return synchroniser().catch(function (e) {
+    // Drive illisible : on envoie quand même ; l'autre appareil refusionnera ses fiches à sa prochaine synchronisation
+    console.error(e);
+    return {};
+  }).then(function (sync) {
+    version = versionDonnees;
+    n = valeurs(D.livres).length;
+    var avant = reglage('derniereSauvegarde');
+    // grimoire repris tel quel depuis le Drive, ou appareil neuf encore vide : rien à envoyer
+    // (un grimoire vide n'écrase jamais la sauvegarde du jour)
+    if (sync.remplace || (!grimoireRempli() && !reglage('syncConnu'))) {
+      return null;
+    }
+    // garde-fou : un grimoire soudain vidé ne doit pas écraser les sauvegardes
+    if (force !== true && avant && avant.livres && n < avant.livres * 0.8) {
+      return 'suspendu';
+    }
+    return fabriquerSauvegarde().then(blobEnBase64).then(function (b64) {
+      return appelRelais('sauver', {contenu: b64, jour: dkey(new Date())});
+    }).then(function (rep) {
+      return regler('derniereSauvegarde', {date: Date.now(), livres: n, taille: rep.taille, nom: rep.nom}).then(function () {
+        return noterSauvegardeEnvoyee(rep);
+      });
+    });
+  }).then(function (r) {
+    sauvegardeEnCours = false;
+    if (r === 'suspendu') {
+      majTemoin('⚠️ sauvegarde suspendue (' + n + ' livres au lieu de ' + reglage('derniereSauvegarde').livres + ')');
+      return;
+    }
     // une modification arrivée pendant l'envoi garde la sauvegarde « en attente »
     if (versionDonnees === version) {
       lsSet('bm_sauv_attente', '');
     }
-    return regler('derniereSauvegarde', {date: Date.now(), livres: n, taille: rep.taille, nom: rep.nom});
-  }).then(function () {
-    sauvegardeEnCours = false;
     majTemoin('');
     if (sauvegardeARefaire || versionDonnees !== version) {
       sauvegardeARefaire = false;
@@ -11796,6 +11861,18 @@ function sauvegarderMaintenant(force) {
       msg = 'réseau trop lent, nouvel essai plus tard';
     }
     majTemoin('☁️ pas sauvegardé (' + msg + ')');
+  });
+}
+// la sauvegarde qu'on vient d'envoyer est la plus récente du Drive : la prochaine synchronisation ne la relira pas
+// (si l'autre appareil a envoyé la sienne entre-temps, elle n'a pas la même taille : elle sera lue et fusionnée)
+function noterSauvegardeEnvoyee(rep) {
+  return listerSauvegardesDrive().then(function (l) {
+    var tete = l[0];
+    if (tete && tete.nom === rep.nom && tete.taille === rep.taille) {
+      return regler('syncConnu', tete.id);
+    }
+  }).catch(function (e) {
+    console.error(e);
   });
 }
 // l'appli passe en arrière-plan : on n'attend pas la fin du délai
@@ -11821,6 +11898,281 @@ function lireSauvegardeDrive(id) {
     return base64EnBuffer(rep.contenu);
   });
 }
+// ---------- Synchronisation entre appareils (téléphone, ordinateur…) ----------
+// Chaque appareil garde tout le grimoire ; ils se retrouvent par la dernière sauvegarde du Drive. À l'ouverture, au
+// retour dans l'appli et avant chaque envoi, l'appareil regarde si elle vient d'ailleurs (son id n'est pas syncConnu)
+// et la fusionne alors fiche par fiche : la plus récemment modifiée gagne (modifieLe) ; une fiche supprimée là-bas
+// (table suppressions) disparaît ici si elle n'a pas été modifiée ici depuis. Ce qui n'existe qu'ici part avec la
+// prochaine sauvegarde.
+// Un appareil neuf reprend le grimoire du Drive tel quel. Une restauration volontaire (ancienne copie, fichier, copie
+// de sécurité) change la « génération » (sa date) : les autres appareils remplacent alors leur grimoire au lieu de fusionner.
+var syncEnCours = null;
+var derniereSync = 0;
+var fusionAffichee = false;
+var SYNC_ECART = 60 * 1000;
+
+function grimoireRempli() {
+  return valeurs(D.livres || {}).length > 0 && !reglage('exemple');
+}
+// les réglages propres à chaque appareil ne passent pas de l'un à l'autre
+function fusionnable(t, id) {
+  return t !== 'reglages' || (REGLAGES_PRIVES.indexOf(id) < 0 && REGLAGES_NON_SYNCHRO.indexOf(id) < 0);
+}
+function suppressionSuivie(t, id) {
+  return t !== 'suppressions' && fusionnable(t, id);
+}
+function cleSuppression(t, id) {
+  return t + '/' + id;
+}
+// une restauration volontaire faite ici doit s'imposer aux autres appareils
+function nouvelleGeneration() {
+  return regler('generation', Date.now());
+}
+
+// la date qui départage deux versions d'une fiche (majLe, absente des fiches écrites avant la synchronisation)
+function versionFiche(o) {
+  return o.majLe || o.modifieLe || 0;
+}
+// même contenu, dates mises à part (clés triées : l'ordre des champs peut différer d'un appareil à l'autre)
+function texteStable(v) {
+  if (Array.isArray(v)) {
+    return '[' + v.map(texteStable).join(',') + ']';
+  }
+  if (v && typeof v === 'object') {
+    return '{' + Object.keys(v).filter(function (k) { return k !== 'majLe' && k !== 'modifieLe' && v[k] !== undefined; }).sort().map(function (k) {
+      return JSON.stringify(k) + ':' + texteStable(v[k]);
+    }).join(',') + '}';
+  }
+  return JSON.stringify(v);
+}
+function memeContenu(t, a, b) {
+  // une photo ne se compare pas (son image n'est pas dans la liste) : sa date suffit
+  return t !== 'photos' && texteStable(a) === texteStable(b);
+}
+
+// d (donnees.json d'une sauvegarde) → {ops à écrire ici, recus : fiches changées ici, aEnvoyer : cet appareil a du neuf}
+function opsFusion(d) {
+  var tables = d.tables || {};
+  var supprLa = {};
+  (tables.suppressions || []).forEach(function (x) {
+    supprLa[x.id] = x;
+  });
+  var supprIci = D.suppressions || {};
+  var ops = [];
+  var recus = 0;
+  var aEnvoyer = false;
+  Object.keys(TABLES).forEach(function (t) {
+    if (t === 'suppressions') {
+      return;
+    }
+    var la = tables[t] || [];
+    if (t === 'photos') {
+      la = d.photos || [];
+    }
+    var vus = {};
+    la.forEach(function (o) {
+      if (!o || o.id === undefined || !fusionnable(t, o.id)) {
+        return;
+      }
+      vus[o.id] = true;
+      var ici = D[t][o.id];
+      var vLa = versionFiche(o);
+      if (!ici) {
+        var s = supprIci[cleSuppression(t, o.id)];
+        // supprimée ici après sa dernière modification là-bas : elle le reste, et la suppression part avec la sauvegarde
+        if (s && s.le >= vLa) {
+          aEnvoyer = true;
+          return;
+        }
+        ops.push({t: t, o: o, garderDate: true, synchro: true});
+        recus++;
+        return;
+      }
+      var vIci = versionFiche(ici);
+      if (vLa === vIci || memeContenu(t, o, ici)) {
+        return;
+      }
+      if (vLa > vIci) {
+        ops.push({t: t, o: o, garderDate: true, synchro: true});
+        recus++;
+      } else {
+        aEnvoyer = true;
+      }
+    });
+    valeurs(D[t]).forEach(function (ici) {
+      if (vus[ici.id] || !fusionnable(t, ici.id)) {
+        return;
+      }
+      var s = supprLa[cleSuppression(t, ici.id)];
+      if (s && s.le >= versionFiche(ici)) {
+        ops.push({t: t, suppr: ici.id, le: s.le});
+        recus++;
+      } else {
+        aEnvoyer = true;
+      }
+    });
+  });
+  // suppressions faites là-bas de fiches que cet appareil n'a pas : gardées, pour les transmettre à leur tour
+  Object.keys(supprLa).forEach(function (k) {
+    var x = supprLa[k];
+    if (!supprIci[k] && !(D[x.t] && D[x.t][x.cle] !== undefined)) {
+      ops.push({t: 'suppressions', o: x, garderDate: true, synchro: true});
+    }
+  });
+  Object.keys(supprIci).forEach(function (k) {
+    if (!supprLa[k]) {
+      aEnvoyer = true;
+    }
+  });
+  return {ops: ops, recus: recus, aEnvoyer: aEnvoyer};
+}
+
+// → Promise<{recus, remplace, aEnvoyer, premier}>
+function synchroniser() {
+  if (!liaison()) {
+    return Promise.resolve({});
+  }
+  if (syncEnCours) {
+    return syncEnCours;
+  }
+  derniereSync = Date.now();
+  var affiche = false;
+  syncEnCours = listerSauvegardesDrive().then(function (l) {
+    var tete = l[0];
+    var connu = reglage('syncConnu');
+    if (!tete || tete.id === connu) {
+      return {};
+    }
+    // première synchronisation d'un appareil qui a déjà son grimoire : il fait référence, sa sauvegarde va partir
+    if (!connu && grimoireRempli()) {
+      return {premier: true, aEnvoyer: true};
+    }
+    if (!sauvegardeEnCours) {
+      affiche = true;
+      majTemoin('☁️ synchronisation…');
+    }
+    return lireSauvegardeDrive(tete.id).then(lireSauvegarde).then(function (lu) {
+      if (!lu) {
+        throw new Error('sauvegarde du Drive illisible');
+      }
+      return integrerSauvegardeDistante(lu, tete.id);
+    });
+  }).then(function (r) {
+    syncEnCours = null;
+    if (affiche) {
+      majTemoin('');
+    }
+    afficherSynchro(r);
+    return r;
+  }, function (e) {
+    syncEnCours = null;
+    if (affiche) {
+      majTemoin('');
+    }
+    throw e;
+  });
+  return syncEnCours;
+}
+function integrerSauvegardeDistante(lu, id) {
+  var gLa = lu.donnees.generation || 0;
+  var gIci = reglage('generation', 0);
+  // une restauration faite ici, pas encore envoyée : ce grimoire fait foi
+  if (gLa < gIci) {
+    return regler('syncConnu', id).then(function () {
+      return {aEnvoyer: true};
+    });
+  }
+  // appareil neuf, ou restauration faite sur l'autre appareil : on reprend la sauvegarde telle quelle
+  if (gLa > gIci || !reglage('syncConnu')) {
+    var restauration = gLa > gIci && !!reglage('syncConnu');
+    var avant = Promise.resolve();
+    if (grimoireRempli()) {
+      avant = faireInstantane('avant de reprendre le grimoire de l\'autre appareil');
+    }
+    return avant.then(function () {
+      return restaurerSauvegarde(lu);
+    }).then(function () {
+      return ecrire([{t: 'reglages', o: {id: 'syncConnu', v: id}}, {t: 'reglages', o: {id: 'generation', v: gLa}}]);
+    }).then(function () {
+      return {remplace: true, restauration: restauration};
+    });
+  }
+  var f = opsFusion(lu.donnees);
+  // les photos reçues sont lues dans le zip avant d'écrire (ecrire() ne fait rien d'asynchrone)
+  return Promise.all(f.ops.map(function (op) {
+    if (op.t !== 'photos' || op.suppr !== undefined) {
+      return op;
+    }
+    return photoDuZip(lu, op.o).then(function (p) {
+      if (!p) {
+        return null;
+      }
+      return {t: 'photos', o: p, garderDate: true, synchro: true};
+    });
+  })).then(function (ops) {
+    ops = ops.filter(Boolean);
+    var avant = Promise.resolve();
+    if (ops.length >= 20 || ops.some(function (op) { return op.suppr !== undefined; })) {
+      avant = faireInstantane('avant une synchronisation');
+    }
+    return avant.then(function () {
+      return ecrire(ops.concat([{t: 'reglages', o: {id: 'syncConnu', v: id}}]));
+    }).then(function () {
+      return {recus: f.recus, aEnvoyer: f.aEnvoyer};
+    });
+  });
+}
+// redessine avec ce qui vient d'arriver (sans reprogrammer d'envoi : c'est déjà dans le Drive)
+function afficherSynchro(r) {
+  if (!r || !(r.recus || r.remplace)) {
+    return;
+  }
+  fusionAffichee = true;
+  try {
+    if (r.remplace) {
+      afficherSiPossible();
+    } else if (document.getElementById('feuille')) {
+      apresEcritureSansRendu();
+    } else {
+      apresEcriture();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  fusionAffichee = false;
+  if (r.restauration) {
+    toast('☁️ Ton grimoire reprend la copie restaurée sur ton autre appareil');
+  } else if (r.remplace) {
+    toast('☁️ Grimoire repris depuis ton Drive · ' + valeurs(D.livres).length + ' livres');
+  } else if (r.recus === 1) {
+    toast('☁️ 1 changement venu de ton autre appareil');
+  } else {
+    toast('☁️ ' + r.recus + ' changements venus de ton autre appareil');
+  }
+}
+// à l'ouverture, au retour dans l'appli, et régulièrement si elle reste ouverte (sur un ordinateur)
+function synchroniserEnFond() {
+  if (!liaison() || sauvegardeEnCours || syncEnCours || Date.now() - derniereSync < SYNC_ECART) {
+    return;
+  }
+  synchroniser().then(function (r) {
+    if (r.aEnvoyer) {
+      planifierSauvegarde();
+    }
+  }).catch(function (e) {
+    console.error(e);
+  });
+}
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'visible') {
+    synchroniserEnFond();
+  }
+});
+setInterval(function () {
+  if (document.visibilityState === 'visible') {
+    synchroniserEnFond();
+  }
+}, 5 * 60 * 1000);
 </script>
 
 <style>
@@ -17980,6 +18332,7 @@ ACTIONS.reglages = function () {
   h += '<div class="reglage"><h4>' + ic('cloud') + 'Sauvegarde dans ton Drive</h4>';
   if (liaison()) {
     h += '<p class="small">Ton grimoire est copié automatiquement dans le dossier <b>Grimoire sauvegardes</b> de ton Drive, 30 secondes après chaque modification (une copie par jour, gardée 30 jours, puis une par mois).</p>' +
+      '<p class="small muted">Relie aussi ton ordinateur ou un autre téléphone avec le même code : ils se synchronisent par le Drive (à l\'ouverture, au retour dans l\'appli et à chaque sauvegarde). Si une même fiche a changé des deux côtés, la modification la plus récente gagne.</p>' +
       '<p class="small"><b id="etatDrive">' + texteAvecIcone(texteSauvegarde()) + '</b></p>' +
       '<div class="row"><button class="act" data-act="sauverDrive">' + ic('cloud-upload') + ' Sauvegarder maintenant</button><button class="act doux" data-act="restaurerDrive">' + ic('rotate-ccw') + ' Restaurer</button><button class="act doux" data-act="delierDrive">Délier</button></div>';
   } else {
@@ -18072,7 +18425,7 @@ ACTIONS.revenirCopie = function (el) {
     if (!ok) {
       return;
     }
-    return revenirInstantane(id).then(function () {
+    return revenirInstantane(id).then(nouvelleGeneration).then(function () {
       fermerFeuille();
       afficherGrimoire();
       planifierSauvegarde();
@@ -18144,8 +18497,12 @@ ACTIONS.restaurerDrive = function () {
       avertir('Aucune sauvegarde dans ton Drive pour l\'instant.');
       return;
     }
-    ouvrirFeuille('<h3>Restaurer depuis le Drive</h3><p class="small muted">Choisis la copie à remettre dans le grimoire.</p><div class="liste-sauv">' + l.map(function (f) {
-      return '<button class="act doux" data-act="restaurerFichierDrive" data-id="' + esc(f.id) + '"><span>' + esc(f.nom.replace(/^grimoire-|\.zip$/g, '')) + '</span><span class="muted">' + nombre(f.taille / 1048576) + ' Mo</span></button>';
+    ouvrirFeuille('<h3>Restaurer depuis le Drive</h3><p class="small muted">Choisis la copie à remettre dans le grimoire.</p><div class="liste-sauv">' + l.map(function (f, i) {
+      var tete = '';
+      if (i === 0) {
+        tete = ' data-tete="1"';
+      }
+      return '<button class="act doux" data-act="restaurerFichierDrive" data-id="' + esc(f.id) + '"' + tete + '><span>' + esc(f.nom.replace(/^grimoire-|\.zip$/g, '')) + '</span><span class="muted">' + nombre(f.taille / 1048576) + ' Mo</span></button>';
     }).join('') + '</div>');
   }).catch(function (e) {
     avertir('Impossible de lire ton Drive : ' + ((e && e.message) || e));
@@ -18157,7 +18514,7 @@ ACTIONS.restaurerFichierDrive = function (el) {
     if (!lu) {
       throw new Error('fichier illisible');
     }
-    proposerRestauration(lu);
+    proposerRestauration(lu, {id: el.dataset.id, tete: el.dataset.tete === '1'});
   }).catch(function (e) {
     avertir('Restauration impossible : ' + ((e && e.message) || e));
   });
@@ -18397,16 +18754,27 @@ function afficherSiPossible() {
     ecranVide();
   }
 }
-function proposerRestauration(lu) {
+// origine : {id, tete} pour une sauvegarde du Drive (tete : la plus récente)
+function proposerRestauration(lu, origine) {
   afficherSiPossible();
-  ouvrirFeuille('<h3>Restaurer une sauvegarde</h3><p>' + esc(resumeSauvegarde(lu.donnees)) + '</p><p class="small muted">Tout ce qui est actuellement dans le grimoire sera remplacé par cette sauvegarde.</p><div class="row"><button class="act" data-act="confirmerRestauration">' + ic('rotate-ccw') + ' Restaurer</button><button class="act doux" data-act="fermer">Annuler</button></div>');
+  var tete = !!(origine && origine.tete);
+  var autres = '';
+  if (liaison() && !tete) {
+    autres = ' Tes autres appareils reliés au Drive la reprendront aussi.';
+  }
+  ouvrirFeuille('<h3>Restaurer une sauvegarde</h3><p>' + esc(resumeSauvegarde(lu.donnees)) + '</p><p class="small muted">Tout ce qui est actuellement dans le grimoire sera remplacé par cette sauvegarde.' + autres + '</p><div class="row"><button class="act" data-act="confirmerRestauration">' + ic('rotate-ccw') + ' Restaurer</button><button class="act doux" data-act="fermer">Annuler</button></div>');
   ACTIONS.confirmerRestauration = function () {
     fermerFeuille();
     faireInstantane('avant une restauration').then(function () {
       return restaurerSauvegarde(lu);
     }).then(function () {
+      // la plus récente du Drive : rien à renvoyer ; une autre copie s'impose aux autres appareils (Sauvegarde.html)
+      if (tete) {
+        return ecrire([{t: 'reglages', o: {id: 'syncConnu', v: origine.id}}, {t: 'reglages', o: {id: 'generation', v: lu.donnees.generation || 0}}]);
+      }
+      return nouvelleGeneration().then(planifierSauvegarde);
+    }).then(function () {
       afficherSiPossible();
-      planifierSauvegarde();
       toast('✨ Sauvegarde restaurée');
     }).catch(erreurEcriture);
   };
@@ -18415,7 +18783,7 @@ function proposerRestauration(lu) {
 function ecranVide() {
   M = null;
   document.getElementById('src').textContent = '';
-  document.getElementById('app').innerHTML = card('Bienvenue dans ton grimoire ✨', '<div class="vide"><p><b>Nouveau téléphone ?</b> Retrouve ton grimoire depuis ton Drive : ' + ic('settings') + ' Réglages → colle ton code de liaison (fichier <i>Grimoire sauvegardes / code-de-liaison.txt</i>) → ' + ic('rotate-ccw') + ' Restaurer.</p><div class="row" style="justify-content:center"><button class="act" data-act="reglages">' + ic('cloud-download') + ' Restaurer depuis mon Drive</button></div><p class="small muted" style="margin-top:16px">Ou reprends une sauvegarde du grimoire (un fichier .zip).</p><div class="row" style="justify-content:center"><button class="act doux" data-act="choisirExport">' + ic('folder-open') + ' Choisir un fichier</button><button class="act doux" data-act="grimoireVide">' + ic('sparkles') + ' Commencer à zéro</button></div>' +
+  document.getElementById('app').innerHTML = card('Bienvenue dans ton grimoire ✨', '<div class="vide"><p><b>Nouveau téléphone, ou ton ordinateur ?</b> Retrouve ton grimoire depuis ton Drive : ' + ic('settings') + ' Réglages → colle ton code de liaison (fichier <i>Grimoire sauvegardes / code-de-liaison.txt</i>) → ' + ic('link') + ' Relier. Il arrive tout seul, et reste ensuite synchronisé avec tes autres appareils.</p><div class="row" style="justify-content:center"><button class="act" data-act="reglages">' + ic('cloud-download') + ' Restaurer depuis mon Drive</button></div><p class="small muted" style="margin-top:16px">Ou reprends une sauvegarde du grimoire (un fichier .zip).</p><div class="row" style="justify-content:center"><button class="act doux" data-act="choisirExport">' + ic('folder-open') + ' Choisir un fichier</button><button class="act doux" data-act="grimoireVide">' + ic('sparkles') + ' Commencer à zéro</button></div>' +
     '<div class="essai-ex"><b>Juste pour voir ?</b><p class="small muted">Un grimoire d\'exemple avec 8 livres inventés, leurs lectures, citations et carnet. Tu pourras tout effacer ensuite.</p><button class="act" data-act="essayerExemple">' + ic('sparkles') + ' Essayer avec l\'exemple</button></div>' +
     '<p class="small" style="margin-top:16px"><a href="aide.html" style="color:var(--accent)">' + ic('book-open') + ' Le mode d\'emploi : installer, sauvegarder, mettre à jour</a></p></div>');
 }
@@ -18493,7 +18861,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-20 15:20:28';
+var VERSION_APPLI = '2026-10-20 17:27:03';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
@@ -18649,6 +19017,8 @@ function demarrer() {
     }
     return Promise.resolve(ouvrirGrimoire()).then(function () {
       reprendreVue(reprise);
+      // ce que l'autre appareil a envoyé au Drive depuis la dernière fois (Sauvegarde.html)
+      synchroniserEnFond();
       // une mise à jour des données a échoué au démarrage : on le dit (elle sera retentée au prochain)
       if (lsGet('bm_erreur_migration')) {
         lsSet('bm_erreur_migration', '');
