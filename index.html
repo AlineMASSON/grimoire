@@ -11775,9 +11775,18 @@ function majTemoin(etat) {
   }
 }
 
-// au moins 5 min entre deux envois pendant qu'on utilise l'appli (chacun repart avec toutes les photos) ;
-// le passage en arrière-plan, lui, envoie tout de suite ce qui attend
-var ECART_SAUVEGARDES = 5 * 60 * 1000;
+// écart minimal entre deux envois pendant qu'on utilise l'appli (chacun repart avec toutes les photos) : 1 min, pour que
+// l'autre appareil suive vite ; 5 min sur données mobiles ou en économie de données (navigator.connection, Chrome Android).
+// Le passage en arrière-plan, lui, envoie tout de suite ce qui attend
+var ECART_SAUVEGARDES = 60 * 1000;
+var ECART_SAUVEGARDES_MOBILE = 5 * 60 * 1000;
+function ecartSauvegardes() {
+  var c = navigator.connection;
+  if (c && (c.saveData || c.type === 'cellular')) {
+    return ECART_SAUVEGARDES_MOBILE;
+  }
+  return ECART_SAUVEGARDES;
+}
 var versionDonnees = 0;
 var sauvegardeARefaire = false;
 function planifierSauvegarde() {
@@ -11791,7 +11800,7 @@ function planifierSauvegarde() {
   var derniere = reglage('derniereSauvegarde');
   var delai = DELAI_SAUVEGARDE;
   if (derniere && derniere.date) {
-    delai = Math.max(delai, ECART_SAUVEGARDES - (Date.now() - derniere.date));
+    delai = Math.max(delai, ecartSauvegardes() - (Date.now() - derniere.date));
   }
   minuteurSauvegarde = setTimeout(sauvegarderMaintenant, delai);
 }
@@ -11881,6 +11890,13 @@ document.addEventListener('visibilitychange', function () {
     sauvegarderMaintenant();
   }
 });
+// sur l'ordinateur, la page reste visible quand on passe à une autre fenêtre : la quitter envoie aussi ce qui attend
+// (pas sur données mobiles, où l'écart de 5 min est gardé)
+window.addEventListener('blur', function () {
+  if (minuteurSauvegarde && ecartSauvegardes() === ECART_SAUVEGARDES) {
+    sauvegarderMaintenant();
+  }
+});
 // au démarrage : une sauvegarde n'a pas pu partir la dernière fois
 function reprendreSauvegarde() {
   if (lsGet('bm_sauv_attente') === '1') {
@@ -11909,7 +11925,7 @@ function lireSauvegardeDrive(id) {
 var syncEnCours = null;
 var derniereSync = 0;
 var fusionAffichee = false;
-var SYNC_ECART = 60 * 1000;
+var SYNC_ECART = 45 * 1000;
 
 function grimoireRempli() {
   return valeurs(D.livres || {}).length > 0 && !reglage('exemple');
@@ -12150,7 +12166,8 @@ function afficherSynchro(r) {
     toast('☁️ ' + r.recus + ' changements venus de ton autre appareil');
   }
 }
-// à l'ouverture, au retour dans l'appli, et régulièrement si elle reste ouverte (sur un ordinateur)
+// à l'ouverture, au retour dans l'appli ou sur sa fenêtre, et chaque minute si elle reste ouverte (au plus une fois
+// toutes les 45 s : seule la liste du Drive est demandée, la sauvegarde n'est lue que si elle a changé)
 function synchroniserEnFond() {
   if (!liaison() || sauvegardeEnCours || syncEnCours || Date.now() - derniereSync < SYNC_ECART) {
     return;
@@ -12168,11 +12185,13 @@ document.addEventListener('visibilitychange', function () {
     synchroniserEnFond();
   }
 });
+// sur l'ordinateur : retour sur la fenêtre de l'appli (elle était restée visible derrière une autre)
+window.addEventListener('focus', synchroniserEnFond);
 setInterval(function () {
   if (document.visibilityState === 'visible') {
     synchroniserEnFond();
   }
-}, 5 * 60 * 1000);
+}, 60 * 1000);
 </script>
 
 <style>
@@ -18861,7 +18880,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-20 17:27:03';
+var VERSION_APPLI = '2026-10-21 13:28:53';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
