@@ -5506,6 +5506,21 @@ function defisEnCours() {
   defis.push({cle: 'M' + d0.getFullYear() + '-' + (d0.getMonth() + 1) + ':finir', ico: '🌕', titre: 'Défi ' + de + nomMois + ' : finir ' + cibleMois + ' livre' + (cibleMois > 1 ? 's' : ''), xp: 150, v: vMois, cible: cibleMois, texte: vMois + ' / ' + cibleMois + ' livre' + (cibleMois > 1 ? 's' : ''), fini: vMois >= cibleMois, mois: true});
   return defis;
 }
+// les noms des quêtes, repris par le ruban des célébrations (Jeu.html) : « 🗓️ Semaine du 5 au 11 oct. », ou
+// « du 28 sept. au 4 oct. » à cheval sur deux mois ; « 🌕 Octobre »
+function nomQueteSemaine() {
+  var lundi = debutSemaine(Date.now());
+  var dimanche = lundi + 7 * DAY;
+  var du = dateCourte(lundi);
+  if (new Date(lundi).getMonth() === new Date(dimanche - DAY).getMonth()) {
+    du = String(new Date(lundi).getDate());
+  }
+  return '🗓️ Semaine du ' + du + ' au ' + dateCourte(dimanche - DAY);
+}
+function nomQueteMois(ico) {
+  var nomMois = new Date().toLocaleDateString('fr-FR', {month: 'long'});
+  return ico + ' ' + nomMois.charAt(0).toUpperCase() + nomMois.slice(1);
+}
 // la quête de la semaine : trois défis, chacun rapporte ses XP ; la semaine va du lundi au dimanche
 function carteQueteSemaine(defis, deja) {
   var lundi = debutSemaine(Date.now());
@@ -5526,17 +5541,12 @@ function carteQueteSemaine(defis, deja) {
     lignes += ligneQuete(d, !!deja[d.cle]);
   });
   var toutes = sem.length && sem.every(function (d) { return deja[d.cle]; });
-  // « du 5 au 11 oct. », ou « du 28 sept. au 4 oct. » à cheval sur deux mois
-  var du = dateCourte(lundi);
-  if (new Date(lundi).getMonth() === new Date(dimanche - DAY).getMonth()) {
-    du = String(new Date(lundi).getDate());
-  }
   var note = 'jusqu\'à ' + total + ' XP cette semaine';
   if (gagne) {
     note += ' · ' + gagne + ' déjà gagnés';
   }
   note += ' · de nouveaux défis chaque lundi';
-  return carteQuete(teteQuete('Quête de la semaine', '🗓️ Semaine du ' + du + ' au ' + dateCourte(dimanche - DAY), dimanche, toutes), friseQuete(lundi, dimanche, dimanche - DAY), lignes + lotsQuete(toutes, lots, note));
+  return carteQuete(teteQuete('Quête de la semaine', nomQueteSemaine(), dimanche, toutes), friseQuete(lundi, dimanche, dimanche - DAY), lignes + lotsQuete(toutes, lots, note));
 }
 // la quête du mois : finir autant de livres que d'habitude
 function carteQueteMois(defis, deja) {
@@ -5547,14 +5557,13 @@ function carteQueteMois(defis, deja) {
   var d0 = new Date();
   var debutMois = new Date(d0.getFullYear(), d0.getMonth(), 1).getTime();
   var finMois = new Date(d0.getFullYear(), d0.getMonth() + 1, 1).getTime();
-  var nomMois = d0.toLocaleDateString('fr-FR', {month: 'long'});
   var gagnee = !!deja[m.cle];
   var sous = 'pour ton niveau';
   if (gagnee) {
     sous = 'gagné ✓';
   }
   var ligne = ligneQuete({ico: m.ico, titre: m.titre.replace(/^Défi [^:]+ : f/, 'F'), v: m.v, cible: m.cible, texte: m.texte}, gagnee);
-  return carteQuete(teteQuete('Quête du mois', m.ico + ' ' + nomMois.charAt(0).toUpperCase() + nomMois.slice(1), finMois, gagnee), friseQuete(debutMois, finMois, finMois - DAY), ligne + lotsQuete(gagnee, pieceXp(m.xp, m.xp + ' XP', sous), 'autant de livres que ton habitude des 6 derniers mois'));
+  return carteQuete(teteQuete('Quête du mois', nomQueteMois(m.ico), finMois, gagnee), friseQuete(debutMois, finMois, finMois - DAY), ligne + lotsQuete(gagnee, pieceXp(m.xp, m.xp + ' XP', sous), 'autant de livres que ton habitude des 6 derniers mois'));
 }
 function cartesQuetesEnCours() {
   var defis = defisEnCours();
@@ -6711,13 +6720,17 @@ function carteQuete(tete, frise, corps) {
   return '<section class="card qs-carte">' + tete + frise + '<div class="qs-corps">' + corps + '</div></section>';
 }
 
+// « Quête de fête » (moins de 2 mois) ou « Quête de saison » : sur la carte, et sur le ruban de la célébration (Jeu.html)
+function genreQueteSaison(i) {
+  if (i.fin - i.debut < 60 * DAY) {
+    return 'Quête de fête';
+  }
+  return 'Quête de saison';
+}
 // une carte par quête de fête ou de saison en cours
 function carteQueteSaison(i, deja) {
   var gagnee = !!deja['Q:' + i.cle];
-  var genre = 'Quête de saison';
-  if (i.fin - i.debut < 60 * DAY) {
-    genre = 'Quête de fête';
-  }
+  var genre = genreQueteSaison(i);
   var lots = '<div class="qs-lot"><div class="vis"><span class="sceau-s"><span>' + i.q[1] + '</span></span></div><b>Sceau</b><span class="muted">' + esc(i.nom) + '</span></div>';
   lots += pieceXp(i.q[5], i.q[5] + ' XP', 'pour ton niveau');
   if (i.q[6]) {
@@ -10914,7 +10927,11 @@ function modeleDepuisBase() {
     marquer(x.debut, x.livreId);
     marquer(x.fin, x.livreId);
   });
+  // la session du minuteur qui tourne ne compte qu'une fois validée (sinon défis, sceaux et bingo se cochent dès le début)
   valeurs(D.sessions).forEach(function (s) {
+    if (s.enCours) {
+      return;
+    }
     marquer(s.debut, s.livreId);
     marquer(s.fin, s.livreId);
   });
@@ -17830,6 +17847,10 @@ ACTIONS.lireReponseClaude = function () {
 .fete-jeu h2{margin:10px 0 4px;font:700 30px/1.15 "Cormorant Garamond",Georgia,serif;max-width:340px}
 .fete-jeu .etiq{font:900 12px Nunito,sans-serif;letter-spacing:2px;color:var(--gold);text-transform:uppercase}
 .fete-jeu .sous-fete{font-size:13.5px;line-height:1.5;color:rgba(255,255,255,.75);max-width:320px}
+/* le ruban doré : le titre de la carte de la page Quêtes d'où vient la récompense */
+.ruban-fete{margin-bottom:18px;display:flex;flex-direction:column;align-items:center}
+.ruban-fete .ruban{padding:11px 44px 12px;background:linear-gradient(180deg,color-mix(in srgb,var(--gold) 55%,#fff),var(--gold));color:#2a1d0c;font:700 23px/1.1 "Cormorant Garamond",Georgia,serif;clip-path:polygon(0 0,100% 0,92% 50%,100% 100%,0 100%,8% 50%);filter:drop-shadow(0 4px 10px rgba(0,0,0,.4));animation:jeu-deplie .7s cubic-bezier(.3,1.4,.5,1) both}
+.ruban-fete .ruban-sous{margin-top:8px;font:700 14px Nunito,sans-serif;color:rgba(255,255,255,.8)}
 .fete-jeu .pastilles-fete{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 .fete-jeu .pastilles-fete span{font:800 12.5px Nunito,sans-serif;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15)}
 .fete-jeu .pastilles-fete .or{border-color:color-mix(in srgb,var(--gold) 70%,transparent);background:color-mix(in srgb,var(--gold) 18%,transparent);color:#fff3c4}
@@ -17848,8 +17869,6 @@ ACTIONS.lireReponseClaude = function () {
 .bingo-fete{margin-top:14px;font:900 34px Nunito,sans-serif;letter-spacing:4px;color:var(--gold);text-shadow:0 0 18px color-mix(in srgb,var(--gold) 80%,transparent);animation:jeu-pop .5s cubic-bezier(.3,1.6,.5,1) both .8s,jeu-brille 1.6s ease-in-out infinite 1.4s}
 .cire-fete{width:124px;height:124px;margin-top:16px;font-size:54px;animation:jeu-sceau .7s cubic-bezier(.3,1.5,.5,1) both .1s}
 .medaille-fete{width:124px;height:124px;margin-top:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:64px;border:4px solid var(--gold);background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--accent) 70%,#24133a),#24133a);box-shadow:0 0 0 8px color-mix(in srgb,var(--gold) 15%,transparent),0 0 40px color-mix(in srgb,var(--accent) 80%,transparent);animation:jeu-pop .8s cubic-bezier(.3,1.6,.5,1) both .2s}
-.carte-fete{perspective:800px;margin-top:6px}
-.carte-fete .carte-c.grande{width:180px;animation:jeu-retourne .9s cubic-bezier(.3,1.3,.5,1) both .1s}
 .de-fete{font-size:76px;line-height:1;margin-top:12px;animation:jeu-deplie .9s cubic-bezier(.3,1.4,.5,1) both}
 /* la carte au trésor de la quête se déplie */
 @keyframes jeu-deplie{0%{opacity:0;transform:scale(.2) rotate(-14deg)}60%{opacity:1;transform:scale(1.12) rotate(4deg)}100%{opacity:1;transform:none}}
@@ -17858,7 +17877,6 @@ ACTIONS.lireReponseClaude = function () {
 .deco-fete .deco-emoji{font-size:110px;filter:drop-shadow(0 0 14px color-mix(in srgb,var(--gold) 70%,transparent))}
 .deco-fete .deco-st img{width:140px;height:140px;filter:drop-shadow(0 0 16px color-mix(in srgb,var(--gold) 70%,transparent))}
 .deco-fete .mv-flamme img{animation:none}
-@keyframes jeu-retourne{0%{opacity:0;transform:rotateY(180deg) scale(.6)}60%{opacity:1}100%{transform:rotateY(0) scale(1)}}
 @keyframes jeu-depose{0%{opacity:0;transform:translateY(-120px)}70%{opacity:1;transform:translateY(6px)}100%{transform:none}}
 .ico-defi-fete{width:96px;height:96px;margin-top:14px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:46px;background:color-mix(in srgb,var(--gold) 22%,#1b1330);border:2px solid var(--gold);animation:jeu-pop .6s cubic-bezier(.3,1.6,.5,1) both .1s}
 @keyframes jeu-fondu{from{opacity:0}to{opacity:1}}
@@ -17871,7 +17889,39 @@ ACTIONS.lireReponseClaude = function () {
 @keyframes jeu-brille{0%,100%{text-shadow:0 0 18px color-mix(in srgb,var(--gold) 80%,transparent)}50%{text-shadow:0 0 34px var(--gold),0 0 4px #fff}}
 @keyframes jeu-sceau{0%{opacity:0;transform:translateY(-160px) scale(1.7)}70%{opacity:1;transform:translateY(0) scale(.92,1.06)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){.fete-jeu,.fete-jeu *{animation:none !important}}
-@media (max-height:620px){.carte-fete .carte-c.grande{width:110px}.carte-fete .carte-c.grande .nom-c{font-size:14px;min-height:30px}.deco-fete{height:90px}.deco-fete .deco-emoji{font-size:70px}.deco-fete .deco-st img{width:86px;height:86px}.de-fete{font-size:52px}.fete-jeu h2{font-size:24px}.couv-fete{width:84px;height:126px}.cire-fete,.medaille-fete{width:92px;height:92px;font-size:42px}.tampon-fete,.ico-defi-fete{width:76px;height:76px;font-size:32px}.bingo-fete{font-size:26px}.fete-jeu .fermer-fete{margin-top:14px}}
+/* fin d'un livre : un cadre enluminé se trace autour de la carte (htmlCadreFete), des lucioles clignotent derrière
+   (htmlLucioles). L'état final est le style de base : sans animation (réglage « Réduites »), le cadre est déjà là. */
+.cadre-hote{position:relative}
+.cadre-hote .couv-fete{width:168px;height:252px;transform:none;animation:jeu-pop .6s cubic-bezier(.3,1.5,.5,1) both}
+.cadre-fete{position:absolute;pointer-events:none;z-index:2}
+.cadre-fete svg{position:absolute;left:0;top:0;overflow:visible}
+.cadre-fete .orne{fill:none;stroke:url(#cfOr);stroke-linecap:round;filter:drop-shadow(0 0 3px rgba(255,214,120,.7))}
+.cadre-fete .trace{stroke-dasharray:100;animation:cadre-trace 1.3s ease-out var(--r) both}
+.cadre-fete .perles{animation:cadre-apparait .6s ease-out 1s both}
+.cadre-fete .entre{transform-box:fill-box;transform-origin:center;animation:cadre-entre .9s cubic-bezier(.3,1.3,.5,1) var(--r) both}
+.cadre-fete .tombe{transform-box:fill-box;transform-origin:center;animation:cadre-tombe .7s cubic-bezier(.3,1.6,.5,1) var(--r) both}
+.cadre-fete .lumiere{fill:none;stroke:#fffbe6;stroke-width:3;stroke-linecap:round;stroke-dasharray:5 95;filter:drop-shadow(0 0 4px #fff) drop-shadow(0 0 10px #ffd56b);opacity:0;animation:cadre-lumiere 3.2s linear 1.9s infinite}
+.cadre-fete .gemme{filter:drop-shadow(0 0 3px rgba(255,255,255,.6))}
+.cadre-fete .gerbe{position:absolute;width:0;height:0}
+.cadre-fete .gerbe i{position:absolute;left:-6px;top:-6px;width:12px;font:normal 11px/12px serif;text-align:center;color:#fff3c4;text-shadow:0 0 6px #ffd56b;opacity:0;animation:cadre-gerbe .9s ease-out var(--r) both}
+.cadre-fete .eclat{position:absolute;width:18px;height:18px;margin:-9px 0 0 -9px;opacity:0;animation:cadre-eclat 2.6s ease-in-out var(--r) infinite}
+.cadre-fete .eclat::before,.cadre-fete .eclat::after{content:"";position:absolute;left:50%;top:50%;width:2px;height:18px;margin:-9px 0 0 -1px;border-radius:1px;background:linear-gradient(transparent,#fff,transparent);box-shadow:0 0 6px #fff}
+.cadre-fete .eclat::after{transform:rotate(90deg)}
+.fete-jeu .etiq.sous-cadre{margin-top:40px}
+.fete-jeu .lucioles-fete{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.lucioles-fete i{position:absolute;width:var(--t);height:var(--t);border-radius:50%;background:#fff6c8;box-shadow:0 0 6px 2px rgba(255,220,120,.85),0 0 16px 6px rgba(255,200,90,.3);opacity:.6;animation:luciole-derive var(--d) ease-in-out var(--r) infinite alternate,luciole-clignote var(--c) ease-in-out var(--r2) infinite}
+.lucioles-fete i.lav{background:#f3e9ff;box-shadow:0 0 6px 2px rgba(205,170,255,.85),0 0 16px 6px rgba(170,120,255,.3)}
+.lucioles-fete i.rose{background:#ffe9f2;box-shadow:0 0 6px 2px rgba(255,160,200,.8),0 0 16px 6px rgba(255,130,180,.28)}
+@keyframes cadre-trace{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+@keyframes cadre-apparait{from{opacity:0}}
+@keyframes cadre-entre{from{opacity:0;transform:scale(1.12)}}
+@keyframes cadre-tombe{from{opacity:0;transform:translateY(-14px) scale(.4)}}
+@keyframes cadre-lumiere{from{opacity:1;stroke-dashoffset:0}to{opacity:1;stroke-dashoffset:-100}}
+@keyframes cadre-gerbe{0%{opacity:0;transform:rotate(var(--a)) translateY(0) scale(.4)}25%{opacity:1}100%{opacity:0;transform:rotate(var(--a)) translateY(-34px) scale(1)}}
+@keyframes cadre-eclat{0%,70%,100%{opacity:0;transform:scale(.2) rotate(0)}80%{opacity:1;transform:scale(1) rotate(45deg)}90%{opacity:.6;transform:scale(.6) rotate(90deg)}}
+@keyframes luciole-derive{from{transform:translate(0,0)}to{transform:translate(var(--x),var(--y))}}
+@keyframes luciole-clignote{0%,100%{opacity:.05}35%{opacity:1}55%{opacity:.85}75%{opacity:.15}}
+@media (max-height:620px){.fete-jeu .etiq.sous-cadre{margin-top:26px}.ruban-fete{margin-bottom:8px}.ruban-fete .ruban{font-size:18px;padding:7px 34px 8px}.ruban-fete .ruban-sous{font-size:12px;margin-top:4px}.deco-fete{height:90px}.deco-fete .deco-emoji{font-size:70px}.deco-fete .deco-st img{width:86px;height:86px}.de-fete{font-size:52px}.fete-jeu h2{font-size:24px}.couv-fete{width:84px;height:126px}.cadre-hote .couv-fete{width:100px;height:150px}.cire-fete,.medaille-fete{width:92px;height:92px;font-size:42px}.tampon-fete,.ico-defi-fete{width:76px;height:76px;font-size:32px}.bingo-fete{font-size:26px}.fete-jeu .fermer-fete{margin-top:14px}}
 </style>
 <script>
 // ---------- Célébrations : on compare l'état du jeu à ce qui a déjà été fêté ----------
@@ -17979,6 +18029,10 @@ function verifierJeu() {
     return;
   }
   if (!M || !D.livres || !valeurs(D.livres).length) {
+    return;
+  }
+  // pas de fête pendant la lecture : tout arrive quand la session est validée (ou rien, si elle est annulée)
+  if (sessionEnCours()) {
     return;
   }
   jeuEnCours = true;
@@ -18119,6 +18173,123 @@ function vibrerFete(motif) {
     } catch (e) {}
   }
 }
+// ---------- fin d'un livre : cadre enluminé et lucioles (choisis sur maquettes, maquettes/fetes-livre/) ----------
+function auHasard(a, b) {
+  return a + Math.random() * (b - a);
+}
+// des lucioles dorées, lavande et roses, qui flottent et clignotent derrière le livre
+function htmlLucioles() {
+  var h = '';
+  for (var i = 0; i < 30; i++) {
+    h += '<i class="' + ['', '', '', 'lav', 'rose'][i % 5] + '" style="left:' + auHasard(3, 96).toFixed(1) + '%;top:' + auHasard(4, 78).toFixed(1) + '%;--t:' + auHasard(3, 6.5).toFixed(1) + 'px;--x:' + auHasard(-26, 26).toFixed(0) + 'px;--y:' + auHasard(-30, 18).toFixed(0) + 'px;--d:' + auHasard(3, 6).toFixed(1) + 's;--r:-' + auHasard(0, 5).toFixed(1) + 's;--c:' + auHasard(1.6, 3.4).toFixed(1) + 's;--r2:' + auHasard(0.3, 2.5).toFixed(1) + 's"></i>';
+  }
+  return '<div class="lucioles-fete">' + h + '</div>';
+}
+// une pierre sertie : monture d'or, quatre griffes, reflet
+function sertiCadre(x, y, r, gemme) {
+  var g = '<circle cx="' + x + '" cy="' + y + '" r="' + (r + 1.6) + '" fill="url(#cfOr)"/><circle class="gemme" cx="' + x + '" cy="' + y + '" r="' + r + '" fill="url(#cf' + gemme + ')"/>';
+  [45, 135, 225, 315].forEach(function (an) {
+    var a = an * Math.PI / 180;
+    g += '<circle cx="' + (x + (r + 1.4) * Math.cos(a)).toFixed(1) + '" cy="' + (y + (r + 1.4) * Math.sin(a)).toFixed(1) + '" r="1.3" fill="#fff4c2"/>';
+  });
+  return g + '<circle cx="' + (x - r * 0.35).toFixed(1) + '" cy="' + (y - r * 0.4).toFixed(1) + '" r="' + (r * 0.28).toFixed(1) + '" fill="#fff" opacity=".8"/>';
+}
+// un coin (dessiné en haut à gauche) : équerre double, volutes, feuilles d'acanthe, perles et pierre sertie au coin du livre
+function coinCadre(gemme) {
+  return '<path class="orne" stroke-width="2.6" d="M3 66 V18 Q3 3 18 3 H66"/><path class="orne" stroke-width="1.2" d="M10 56 V22 Q10 10 22 10 H56"/>' +
+    '<path class="orne" stroke-width="1.6" d="M24 24 C 32 10, 52 12, 47 27 C 44 35, 33 33, 35 26 C 36 22, 41 22, 41 26"/>' +
+    '<path class="orne" stroke-width="1.6" d="M24 24 C 10 32, 12 52, 27 47 C 35 44, 33 33, 26 35 C 22 36, 22 41, 26 41"/>' +
+    '<path d="M48 5 Q60 -1 72 6 Q60 11 48 5 Z" fill="url(#cfOr)" opacity=".9"/><path d="M5 48 Q-1 60 6 72 Q11 60 5 48 Z" fill="url(#cfOr)" opacity=".9"/>' +
+    '<path d="M33 14 Q40 6 50 9 Q42 14 33 14 Z" fill="url(#cfOr)" opacity=".75"/><path d="M14 33 Q6 40 9 50 Q14 42 14 33 Z" fill="url(#cfOr)" opacity=".75"/>' +
+    '<circle cx="30" cy="3" r="1.8" fill="url(#cfOr)"/><circle cx="38" cy="3" r="1.4" fill="url(#cfOr)"/><circle cx="3" cy="30" r="1.8" fill="url(#cfOr)"/><circle cx="3" cy="38" r="1.4" fill="url(#cfOr)"/>' +
+    sertiCadre(24, 24, 6.5, gemme);
+}
+function etoileCadre(x, y, r) {
+  var k = r * 0.28;
+  return 'M' + x + ' ' + (y - r) + ' L' + (x + k) + ' ' + (y - k) + ' L' + (x + r) + ' ' + y + ' L' + (x + k) + ' ' + (y + k) + ' L' + x + ' ' + (y + r) + ' L' + (x - k) + ' ' + (y + k) + ' L' + (x - r) + ' ' + y + ' L' + (x - k) + ' ' + (y - k) + ' Z';
+}
+// le cadre autour de la couverture (w × h px) : il se trace (filets, perles), les coins entrent, le blason, le pendentif et
+// les côtés tombent, une gerbe d'étoiles part des pierres, puis un trait de lumière fait le tour et les pierres scintillent
+function htmlCadreFete(w, h) {
+  // sur un petit écran (couverture de 100 px), tout est réduit d'autant
+  var k = Math.min(1, w / 168);
+  var m = Math.round(24 * k);
+  var W = w + 2 * m;
+  var H = h + 2 * m;
+  var cx = W / 2;
+  var defs = '<defs><linearGradient id="cfOr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff4c2"/><stop offset=".45" stop-color="#e2b64a"/><stop offset="1" stop-color="#a8761f"/></linearGradient>' +
+    '<radialGradient id="cfRubis" cx=".35" cy=".3"><stop offset="0" stop-color="#ffd0dc"/><stop offset=".4" stop-color="#ff5d84"/><stop offset="1" stop-color="#9c0f33"/></radialGradient>' +
+    '<radialGradient id="cfSaphir" cx=".35" cy=".3"><stop offset="0" stop-color="#dbeaff"/><stop offset=".4" stop-color="#5c9cff"/><stop offset="1" stop-color="#1d3f99"/></radialGradient>' +
+    '<radialGradient id="cfEmeraude" cx=".35" cy=".3"><stop offset="0" stop-color="#dcffe9"/><stop offset=".4" stop-color="#3fd08a"/><stop offset="1" stop-color="#0d6b3c"/></radialGradient></defs>';
+  var gemmes = ['Rubis', 'Saphir', 'Saphir', 'Rubis'];
+  var places = ['scale(' + k + ')', 'translate(' + W + ' 0) scale(-' + k + ' ' + k + ')', 'translate(0 ' + H + ') scale(' + k + ' -' + k + ')', 'translate(' + W + ' ' + H + ') scale(-' + k + ' -' + k + ')'];
+  var coins = places.map(function (t, i) {
+    return '<g transform="' + t + '"><g class="entre" style="--r:' + (0.9 + i * 0.12).toFixed(2) + 's">' + coinCadre(gemmes[i]) + '</g></g>';
+  }).join('');
+  // en haut, le blason : une grande pierre sertie entre deux volutes, une étoile au-dessus, des feuilles le long du filet
+  var blason = '<g transform="translate(' + cx + ' 0) scale(' + k + ')"><g class="tombe" style="--r:1.5s">' +
+    '<path class="orne" stroke-width="1.6" d="M-11 5 C -22 -8, -42 -4, -37 7 C -34 14, -26 12, -28 7"/><path class="orne" stroke-width="1.6" d="M11 5 C 22 -8, 42 -4, 37 7 C 34 14, 26 12, 28 7"/>' +
+    '<path d="' + etoileCadre(0, -15, 7) + '" fill="url(#cfOr)"/>' +
+    '<path d="M-46 3 Q-58 -3 -70 3 Q-58 8 -46 3 Z" fill="url(#cfOr)" opacity=".85"/><path d="M46 3 Q58 -3 70 3 Q58 8 46 3 Z" fill="url(#cfOr)" opacity=".85"/>' +
+    sertiCadre(0, 3, 8, 'Rubis') + '</g></g>';
+  // en bas, un pendentif en goutte d'émeraude
+  var pendentif = '<g transform="translate(' + cx + ' ' + (H - 3) + ') scale(' + k + ')"><g class="tombe" style="--r:1.65s">' +
+    '<path class="orne" stroke-width="1.6" d="M-10 -2 C -22 10, -40 6, -35 -5"/><path class="orne" stroke-width="1.6" d="M10 -2 C 22 10, 40 6, 35 -5"/>' +
+    '<path d="M0 -7 C 8 -7, 8 4, 0 13 C -8 4, -8 -7, 0 -7 Z" fill="url(#cfEmeraude)" stroke="url(#cfOr)" stroke-width="1.6"/><circle cx="-2.5" cy="-2" r="2" fill="#fff" opacity=".75"/></g></g>';
+  // sur les côtés, une émeraude entre deux volutes
+  function cote(x, sens) {
+    return '<g transform="translate(' + x + ' ' + (H / 2) + ') scale(' + (sens * k) + ' ' + k + ')"><g class="tombe" style="--r:1.75s">' +
+      '<path class="orne" stroke-width="1.5" d="M0 -8 C 10 -18, 4 -34, -4 -28"/><path class="orne" stroke-width="1.5" d="M0 8 C 10 18, 4 34, -4 28"/>' + sertiCadre(0, 0, 5, 'Emeraude') + '</g></g>';
+  }
+  var svg = '<svg width="' + W + '" height="' + H + '" aria-hidden="true">' + defs +
+    '<rect class="orne trace" style="--r:.3s" stroke-width="2.4" x="4" y="4" width="' + (W - 8) + '" height="' + (H - 8) + '" rx="' + (20 * k).toFixed(1) + '" pathLength="100"/>' +
+    '<rect class="perles" fill="none" stroke="url(#cfOr)" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0 6.5" x="9" y="9" width="' + (W - 18) + '" height="' + (H - 18) + '" rx="' + (16 * k).toFixed(1) + '"/>' +
+    '<rect class="orne trace" style="--r:.5s" stroke-width="1.2" x="14" y="14" width="' + (W - 28) + '" height="' + (H - 28) + '" rx="' + (13 * k).toFixed(1) + '" pathLength="100"/>' +
+    '<rect class="lumiere" x="4" y="4" width="' + (W - 8) + '" height="' + (H - 8) + '" rx="' + (20 * k).toFixed(1) + '" pathLength="100"/>' +
+    coins + blason + pendentif + cote(4, 1) + cote(W - 4, -1) + '</svg>';
+  // la gerbe d'étoiles quand le cadre est complet, et les éclats des pierres ensuite
+  var pierres = [[24 * k, 24 * k], [W - 24 * k, 24 * k], [W - 24 * k, H - 24 * k], [24 * k, H - 24 * k], [cx, 3]];
+  var gerbes = pierres.map(function (p, n) {
+    var etoiles = '';
+    for (var j = 0; j < 7; j++) {
+      etoiles += '<i style="--a:' + (j * 51) + 'deg;--r:' + (1.6 + n * 0.08).toFixed(2) + 's">✦</i>';
+    }
+    return '<div class="gerbe" style="left:' + p[0].toFixed(1) + 'px;top:' + p[1].toFixed(1) + 'px">' + etoiles + '</div>';
+  }).join('');
+  var eclats = pierres.concat([[cx, H - 3]]).map(function (p, n) {
+    return '<span class="eclat" style="left:' + p[0].toFixed(1) + 'px;top:' + p[1].toFixed(1) + 'px;--r:' + (1.4 + n * 0.65).toFixed(2) + 's"></span>';
+  }).join('');
+  return '<div class="cadre-fete" style="left:-' + m + 'px;top:-' + m + 'px;width:' + W + 'px;height:' + H + 'px">' + svg + gerbes + eclats + '</div>';
+}
+// le ruban doré, avec le titre de la carte de la page Quêtes (Quetes.html, Saisons.html) ; rien pour un livre fini ou une décoration
+function rubanFete(f) {
+  var titre = '';
+  var sous = '';
+  if (f.type === 'defi' && f.d.mois) {
+    titre = 'Quête du mois';
+    sous = nomQueteMois(f.d.ico);
+  } else if (f.type === 'defi') {
+    titre = 'Quête de la semaine';
+    sous = nomQueteSemaine();
+  } else if (f.type === 'case') {
+    titre = 'Mon bingo ' + new Date().getFullYear();
+  } else if (f.type === 'sceau') {
+    titre = 'Mes sceaux magiques';
+  } else if (f.type === 'pari') {
+    titre = 'Quête de Bergamote';
+  } else if (f.type === 'saison') {
+    titre = genreQueteSaison(instanceSaison(f.cle));
+  } else if (f.type === 'niveau') {
+    titre = 'Mon niveau';
+  }
+  if (!titre) {
+    return '';
+  }
+  if (sous) {
+    sous = '<div class="ruban-sous">' + sous + '</div>';
+  }
+  return '<div class="ruban-fete"><div class="ruban">' + titre + '</div>' + sous + '</div>';
+}
 function contenuFete(f) {
   var y = new Date().getFullYear();
   if (f.type === 'livre') {
@@ -18137,17 +18308,17 @@ function contenuFete(f) {
     var rang = avec('quetes', function () { return finies().filter(function (r) { return annee(r.end) === y; }).length; });
     // la carte de collection de ce livre
     var carte = cartesCollection().filter(function (c) { return c.r.book.id === b.id && c.r.nth === f.r.nth; })[0];
-    var visuel = '<div class="couv-fete">' + couv + '</div>';
+    // la couverture du livre, au milieu : elle reçoit son cadre enluminé dans montrerFete(), une fois sa taille connue
+    var visuel = '<div class="cadre-hote"><div class="couv-fete">' + couv + '</div></div>';
     var nouvelle = '';
-    var fond = confettis();
+    var fond = htmlLucioles();
     if (carte) {
-      visuel = '<div class="carte-fete">' + htmlCarte(carte, true) + '</div>';
       nouvelle = '<span>Nouvelle carte ' + RARETES[carte.rar][1].toLowerCase() + ' ' + RARETES[carte.rar][2] + '</span>';
       if (carte.rar === 3) {
-        fond = '<div class="rayons-fete"></div>' + confettis();
+        fond = '<div class="rayons-fete"></div>' + htmlLucioles();
       }
     }
-    return {html: fond + visuel + '<div class="etiq" style="margin-top:16px">Livre terminé</div><h2>' + esc(titre(b)) + '</h2><div class="pastilles-fete"><span class="or" data-compteur="' + xp + '">+0 XP</span>' + taille + '<span>' + rang + (rang > 1 ? 'ᵉ' : 'ᵉʳ') + ' livre de ' + y + '</span>' + nouvelle + '</div>', bouton: 'Youpi ✨', vib: [80, 60, 80]};
+    return {html: fond + visuel + '<div class="etiq sous-cadre">Livre terminé</div><h2>' + esc(titre(b)) + '</h2><div class="pastilles-fete"><span class="or" data-compteur="' + xp + '">+0 XP</span>' + taille + '<span>' + rang + (rang > 1 ? 'ᵉ' : 'ᵉʳ') + ' livre de ' + y + '</span>' + nouvelle + '</div>', bouton: 'Youpi ✨', vib: [80, 60, 80]};
   }
   if (f.type === 'case') {
     var cases = avec('quetes', function () { return casesBingo(y); });
@@ -18167,11 +18338,11 @@ function contenuFete(f) {
       bingo = '<div class="bingo-fete">BINGO' + (nb > 1 ? ' ×' + nb : '') + ' !</div>';
       vib = [60, 40, 60, 40, 160];
     }
-    return {html: (nb > 0 ? confettis() : '') + '<div class="etiq">Case' + (f.cases.length > 1 ? 's' : '') + ' cochée' + (f.cases.length > 1 ? 's' : '') + '</div><div class="tampon-fete">' + c[0] + '</div><h2>' + esc(c[2]) + '</h2>' + avecLivre + autres + bingo + '<div class="sous-fete" style="margin-top:6px">' + f.nbOk + ' / 25 cases · ' + f.bingos + ' bingo' + (f.bingos > 1 ? 's' : '') + '</div>', bouton: 'Trop bien 🎉', vib: vib};
+    return {html: (nb > 0 ? confettis() : '') + rubanFete(f) + '<div class="etiq">Case' + (f.cases.length > 1 ? 's' : '') + ' cochée' + (f.cases.length > 1 ? 's' : '') + '</div><div class="tampon-fete">' + c[0] + '</div><h2>' + esc(c[2]) + '</h2>' + avecLivre + autres + bingo + '<div class="sous-fete" style="margin-top:6px">' + f.nbOk + ' / 25 cases · ' + f.bingos + ' bingo' + (f.bingos > 1 ? 's' : '') + '</div>', bouton: 'Trop bien 🎉', vib: vib};
   }
   if (f.type === 'pari') {
     var avance = Math.max(0, Math.floor((f.p.echeance - f.r.end) / DAY));
-    return {html: confettis() + '<div class="etiq">Quête accomplie</div><div class="de-fete">🗺️</div><h2>' + esc(titre(f.r.book)) + '</h2><div class="sous-fete">fini ' + avance + ' jour' + (avance > 1 ? 's' : '') + ' avant la date. Bergamote est fière de toi.</div><div class="pastilles-fete"><span class="or" data-compteur="' + f.p.xp + '">+0 XP</span></div>', bouton: 'Hou-hou ✨', vib: [60, 40, 60, 40, 160]};
+    return {html: confettis() + rubanFete(f) + '<div class="etiq">Quête accomplie</div><div class="de-fete">🗺️</div><h2>' + esc(titre(f.r.book)) + '</h2><div class="sous-fete">fini ' + avance + ' jour' + (avance > 1 ? 's' : '') + ' avant la date. Bergamote est fière de toi.</div><div class="pastilles-fete"><span class="or" data-compteur="' + f.p.xp + '">+0 XP</span></div>', bouton: 'Hou-hou ✨', vib: [60, 40, 60, 40, 160]};
   }
   if (f.type === 'saison') {
     var i = instanceSaison(f.cle);
@@ -18179,7 +18350,7 @@ function contenuFete(f) {
     if (i.q[6] && !decoDejaGagnee(i)) {
       deco = '<br>Et une nouvelle décoration : ' + esc(nomDeco(i.q[6])) + ' !';
     }
-    return {html: '<div class="rayons-fete"></div>' + confettis() + '<div class="etiq">Quête de saison réussie</div><div class="sceau-s sceau-fete"><span>' + i.q[1] + '</span></div><h2>' + esc(i.nom) + '</h2><div class="sous-fete">Le sceau rejoint ta collection.' + deco + '</div><div class="pastilles-fete"><span class="or" data-compteur="' + i.q[5] + '">+0 XP</span></div>', bouton: 'Magique ✨', vib: [100, 50, 100]};
+    return {html: '<div class="rayons-fete"></div>' + confettis() + rubanFete(f) + '<div class="etiq">Quête réussie</div><div class="sceau-s sceau-fete"><span>' + i.q[1] + '</span></div><h2>' + esc(i.nom) + '</h2><div class="sous-fete">Le sceau rejoint ta collection.' + deco + '</div><div class="pastilles-fete"><span class="or" data-compteur="' + i.q[5] + '">+0 XP</span></div>', bouton: 'Magique ✨', vib: [100, 50, 100]};
   }
   if (f.type === 'deco') {
     var dd = DECOS.filter(function (x) { return x[0] === f.id; })[0];
@@ -18190,7 +18361,7 @@ function contenuFete(f) {
     return {html: '<div class="rayons-fete"></div><div class="etiq">Nouvelle décoration</div><div class="deco-fete">' + svgDeco(f.id, true) + '</div><h2>' + esc(dd[1]) + '</h2><div class="sous-fete">Débloquée : ' + esc(dd[2].charAt(0).toLowerCase() + dd[2].slice(1)) + '.<br>' + place + '</div>', bouton: 'Je l\'adopte 💛', vib: [80, 50, 80]};
   }
   if (f.type === 'defi') {
-    return {html: '<div class="etiq">Défi réussi</div><div class="ico-defi-fete">' + f.d.ico + '</div><h2>' + esc(f.d.titre) + '</h2><div class="pastilles-fete"><span class="or" data-compteur="' + f.d.xp + '">+0 XP</span></div>', bouton: 'Bien joué ✨', vib: [50, 40, 50]};
+    return {html: rubanFete(f) + '<div class="etiq">Défi réussi</div><div class="ico-defi-fete">' + f.d.ico + '</div><h2>' + esc(f.d.titre) + '</h2><div class="pastilles-fete"><span class="or" data-compteur="' + f.d.xp + '">+0 XP</span></div>', bouton: 'Bien joué ✨', vib: [50, 40, 50]};
   }
   if (f.type === 'sceau') {
     var fam = FAMILLES_SCEAUX.filter(function (x) { return x[0] === f.cle; })[0];
@@ -18206,7 +18377,7 @@ function contenuFete(f) {
       nom = uni[2];
       desc = avec('quetes', function () { return uni[4](donneesSceaux()); });
     }
-    return {html: '<div class="rayons-fete"></div><div class="etiq">Nouveau sceau</div><div class="cire cire-fete ' + cls + '"><span>' + em + '</span></div><h2>' + esc(nom) + '</h2><div class="sous-fete">' + esc(desc) + '</div>', bouton: 'Je le garde 💛', vib: [100, 50, 100]};
+    return {html: '<div class="rayons-fete"></div>' + rubanFete(f) + '<div class="etiq">Nouveau sceau</div><div class="cire cire-fete ' + cls + '"><span>' + em + '</span></div><h2>' + esc(nom) + '</h2><div class="sous-fete">' + esc(desc) + '</div>', bouton: 'Je le garde 💛', vib: [100, 50, 100]};
   }
   // niveau
   var n = niveau();
@@ -18220,7 +18391,7 @@ function contenuFete(f) {
   if (n.dates[f.de] && n.dates[f.a]) {
     quitte = 'Tu quittes ' + de[1] + ' ' + esc(de[2]) + ' après ' + dureeNiveau(n.dates[f.a] - n.dates[f.de]) + '.';
   }
-  return {html: '<div class="rayons-fete"></div>' + confettis() + '<div class="etiq">Niveau ' + (f.a + 1) + '</div><div class="medaille-fete">' + lv[1] + '</div><h2>' + esc(lv[2]) + '</h2><div class="sous-fete">' + quitte + prochain + '</div>', bouton: 'Je déploie mes ailes ✨', vib: [100, 60, 100, 60, 300]};
+  return {html: '<div class="rayons-fete"></div>' + confettis() + rubanFete(f) + '<div class="etiq">Niveau ' + (f.a + 1) + '</div><div class="medaille-fete">' + lv[1] + '</div><h2>' + esc(lv[2]) + '</h2><div class="sous-fete">' + quitte + prochain + '</div>', bouton: 'Je déploie mes ailes ✨', vib: [100, 60, 100, 60, 300]};
 }
 function montrerFete() {
   if (document.getElementById('feteJeu') || !fileFetes.length) {
@@ -18235,6 +18406,11 @@ function montrerFete() {
   d.setAttribute('aria-modal', 'true');
   d.innerHTML = c.html + '<button class="fermer-fete">' + c.bouton + '</button>';
   document.body.appendChild(d);
+  // fin d'un livre : le cadre enluminé se pose à la taille de la couverture, maintenant qu'elle est à l'écran
+  var hote = d.querySelector('.cadre-hote');
+  if (hote) {
+    hote.insertAdjacentHTML('beforeend', htmlCadreFete(hote.offsetWidth, hote.offsetHeight));
+  }
   vibrerFete(c.vib);
   // l'XP défile en comptant
   var compteur = d.querySelector('[data-compteur]');
@@ -18880,7 +19056,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-21 13:28:53';
+var VERSION_APPLI = '2026-10-26 17:05:01';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
