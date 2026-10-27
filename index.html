@@ -5383,19 +5383,21 @@ ACTIONS.imageCitation = function (el) {
 .sceau .prog{height:5px;margin:5px 8px 2px}
 /* onglets de la page : un médaillon par genre ; le choisi rempli du dégradé des boutons, avec le mot en couleur et
    l'étoile de la barre du bas (choisi sur maquettes le 2026-10-27) ; la barre défile */
-.onglets-quetes{position:relative;display:flex;gap:4px;margin:16px 0 8px;padding-top:6px;overflow-x:auto;scrollbar-width:none}
+.onglets-quetes{position:relative;display:flex;gap:4px;margin:14px 0 8px;padding-top:8px;overflow-x:auto;scrollbar-width:none}
 .onglets-quetes::-webkit-scrollbar{display:none}
 /* un fondu sur le bord qui cache encore des médaillons (à 384 px, le dernier visible tombe entier : sans lui, rien ne dit que ça défile) */
 .onglets-quetes.suite{-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
 .onglets-quetes.avant{-webkit-mask-image:linear-gradient(90deg,transparent,#000 40px);mask-image:linear-gradient(90deg,transparent,#000 40px)}
 .onglets-quetes.avant.suite{-webkit-mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent)}
 .onglets-quetes button{flex:none;width:66px;display:flex;flex-direction:column;align-items:center;gap:5px;padding:0 0 4px;border:0;background:none;cursor:pointer;white-space:nowrap;font:700 12px Nunito,sans-serif;color:var(--muted)}
-.onglets-quetes .rond{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1.5px solid var(--line);box-shadow:var(--shadow)}
+/* une ombre courte : la barre défile, donc elle coupe net tout ce qui dépasse (l'ombre commune --shadow, 24 px de flou,
+   y faisait une lueur coupée en carré au-dessus des médaillons) */
+.onglets-quetes .rond{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--card);border:1.5px solid var(--line);box-shadow:0 2px 5px rgba(0,0,0,.25)}
 .onglets-quetes .ic{width:20px;height:20px}
 .onglets-quetes button::after{/* petit-ok : étoile décorative */content:"";height:10px;font-size:8px;line-height:10px;color:var(--gold)}
 .onglets-quetes button.on{color:var(--accent)}
 .onglets-quetes button.on::after{content:"✦"}
-.onglets-quetes button.on .rond{background:linear-gradient(135deg,var(--accent),var(--lav));border-color:transparent;color:#fff;box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 40%,transparent);transform:translateY(-2px)}
+.onglets-quetes button.on .rond{background:linear-gradient(135deg,var(--accent),var(--lav)) border-box;border-color:transparent;color:#fff;transform:translateY(-2px)}
 </style>
 <script>
 // ---------- Quêtes : niveau de sorcière, défis, bingo, sceaux ----------
@@ -19316,7 +19318,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-27 17:03:13';
+var VERSION_APPLI = '2026-10-27 17:15:32';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
