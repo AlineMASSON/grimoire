@@ -18098,7 +18098,11 @@ ACTIONS.lireReponseClaude = function () {
 .ruban-fete .ruban-sous{margin-top:8px;font:700 14px Nunito,sans-serif;color:rgba(255,255,255,.8)}
 .fete-jeu .pastilles-fete{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px}
 .fete-jeu .pastilles-fete span{font:800 12.5px Nunito,sans-serif;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15)}
-.fete-jeu .pastilles-fete .or{border-color:color-mix(in srgb,var(--gold) 70%,transparent);background:color-mix(in srgb,var(--gold) 18%,transparent);color:#fff3c4}
+/* l'XP gagnée : une pièce d'or vieilli (.piece-xp, Saisons.html), plus grande, qui tourne sur elle-même en arrivant ;
+   le nombre défile en comptant (montrerFete) */
+.fete-jeu .piece-fete{width:78px;height:78px;margin:14px auto 0;font-size:24px;animation:jeu-piece 1s cubic-bezier(.25,.9,.35,1) both .25s}
+.fete-jeu .piece-fete small{font-size:13px}
+.fete-jeu .piece-fete::before{inset:8px;border-width:3px}
 .fete-jeu .fermer-fete{margin-top:22px;font:800 15px Nunito,sans-serif;padding:12px 28px;border:0;border-radius:999px;color:#fff;background:linear-gradient(135deg,var(--accent),var(--lav));box-shadow:0 8px 20px rgba(0,0,0,.35);cursor:pointer;position:relative;z-index:2}
 .fete-jeu>*{position:relative;z-index:1}
 .fete-jeu .confettis,.fete-jeu .rayons-fete{position:absolute;z-index:0;pointer-events:none}
@@ -18131,6 +18135,7 @@ ACTIONS.lireReponseClaude = function () {
 @keyframes jeu-monte{0%{opacity:0;transform:translateY(80px) rotate(-30deg) scale(.5)}100%{opacity:1;transform:translateY(0) rotate(-6deg) scale(1)}}
 @keyframes jeu-tampon{0%{opacity:0;transform:scale(2.6) rotate(-18deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
 @keyframes jeu-pop{0%{opacity:0;transform:scale(.2)}100%{opacity:1;transform:scale(1)}}
+@keyframes jeu-piece{0%{opacity:0;transform:scale(.3) rotateY(0)}60%{opacity:1;transform:scale(1.1) rotateY(540deg)}100%{opacity:1;transform:scale(1) rotateY(720deg)}}
 @keyframes jeu-brille{0%,100%{text-shadow:0 0 18px color-mix(in srgb,var(--gold) 80%,transparent)}50%{text-shadow:0 0 34px var(--gold),0 0 4px #fff}}
 @keyframes jeu-sceau{0%{opacity:0;transform:translateY(-160px) scale(1.7)}70%{opacity:1;transform:translateY(0) scale(.92,1.06)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){.fete-jeu,.fete-jeu *{animation:none !important}}
@@ -18166,7 +18171,7 @@ ACTIONS.lireReponseClaude = function () {
 @keyframes cadre-eclat{0%,70%,100%{opacity:0;transform:scale(.2) rotate(0)}80%{opacity:1;transform:scale(1) rotate(45deg)}90%{opacity:.6;transform:scale(.6) rotate(90deg)}}
 @keyframes luciole-derive{from{transform:translate(0,0)}to{transform:translate(var(--x),var(--y))}}
 @keyframes luciole-clignote{0%,100%{opacity:.05}35%{opacity:1}55%{opacity:.85}75%{opacity:.15}}
-@media (max-height:620px){.fete-jeu .etiq.sous-cadre{margin-top:26px}.ruban-fete{margin-bottom:8px}.ruban-fete .ruban{font-size:18px;padding:7px 34px 8px}.ruban-fete .ruban-sous{font-size:12px;margin-top:4px}.deco-fete{height:90px}.deco-fete .deco-emoji{font-size:70px}.deco-fete .deco-st img{width:86px;height:86px}.de-fete{font-size:52px}.fete-jeu h2{font-size:24px}.couv-fete{width:84px;height:126px}.cadre-hote .couv-fete{width:100px;height:150px}.cire-fete,.medaille-fete{width:92px;height:92px;font-size:42px}.tampon-fete,.ico-defi-fete{width:76px;height:76px;font-size:32px}.bingo-fete{font-size:26px}.fete-jeu .fermer-fete{margin-top:14px}}
+@media (max-height:620px){.fete-jeu .etiq.sous-cadre{margin-top:26px}.ruban-fete{margin-bottom:8px}.ruban-fete .ruban{font-size:18px;padding:7px 34px 8px}.ruban-fete .ruban-sous{font-size:12px;margin-top:4px}.deco-fete{height:90px}.deco-fete .deco-emoji{font-size:70px}.deco-fete .deco-st img{width:86px;height:86px}.de-fete{font-size:52px}.fete-jeu h2{font-size:24px}.couv-fete{width:84px;height:126px}.cadre-hote .couv-fete{width:100px;height:150px}.cire-fete,.medaille-fete{width:92px;height:92px;font-size:42px}.tampon-fete,.ico-defi-fete{width:76px;height:76px;font-size:32px}.bingo-fete{font-size:26px}.fete-jeu .piece-fete{width:60px;height:60px;font-size:19px;margin-top:8px}.fete-jeu .piece-fete small{font-size:11px}.fete-jeu .fermer-fete{margin-top:14px}}
 </style>
 <script>
 // ---------- Célébrations : on compare l'état du jeu à ce qui a déjà été fêté ----------
@@ -18535,6 +18540,10 @@ function rubanFete(f) {
   }
   return '<div class="ruban-fete"><div class="ruban">' + titre + '</div>' + sous + '</div>';
 }
+// l'XP d'une fête, sur une pièce ; montrerFete fait défiler le nombre jusqu'à xp
+function pieceFete(xp) {
+  return '<div class="piece-xp piece-fete"><b data-compteur="' + xp + '">+0</b><small>XP</small></div>';
+}
 function contenuFete(f) {
   var y = new Date().getFullYear();
   if (f.type === 'livre') {
@@ -18563,7 +18572,7 @@ function contenuFete(f) {
         fond = '<div class="rayons-fete"></div>' + htmlLucioles();
       }
     }
-    return {html: fond + visuel + '<div class="etiq sous-cadre">Livre terminé</div><h2>' + esc(titre(b)) + '</h2><div class="pastilles-fete"><span class="or" data-compteur="' + xp + '">+0 XP</span>' + taille + '<span>' + rang + (rang > 1 ? 'ᵉ' : 'ᵉʳ') + ' livre de ' + y + '</span>' + nouvelle + '</div>', bouton: 'Youpi ✨', vib: [80, 60, 80]};
+    return {html: fond + visuel + '<div class="etiq sous-cadre">Livre terminé</div><h2>' + esc(titre(b)) + '</h2>' + pieceFete(xp) + '<div class="pastilles-fete">' + taille + '<span>' + rang + (rang > 1 ? 'ᵉ' : 'ᵉʳ') + ' livre de ' + y + '</span>' + nouvelle + '</div>', bouton: 'Youpi ✨', vib: [80, 60, 80]};
   }
   if (f.type === 'case') {
     var cases = avec('quetes', function () { return casesBingo(y); });
@@ -18587,7 +18596,7 @@ function contenuFete(f) {
   }
   if (f.type === 'pari') {
     var avance = Math.max(0, Math.floor((f.p.echeance - f.r.end) / DAY));
-    return {html: confettis() + rubanFete(f) + '<div class="etiq">Quête accomplie</div><div class="de-fete">🗺️</div><h2>' + esc(titre(f.r.book)) + '</h2><div class="sous-fete">fini ' + avance + ' jour' + (avance > 1 ? 's' : '') + ' avant la date. Bergamote est fière de toi.</div><div class="pastilles-fete"><span class="or" data-compteur="' + f.p.xp + '">+0 XP</span></div>', bouton: 'Hou-hou ✨', vib: [60, 40, 60, 40, 160]};
+    return {html: confettis() + rubanFete(f) + '<div class="etiq">Quête accomplie</div><div class="de-fete">🗺️</div><h2>' + esc(titre(f.r.book)) + '</h2><div class="sous-fete">fini ' + avance + ' jour' + (avance > 1 ? 's' : '') + ' avant la date. Bergamote est fière de toi.</div>' + pieceFete(f.p.xp), bouton: 'Hou-hou ✨', vib: [60, 40, 60, 40, 160]};
   }
   if (f.type === 'saison') {
     var i = instanceSaison(f.cle);
@@ -18595,7 +18604,7 @@ function contenuFete(f) {
     if (i.q[6] && !decoDejaGagnee(i)) {
       deco = '<br>Et une nouvelle décoration : ' + esc(nomDeco(i.q[6])) + ' !';
     }
-    return {html: '<div class="rayons-fete"></div>' + confettis() + rubanFete(f) + '<div class="etiq">Quête réussie</div><div class="sceau-s sceau-fete">' + cireSvg('p3', i.cle) + '<span>' + i.q[1] + '</span></div><h2>' + esc(i.nom) + '</h2><div class="sous-fete">Le sceau rejoint ta collection.' + deco + '</div><div class="pastilles-fete"><span class="or" data-compteur="' + i.q[5] + '">+0 XP</span></div>', bouton: 'Magique ✨', vib: [100, 50, 100]};
+    return {html: '<div class="rayons-fete"></div>' + confettis() + rubanFete(f) + '<div class="etiq">Quête réussie</div><div class="sceau-s sceau-fete">' + cireSvg('p3', i.cle) + '<span>' + i.q[1] + '</span></div><h2>' + esc(i.nom) + '</h2><div class="sous-fete">Le sceau rejoint ta collection.' + deco + '</div>' + pieceFete(i.q[5]), bouton: 'Magique ✨', vib: [100, 50, 100]};
   }
   if (f.type === 'deco') {
     var dd = DECOS.filter(function (x) { return x[0] === f.id; })[0];
@@ -18606,7 +18615,7 @@ function contenuFete(f) {
     return {html: '<div class="rayons-fete"></div><div class="etiq">Nouvelle décoration</div><div class="deco-fete">' + svgDeco(f.id, true) + '</div><h2>' + esc(dd[1]) + '</h2><div class="sous-fete">Débloquée : ' + esc(dd[2].charAt(0).toLowerCase() + dd[2].slice(1)) + '.<br>' + place + '</div>', bouton: 'Je l\'adopte 💛', vib: [80, 50, 80]};
   }
   if (f.type === 'defi') {
-    return {html: rubanFete(f) + '<div class="etiq">Défi réussi</div><div class="ico-defi-fete">' + f.d.ico + '</div><h2>' + esc(f.d.titre) + '</h2><div class="pastilles-fete"><span class="or" data-compteur="' + f.d.xp + '">+0 XP</span></div>', bouton: 'Bien joué ✨', vib: [50, 40, 50]};
+    return {html: rubanFete(f) + '<div class="etiq">Défi réussi</div><div class="ico-defi-fete">' + f.d.ico + '</div><h2>' + esc(f.d.titre) + '</h2>' + pieceFete(f.d.xp), bouton: 'Bien joué ✨', vib: [50, 40, 50]};
   }
   if (f.type === 'sceau') {
     var fam = FAMILLES_SCEAUX.filter(function (x) { return x[0] === f.cle; })[0];
@@ -18663,7 +18672,7 @@ function montrerFete() {
     hote.insertAdjacentHTML('beforeend', htmlCadreFete(hote.offsetWidth, hote.offsetHeight));
   }
   vibrerFete(c.vib);
-  // l'XP défile en comptant
+  // l'XP défile en comptant sur la pièce
   var compteur = d.querySelector('[data-compteur]');
   if (compteur) {
     var cible = parseInt(compteur.dataset.compteur, 10);
@@ -18673,7 +18682,7 @@ function montrerFete() {
         t0 = t;
       }
       var p = Math.min(1, (t - t0) / 1200);
-      compteur.textContent = '+' + nombreFr(cible * (1 - Math.pow(1 - p, 3))) + ' XP';
+      compteur.textContent = '+' + nombreFr(cible * (1 - Math.pow(1 - p, 3)));
       if (p < 1 && document.body.contains(compteur)) {
         requestAnimationFrame(pas);
       }
@@ -19307,7 +19316,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-27 16:25:42';
+var VERSION_APPLI = '2026-10-27 17:03:13';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
