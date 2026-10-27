@@ -622,6 +622,37 @@ header{padding-top:calc(22px + 42px + env(safe-area-inset-top))}
   .fab-scan .ic{width:24px;height:24px}
   nav button span .ic{width:19px;height:19px}
 }
+/* Ma flamme de lectrice (carteFlamme, App.html) : la série de jours de lecture, sous « En ce moment » */
+.carte-flamme{display:flex;gap:14px;align-items:center}
+.grande-flamme{position:relative;width:92px;height:118px;flex:none}
+.grande-flamme svg{width:92px;height:118px;filter:drop-shadow(0 0 14px rgba(255,140,60,.55))}
+.grande-flamme.eteinte svg{opacity:.35;filter:none}
+.grande-flamme b{position:absolute;left:0;right:0;top:56px;text-align:center;font:700 34px/1 "Cormorant Garamond",Georgia,serif;color:#5a2410}
+.grande-flamme.eteinte b{color:var(--ink)}
+.titre-flamme{font:700 21px/1.15 "Cormorant Garamond",Georgia,serif}
+.semaine-f{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center;margin-top:8px}
+.semaine-f span{font:800 11px Nunito,sans-serif;color:var(--muted)}
+.semaine-f .j{height:26px;display:flex;align-items:center;justify-content:center}
+.semaine-f .auj{width:16px;height:16px;border-radius:50%;border:1.5px dashed var(--muted);opacity:.7}
+.semaine-f .autre{width:6px;height:6px;border-radius:50%;background:var(--muted);opacity:.35}
+.palier-f{margin-top:10px;font-size:12.5px}
+.palier-f .prog{height:7px;margin-top:5px}
+/* le « +1 jour » à la première session validée du jour (feterFlamme) : l'état final est le style de base */
+.flamme-plus1{position:fixed;left:50%;bottom:calc(156px + env(safe-area-inset-bottom));z-index:96;width:max-content;max-width:calc(100vw - 40px);box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:10px 20px 10px 12px;border-radius:999px;background:linear-gradient(135deg,#43200f,#2b1733);border:1px solid rgba(255,154,61,.65);box-shadow:0 0 26px rgba(255,140,60,.5),0 10px 24px rgba(0,0,0,.45);color:#fff;pointer-events:none;transform:translateX(-50%);animation:flamme-entre .5s cubic-bezier(.3,1.5,.5,1) both}
+.flamme-plus1.part{animation:flamme-sort .4s ease-in forwards}
+.flamme-plus1 .fl-boite{position:relative;width:36px;height:46px;flex:none}
+.flamme-plus1 .fl-boite svg{transform-origin:50% 90%;animation:flamme-grandit .9s cubic-bezier(.3,1.5,.5,1) .35s both;filter:drop-shadow(0 0 8px rgba(255,150,60,.8))}
+.flamme-plus1 .braise{position:absolute;left:50%;top:40%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#ffd56b;box-shadow:0 0 6px #ff9a3d;opacity:0;animation:flamme-braise 1.1s ease-out var(--r) both}
+.flamme-plus1 .ligne{display:flex;align-items:baseline;gap:8px}
+.flamme-plus1 .compte{flex:none;height:1.1em;overflow:hidden;font:700 30px/1.1 "Cormorant Garamond",Georgia,serif}
+.flamme-plus1 .compte span{display:block;transform:translateY(-1.1em);animation:flamme-roule 1.4s cubic-bezier(.5,0,.3,1.3) both}
+.flamme-plus1 small{font:800 13px Nunito,sans-serif;color:#ffe2bf}
+@keyframes flamme-entre{from{opacity:0;transform:translate(-50%,30px) scale(.8)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+@keyframes flamme-sort{to{opacity:0;transform:translate(-50%,10px) scale(.95)}}
+@keyframes flamme-grandit{0%{transform:scale(.55)}55%{transform:scale(1.3)}100%{transform:scale(1)}}
+@keyframes flamme-roule{0%,30%{transform:translateY(0)}60%,100%{transform:translateY(-1.1em)}}
+@keyframes flamme-braise{0%{opacity:0;transform:translate(0,0) scale(.6)}20%{opacity:1}100%{opacity:0;transform:translate(var(--x),-46px) scale(.2)}}
+@media (prefers-reduced-motion:reduce){.flamme-plus1,.flamme-plus1 *{animation:none !important}}
 </style>
 
 </head>
@@ -1903,7 +1934,102 @@ function vAccueil() {
   return avec('stats', vAccueilCorps);
 }
 function vAccueilCorps() {
-  return bandeauExemple() + blocEnCeMoment() + carteBergamoteAccueil() + carteAnnee() + bandeauNiveau() + carteCitationDuJour() + carteCeJourLa();
+  return bandeauExemple() + blocEnCeMoment() + carteFlamme() + carteBergamoteAccueil() + carteAnnee() + bandeauNiveau() + carteCitationDuJour() + carteCeJourLa();
+}
+
+// ---------- Ma flamme de lectrice : la série de jours de lecture (choisie sur maquettes, maquettes/serie-jours/, C) ----------
+var numeroFlamme = 0;
+// une flamme dessinée, t px de large (chaque dessin a son propre dégradé)
+function svgFlamme(t) {
+  var id = 'flg' + (++numeroFlamme);
+  return '<svg width="' + t + '" height="' + Math.round(t * 1.3) + '" viewBox="0 0 40 52" aria-hidden="true"><defs><linearGradient id="' + id + '" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff5e3a"/><stop offset=".55" stop-color="#ffa53d"/><stop offset="1" stop-color="#ffe08a"/></linearGradient></defs>' +
+    '<path d="M20 2 C 25 12, 37 18, 35 32 C 34 43, 27 50, 20 50 C 12 50, 5 43, 6 32 C 7 24, 13 20, 14 12 C 17 16, 18 19, 18 22 C 21 17, 21 9, 20 2 Z" fill="url(#' + id + ')"/>' +
+    '<path d="M20 24 C 23 29, 28 32, 27 38 C 26 44, 23 47, 20 47 C 16 47, 13 44, 13 39 C 13 34, 17 31, 18 28 C 19 30, 20 31, 21 32 C 22 29, 21 26, 20 24 Z" fill="#fff3c4" opacity=".9"/></svg>';
+}
+// la série en cours, sa semaine (une flamme par jour lu, un rond pointillé pour aujourd'hui pas encore lu) et le prochain
+// palier du sceau « Flamme fidèle » (atteint quand la série en cours arrive au seuil)
+function carteFlamme() {
+  var sj = series_jours();
+  if (!sj.total) {
+    return '';
+  }
+  var J = jours();
+  var auj = dkey(new Date());
+  var lundi = new Date(debutSemaine(Date.now()));
+  var semaine = ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(function (lettre, i) {
+    var k = dkey(new Date(lundi.getFullYear(), lundi.getMonth(), lundi.getDate() + i));
+    var marque = '<i class="autre"></i>';
+    if (J[k]) {
+      marque = svgFlamme(16);
+    } else if (k === auj) {
+      marque = '<i class="auj"></i>';
+    }
+    return '<div><span>' + lettre + '</span><div class="j">' + marque + '</div></div>';
+  }).join('');
+  var n = sj.actuelle;
+  var titre = n + ' jour' + (n > 1 ? 's' : '') + ' de lecture d\'affilée';
+  var eteinte = '';
+  if (!n) {
+    titre = 'Ta prochaine lecture rallume ta flamme';
+    eteinte = ' eteinte';
+  }
+  var record = '';
+  if (sj.best > 1) {
+    record = '<div class="small muted">record : ' + sj.best + ' jours</div>';
+  }
+  var palier = '';
+  var fam = FAMILLES_SCEAUX.filter(function (x) { return x[0] === 'flamme'; })[0];
+  if (fam) {
+    var p = fam[3].findIndex(function (seuil) { return seuil > sj.best; });
+    if (p < 0) {
+      palier = '<div class="palier-f">' + fam[1] + ' Tous les paliers de la <b>' + fam[2] + '</b> sont à toi</div>';
+    } else {
+      var seuil = fam[3][p];
+      var reste = seuil - n;
+      palier = '<div class="palier-f">' + fam[1] + ' <b>' + fam[2] + ' ' + CHIFFRES_ROMAINS[p + 1] + '</b> à ' + seuil + ' jours · encore ' + reste + ' jour' + (reste > 1 ? 's' : '') + '<div class="prog"><div style="width:' + Math.round(100 * n / seuil) + '%"></div></div></div>';
+    }
+  }
+  return card('Ma flamme de lectrice', '<div class="carte-flamme"><div class="grande-flamme' + eteinte + '">' + svgFlamme(92) + '<b>' + n + '</b></div><div style="flex:1;min-width:0"><div class="titre-flamme">' + titre + '</div>' + record + '<div class="semaine-f">' + semaine + '</div></div></div>' + palier);
+}
+// avant d'enregistrer une session : aujourd'hui était-il déjà un jour de lecture, et la série en cours
+function etatFlamme() {
+  if (!M) {
+    return null;
+  }
+  return {lu: !!M.jours[dkey(new Date())], n: series_jours().actuelle};
+}
+// après : si c'est la première lecture du jour, la flamme grandit d'un jour (petit encart, choisi sur maquettes : V1) ;
+// les célébrations du jeu attendent qu'il soit parti (finFlamme, Jeu.html)
+var finFlamme = 0;
+function feterFlamme(avant) {
+  if (!avant || avant.lu || !M || !M.jours[dkey(new Date())]) {
+    return;
+  }
+  var n = series_jours().actuelle;
+  var texte = 'jours de lecture d\'affilée !';
+  if (n === 1) {
+    texte = 'jour : ta flamme s\'allume !';
+  }
+  var braises = '';
+  for (var i = 0; i < 7; i++) {
+    braises += '<i class="braise" style="--x:' + Math.round(Math.random() * 40 - 20) + 'px;--r:' + (0.6 + i * 0.12).toFixed(2) + 's"></i>';
+  }
+  var ancien = document.querySelector('.flamme-plus1');
+  if (ancien) {
+    ancien.remove();
+  }
+  var d = document.createElement('div');
+  d.className = 'flamme-plus1';
+  d.setAttribute('role', 'status');
+  d.innerHTML = '<div class="fl-boite">' + svgFlamme(36) + braises + '</div><div class="ligne"><span class="compte"><span>' + avant.n + '<br>' + n + '</span></span><small>' + texte + '</small></div>';
+  document.body.appendChild(d);
+  finFlamme = Date.now() + 3800;
+  setTimeout(function () {
+    d.classList.add('part');
+  }, 3400);
+  setTimeout(function () {
+    d.remove();
+  }, 3800);
 }
 
 // ---------- En ce moment : les lectures en cours (pas celles en pause), la plus récemment lue d'abord ----------
@@ -2124,7 +2250,6 @@ function carteAnnee() {
     return d.getFullYear() === y - 1 && d <= new Date(y - 1, now.getMonth(), now.getDate());
   }).length;
   var obj = objectifAnnee(y);
-  var sj = series_jours();
   var anneau;
   if (obj.livres) {
     var pct = Math.min(100, Math.round(100 * cetteAnnee / obj.livres));
@@ -2135,13 +2260,8 @@ function carteAnnee() {
   var pages = pagesAnnee(y);
   var heures = heuresAnnee(y);
   var lignes = ligneObjectif('📖', pages, obj.pages, 'pages') + ligneObjectif('⏱️', heures, obj.heures, 'heures');
+  // la série et le record de jours de lecture sont dans « Ma flamme de lectrice » (carteFlamme)
   var badges = [];
-  if (sj.actuelle > 0) {
-    badges.push('🔥 série de ' + sj.actuelle + ' j');
-  }
-  if (sj.best > 0) {
-    badges.push('🏆 record ' + sj.best + ' j');
-  }
   if (cetteAnnee > anDernier) {
     badges.push('✨ +' + (cetteAnnee - anDernier) + ' vs ' + (y - 1));
   }
@@ -14219,8 +14339,10 @@ ACTIONS.formSession = function (el) {
         return;
       }
       var pos = r.pos;
+      var flamme = etatFlamme();
       ecrire(r.ops).then(function () {
         apresEcriture();
+        feterFlamme(flamme);
         // arrivée au bout du livre : on propose de le terminer
         var lec = D.lectures[x.id];
         if (!s && pos !== null && lec.total && pos >= lec.total && lec.statut !== 'terminee') {
@@ -15588,9 +15710,11 @@ ACTIONS.arreterMinuteur = function () {
     if (pos !== null) {
       ops.push({t: 'lectures', o: Object.assign({}, lec, {position: pos})});
     }
+    var flamme = etatFlamme();
     ecrire(ops).then(function () {
       fermerPageMinuteur();
       apresEcriture();
+      feterFlamme(flamme);
       if (lec.total && pos !== null && pos >= lec.total) {
         proposerFin(lec.id);
       } else {
@@ -18397,6 +18521,11 @@ function montrerFete() {
   if (document.getElementById('feteJeu') || !fileFetes.length) {
     return;
   }
+  // la flamme qui grandit d'un jour passe d'abord (feterFlamme, App.html)
+  if (Date.now() < finFlamme) {
+    setTimeout(montrerFete, finFlamme - Date.now() + 50);
+    return;
+  }
   var f = fileFetes.shift();
   var c = contenuFete(f);
   var d = document.createElement('div');
@@ -19056,7 +19185,7 @@ ACTIONS.choisirExport = function () {
 // ---------- mises à jour de l'appli ----------
 // assembler.py écrit la date de fabrication ici et dans version.txt : si le site a une version plus récente
 // que la page ouverte (Android garde l'appli en mémoire), on recharge en revenant dans l'appli.
-var VERSION_APPLI = '2026-10-26 17:05:01';
+var VERSION_APPLI = '2026-10-27 09:42:46';
 function appliOccupee() {
   return !!(document.getElementById('feuille') || document.querySelector('.boite-fond') || document.getElementById('pageMinuteur'));
 }
